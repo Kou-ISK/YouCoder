@@ -1,14 +1,12 @@
 const { GoogleSpreadsheet } = require('google-spreadsheet');
-const config = require('../../config.json');
-
-const CREDENTIALS = require(config.credentialsPath);
 
 async function appendData(startTime, endTime, actionName, labels) {
-  const doc = new GoogleSpreadsheet(config.spreadsheetId);
-  await doc.useServiceAccountAuth({
-    client_email: CREDENTIALS.client_email,
-    private_key: CREDENTIALS.private_key,
-  });
+  // スプレッドシートIDを取得
+  const spreadsheetId = await getSpreadsheetId();
+  const credentials = await getCredentials();
+
+  const doc = new GoogleSpreadsheet(spreadsheetId);
+  await doc.useServiceAccountAuth(credentials);
   await doc.loadInfo();
 
   const sheet = doc.sheetsByIndex[0];
@@ -23,6 +21,24 @@ async function appendData(startTime, endTime, actionName, labels) {
   };
 
   await sheet.addRow(row);
+}
+
+function getSpreadsheetId() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['spreadsheetId'], (result) => {
+      resolve(result.spreadsheetId || '');
+    });
+  });
+}
+
+function getCredentials() {
+  return new Promise((resolve) => {
+    // 必要に応じて、credentials を chrome.storage に保存して取得するように変更
+    resolve({
+      client_email: 'YOUR_CLIENT_EMAIL',
+      private_key: 'YOUR_PRIVATE_KEY',
+    });
+  });
 }
 
 module.exports = { appendData };
