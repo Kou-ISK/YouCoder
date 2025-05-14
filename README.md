@@ -1,77 +1,33 @@
-# YouCoder
+This is a [Plasmo extension](https://docs.plasmo.com/) project bootstrapped with [`plasmo init`](https://www.npmjs.com/package/plasmo).
 
-YouCoder は、YouTube 動画を視聴しながらタイムスタンプを記録し、Google スプレッドシートにデータを保存できる Chrome 拡張機能です。この拡張機能には「アクションボタン」と「ラベルボタン」の 2 種類のボタンがあり、簡単にタイムスタンプとラベルを管理できます。
+## Getting Started
 
-## 機能
-
-- **アクションボタン**:
-  - 初回クリック時に開始時間（startTime）を記録。
-  - 2 回目のクリック時に終了時間（endTime）を記録。
-- **ラベルボタン**:
-  - アクションボタンが押されている間にクリックすることで、ラベルを追加可能。
-- **データ保存**:
-  - 記録されたデータは以下の形式で Google スプレッドシートに自動保存されます。
-    ```
-    startTime | endTime | アクション名 | ラベル1 | ラベル2 | ... | ラベルN
-    ```
-
-## プロジェクト構成
-
-```
-youtube-timestamp-extension
-├── src
-│   ├── background.js        # イベントとデータを管理するバックグラウンドスクリプト
-│   ├── content.js           # YouTubeページとやり取りするスクリプト
-│   ├── popup
-│   │   ├── popup.html       # ポップアップUIのHTML構造
-│   │   ├── popup.js         # ポップアップ操作を処理するロジック
-│   │   └── popup.css        # ポップアップUIのスタイル
-│   └── utils
-│       └── google-sheets-api.js # Google Sheets APIとの通信機能
-├── manifest.json            # Chrome拡張機能のマニフェストファイル
-└── README.md                # プロジェクトのドキュメント
-```
-
-## インストール方法
-
-1. リポジトリをローカルマシンにクローンします。
+First, run the development server:
 
 ```bash
-git clone https://github.com/Kou-ISK/YouCoder.git
-cd YouCoder
+pnpm dev
+# or
+npm run dev
 ```
 
-2. 必要な依存関係をインストールします。
+Open your browser and load the appropriate development build. For example, if you are developing for the chrome browser, using manifest v3, use: `build/chrome-mv3-dev`.
+
+You can start editing the popup by modifying `popup.tsx`. It should auto-update as you make changes. To add an options page, simply add a `options.tsx` file to the root of the project, with a react component default exported. Likewise to add a content page, add a `content.ts` file to the root of the project, importing some module and do some logic, then reload the extension on your browser.
+
+For further guidance, [visit our Documentation](https://docs.plasmo.com/)
+
+## Making production build
+
+Run the following:
 
 ```bash
-npm install
-```
-
-3. ビルドを実行します。
-
-```bash
+pnpm build
+# or
 npm run build
 ```
 
-- ビルド後、dist ディレクトリに出力されたファイルが生成されます。
+This should create a production bundle for your extension, ready to be zipped and published to the stores.
 
-4. Chrome を開き、chrome://extensions/ に移動します。
-5. 右上の「デベロッパーモード」を有効にします。
-6. 「パッケージ化されていない拡張機能を読み込む」をクリックし、dist ディレクトリを選択します。
-7. 拡張機能がインストールされ、使用可能になります。
+## Submit to the webstores
 
-## 使用方法
-
-1. YouTube 動画を開きます。
-2. 拡張機能アイコンをクリックしてポップアップを開きます。
-3. アクションボタンを使用してタイムスタンプを記録します。
-4. ラベルボタンを使用して記録期間中にラベルを追加します。
-5. 記録されたデータは指定された Google スプレッドシートに自動的に送信されます。
-
-## コントリビューション
-
-拡張機能に関する提案や改善があれば、ぜひ Issue やプルリクエストを送信してください。
-
-## ライセンス
-
-このプロジェクトは MIT ライセンスの下で提供されています。
+The easiest way to deploy your Plasmo extension is to use the built-in [bpp](https://bpp.browser.market) GitHub action. Prior to using this action however, make sure to build your extension and upload the first version to the store to establish the basic credentials. Then, simply follow [this setup instruction](https://docs.plasmo.com/framework/workflows/submit) and you should be on your way for automated submission!
