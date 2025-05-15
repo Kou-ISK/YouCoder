@@ -8,7 +8,8 @@ export const config: PlasmoCSConfig = {
   matches: ["*://*.youtube.com/*"]
 }
 
-export default function Contents() {
+function Contents() {
+  console.log("YouCoder content script loaded")
   const [buttons, setButtons] = useState<Button[]>([
     {
       type: "action",
@@ -34,3 +35,5 @@ export default function Contents() {
     </div>
   )
 }
+
+export default Contents
