@@ -38,16 +38,29 @@ export const getActions = () => actions
 const STORAGE_KEY = "youcoder_actions"
 
 // ローカルストレージにアクションを保存
-export const saveActionsToStorage = () => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(actions))
+export const saveActionsToStorage = async () => {
+  try {
+    // Get current actions and labels
+    const data = await chrome.storage.local.get(["actions", "labels"])
+    console.log("Saving current data:", data)
+    await chrome.storage.local.set(data)
+    console.log("Data saved successfully")
+    return true
+  } catch (error) {
+    console.error("Failed to save actions:", error)
+    return false
+  }
 }
 
 // ローカルストレージからアクションを読み込み
-export const loadActionsFromStorage = () => {
-  const storedActions = localStorage.getItem(STORAGE_KEY)
-  if (storedActions) {
-    const parsedActions: Action[] = JSON.parse(storedActions)
-    actions.push(...parsedActions)
+export const loadActionsFromStorage = async () => {
+  try {
+    const result = await chrome.storage.local.get(["actions", "labels"])
+    console.log("Loaded actions from storage:", result)
+    return result
+  } catch (error) {
+    console.error("Failed to load actions:", error)
+    return { actions: {}, labels: {} }
   }
 }
 

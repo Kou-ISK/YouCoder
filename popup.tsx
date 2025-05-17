@@ -18,14 +18,20 @@ const Popup = () => {
   const [modalType, setModalType] = useState<"action" | "label" | null>(null)
 
   useEffect(() => {
-    const storedActions = localStorage.getItem("actions")
-    const storedLabels = localStorage.getItem("labels")
-    if (storedActions) {
-      setActions(JSON.parse(storedActions))
+    const loadData = async () => {
+      try {
+        const result = await chrome.storage.local.get(["actions", "labels"])
+        if (result.actions) {
+          setActions(result.actions)
+        }
+        if (result.labels) {
+          setLabels(result.labels)
+        }
+      } catch (error) {
+        console.error("Failed to load data:", error)
+      }
     }
-    if (storedLabels) {
-      setLabels(JSON.parse(storedLabels))
-    }
+    loadData()
   }, [])
 
   const handleHotkeyChange = (
@@ -53,33 +59,31 @@ const Popup = () => {
     setModalType(null)
   }
 
-  const handleModalSubmit = () => {
-    console.log("handleModalSubmit")
+  const handleModalSubmit = async () => {
     if (modalType === "action" && modalInput) {
-      setActions((prev) => {
-        console.log("prev", prev)
-        console.log("modalInput", modalInput)
-        const updated = { ...prev, [modalInput]: "" }
-        localStorage.setItem("actions", JSON.stringify(updated))
-        return updated
-      })
+      const updatedActions = { ...actions, [modalInput]: "" }
+      await chrome.storage.local.set({ actions: updatedActions })
+      setActions(updatedActions)
     } else if (modalType === "label" && modalInput) {
-      setLabels((prev) => {
-        console.log("prev", prev)
-        console.log("modalInput", modalInput)
-        const updated = { ...prev, [modalInput]: "" }
-        localStorage.setItem("labels", JSON.stringify(updated))
-        return updated
-      })
+      const updatedLabels = { ...labels, [modalInput]: "" }
+      await chrome.storage.local.set({ labels: updatedLabels })
+      setLabels(updatedLabels)
     }
     closeModal()
   }
 
-  const handleSave = () => {
-    saveHotkeysToStorage(hotkeys)
-    localStorage.setItem("actions", JSON.stringify(actions))
-    localStorage.setItem("labels", JSON.stringify(labels))
-    alert("Settings saved!")
+  const handleSave = async () => {
+    try {
+      saveHotkeysToStorage(hotkeys)
+      await chrome.storage.local.set({
+        actions,
+        labels
+      })
+      alert("Settings saved!")
+    } catch (error) {
+      console.error("Failed to save settings:", error)
+      alert("Failed to save settings!")
+    }
   }
 
   const handleAuth = async () => {
