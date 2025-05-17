@@ -17,8 +17,7 @@ export const config: PlasmoCSConfig = {
   matches: ["*://*.youtube.com/*"]
 }
 
-export default function Contents() {
-  console.log("YouCoder content script loaded")
+const Content = () => {
   const [activeActions, setActiveActions] = useState<Set<string>>(new Set())
   const [hotkeys, setHotkeys] = useState(loadHotkeysFromStorage())
   const [actions, setActions] = useState<Record<string, string>>({})
@@ -38,6 +37,48 @@ export default function Contents() {
     }
     if (storedLabels) {
       setLabels(JSON.parse(storedLabels))
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const storedActions = localStorage.getItem("actions")
+      const storedLabels = localStorage.getItem("labels")
+      if (storedActions) {
+        setActions(JSON.parse(storedActions))
+      }
+      if (storedLabels) {
+        setLabels(JSON.parse(storedLabels))
+      }
+    }
+
+    window.addEventListener("storage", handleStorageChange)
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === "actions") {
+        const storedActions = localStorage.getItem("actions")
+        if (storedActions) {
+          setActions(JSON.parse(storedActions))
+        }
+      }
+      if (event.key === "labels") {
+        const storedLabels = localStorage.getItem("labels")
+        if (storedLabels) {
+          setLabels(JSON.parse(storedLabels))
+        }
+      }
+    }
+
+    window.addEventListener("storage", handleStorageChange)
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
     }
   }, [])
 
@@ -164,3 +205,5 @@ export default function Contents() {
     </Draggable>
   )
 }
+
+export default Content

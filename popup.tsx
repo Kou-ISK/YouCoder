@@ -54,14 +54,19 @@ const Popup = () => {
   }
 
   const handleModalSubmit = () => {
+    console.log("handleModalSubmit")
     if (modalType === "action" && modalInput) {
       setActions((prev) => {
+        console.log("prev", prev)
+        console.log("modalInput", modalInput)
         const updated = { ...prev, [modalInput]: "" }
         localStorage.setItem("actions", JSON.stringify(updated))
         return updated
       })
     } else if (modalType === "label" && modalInput) {
       setLabels((prev) => {
+        console.log("prev", prev)
+        console.log("modalInput", modalInput)
         const updated = { ...prev, [modalInput]: "" }
         localStorage.setItem("labels", JSON.stringify(updated))
         return updated
