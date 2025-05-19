@@ -13,20 +13,24 @@ const Popup = () => {
   const [authUrl, setAuthUrl] = useState<string | null>(null)
   const [actions, setActions] = useState<Record<string, string>>({})
   const [labels, setLabels] = useState<Record<string, string>>({})
+  const [teams, setTeams] = useState<string[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalInput, setModalInput] = useState("")
-  const [modalType, setModalType] = useState<"action" | "label" | null>(null)
+  const [modalType, setModalType] = useState<
+    "action" | "label" | "team" | null
+  >(null)
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const result = await chrome.storage.local.get(["actions", "labels"])
-        if (result.actions) {
-          setActions(result.actions)
-        }
-        if (result.labels) {
-          setLabels(result.labels)
-        }
+        const data = await chrome.storage.local.get([
+          "actions",
+          "labels",
+          "teams"
+        ])
+        setActions(data.actions || {})
+        setLabels(data.labels || {})
+        setTeams(data.teams || [])
       } catch (error) {
         console.error("Failed to load data:", error)
       }
@@ -48,7 +52,7 @@ const Popup = () => {
     }))
   }
 
-  const openModal = (type: "action" | "label") => {
+  const openModal = (type: "action" | "label" | "team") => {
     setModalType(type)
     setModalInput("")
     setIsModalOpen(true)
@@ -60,16 +64,32 @@ const Popup = () => {
   }
 
   const handleModalSubmit = async () => {
-    if (modalType === "action" && modalInput) {
-      const updatedActions = { ...actions, [modalInput]: "" }
-      await chrome.storage.local.set({ actions: updatedActions })
-      setActions(updatedActions)
-    } else if (modalType === "label" && modalInput) {
-      const updatedLabels = { ...labels, [modalInput]: "" }
-      await chrome.storage.local.set({ labels: updatedLabels })
-      setLabels(updatedLabels)
+    if (!modalInput) return
+
+    switch (modalType) {
+      case "action":
+        const updatedActions = { ...actions, [modalInput]: "" }
+        await chrome.storage.local.set({ actions: updatedActions })
+        setActions(updatedActions)
+        break
+      case "label":
+        const updatedLabels = { ...labels, [modalInput]: "" }
+        await chrome.storage.local.set({ labels: updatedLabels })
+        setLabels(updatedLabels)
+        break
+      case "team":
+        const updatedTeams = [...teams, modalInput]
+        await chrome.storage.local.set({ teams: updatedTeams })
+        setTeams(updatedTeams)
+        break
     }
     closeModal()
+  }
+
+  const handleRemoveTeam = async (teamName: string) => {
+    const updatedTeams = teams.filter((team) => team !== teamName)
+    await chrome.storage.local.set({ teams: updatedTeams })
+    setTeams(updatedTeams)
   }
 
   const handleSave = async () => {
@@ -121,87 +141,128 @@ const Popup = () => {
 
   return (
     <div style={{ padding: "1rem", fontFamily: "Arial, sans-serif" }}>
-      <h1>YouCoder Settings</h1>
-      <h2>Google Sheets Integration</h2>
-      <div>
-        <label>
-          Spreadsheet ID:{" "}
-          <input
-            type="text"
-            value={spreadsheetId}
-            onChange={(e) => setSpreadsheetId(e.target.value)}
-          />
-        </label>
+      <div style={{ marginBottom: "2rem" }}>
+        <h3>Teams</h3>
+        <div>
+          {teams.map((team) => (
+            <div
+              key={team}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                marginBottom: "0.5rem"
+              }}>
+              <span>{team}</span>
+              <button
+                onClick={() => handleRemoveTeam(team)}
+                style={{ marginLeft: "1rem", padding: "0.2rem 0.5rem" }}>
+                削除
+              </button>
+            </div>
+          ))}
+          <button onClick={() => openModal("team")}>チームを追加</button>
+        </div>
       </div>
-      <button onClick={handleAuth} style={{ marginTop: "1rem" }}>
-        Authenticate with Google
-      </button>
-      <button onClick={handleSetCredentials} style={{ marginTop: "1rem" }}>
-        Set Credentials
-      </button>
-      <button onClick={handleExportToSheet} style={{ marginTop: "1rem" }}>
-        Export to Google Sheets
-      </button>
-      <h2>Action Hotkeys</h2>
-      {Object.entries(hotkeys.actions).map(([action, key]) => (
-        <div key={action}>
+
+      <div style={{ marginBottom: "2rem" }}>
+        <h3>Actions</h3>
+        {Object.entries(hotkeys.actions).map(([action, key]) => (
+          <div key={action}>
+            <label>
+              {action}:{" "}
+              <input
+                type="text"
+                value={key}
+                onChange={(e) =>
+                  handleHotkeyChange("actions", action, e.target.value)
+                }
+              />
+            </label>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ marginBottom: "2rem" }}>
+        <h3>Labels</h3>
+        {Object.entries(hotkeys.labels).map(([label, key]) => (
+          <div key={label}>
+            <label>
+              {label}:{" "}
+              <input
+                type="text"
+                value={key}
+                onChange={(e) =>
+                  handleHotkeyChange("labels", label, e.target.value)
+                }
+              />
+            </label>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ marginBottom: "2rem" }}>
+        <h3>Google Sheets Integration</h3>
+        <div>
           <label>
-            {action}:{" "}
+            Spreadsheet ID:{" "}
             <input
               type="text"
-              value={key}
-              onChange={(e) =>
-                handleHotkeyChange("actions", action, e.target.value)
-              }
+              value={spreadsheetId}
+              onChange={(e) => setSpreadsheetId(e.target.value)}
             />
           </label>
         </div>
-      ))}
-      <h2>Label Hotkeys</h2>
-      {Object.entries(hotkeys.labels).map(([label, key]) => (
-        <div key={label}>
-          <label>
-            {label}:{" "}
-            <input
-              type="text"
-              value={key}
-              onChange={(e) =>
-                handleHotkeyChange("labels", label, e.target.value)
-              }
-            />
-          </label>
-        </div>
-      ))}
+        <button onClick={handleAuth} style={{ marginTop: "1rem" }}>
+          Authenticate with Google
+        </button>
+        <button onClick={handleSetCredentials} style={{ marginTop: "1rem" }}>
+          Set Credentials
+        </button>
+        <button onClick={handleExportToSheet} style={{ marginTop: "1rem" }}>
+          Export to Google Sheets
+        </button>
+      </div>
+
       <button onClick={handleSave} style={{ marginTop: "1rem" }}>
         Save Hotkeys
       </button>
-      <h2>Actions</h2>
-      <ul>
-        {Object.keys(actions).map((action) => (
-          <li key={action}>{action}</li>
-        ))}
-      </ul>
-      <button onClick={() => openModal("action")}>Add Action</button>
-
-      <h2>Labels</h2>
-      <ul>
-        {Object.keys(labels).map((label) => (
-          <li key={label}>{label}</li>
-        ))}
-      </ul>
-      <button onClick={() => openModal("label")}>Add Label</button>
 
       {isModalOpen && (
-        <div className="modal">
-          <div className="modal-content">
-            <h2>Add {modalType === "action" ? "Action" : "Label"}</h2>
-            <input
-              type="text"
-              value={modalInput}
-              onChange={(e) => setModalInput(e.target.value)}
-            />
-            <button onClick={handleModalSubmit}>Submit</button>
-            <button onClick={closeModal}>Cancel</button>
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            backgroundColor: "white",
+            padding: "1rem",
+            boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+            borderRadius: "4px"
+          }}>
+          <h4>
+            {modalType === "team"
+              ? "チームを追加"
+              : modalType === "action"
+                ? "アクションを追加"
+                : "ラベルを追加"}
+          </h4>
+          <input
+            type="text"
+            value={modalInput}
+            onChange={(e) => setModalInput(e.target.value)}
+            placeholder={
+              modalType === "team"
+                ? "チーム名"
+                : modalType === "action"
+                  ? "アクション名"
+                  : "ラベル名"
+            }
+          />
+          <div style={{ marginTop: "1rem" }}>
+            <button onClick={handleModalSubmit}>保存</button>
+            <button onClick={closeModal} style={{ marginLeft: "0.5rem" }}>
+              キャンセル
+            </button>
           </div>
         </div>
       )}

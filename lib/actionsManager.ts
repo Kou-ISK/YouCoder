@@ -7,14 +7,60 @@ type Action = {
 }
 
 const actions: Action[] = []
+let teams: string[] = []
+
+export const addTeam = (teamName: string) => {
+  if (!teams.includes(teamName)) {
+    teams.push(teamName)
+    saveTeamsToStorage()
+  }
+}
+
+export const removeTeam = (teamName: string) => {
+  teams = teams.filter((team) => team !== teamName)
+  saveTeamsToStorage()
+}
+
+export const getTeams = () => teams
+
+// チーム名をストレージに保存
+const saveTeamsToStorage = async () => {
+  try {
+    await chrome.storage.local.set({ teams })
+    console.log("Teams saved successfully")
+    return true
+  } catch (error) {
+    console.error("Failed to save teams:", error)
+    return false
+  }
+}
+
+// チーム名をストレージから読み込み
+const loadTeamsFromStorage = async () => {
+  try {
+    const result = await chrome.storage.local.get(["teams"])
+    if (result.teams) {
+      teams = result.teams
+    }
+    console.log("Loaded teams from storage:", teams)
+  } catch (error) {
+    console.error("Failed to load teams:", error)
+  }
+}
+
+// YouTubeの再生時刻を取得する関数
+const getYoutubeCurrentTime = (): number => {
+  const video = document.querySelector("video")
+  return video ? Math.floor(video.currentTime * 1000) : 0 // ミリ秒単位で返す
+}
 
 export const startAction = (team: string, action: string) => {
-  const startTime = Date.now()
+  const startTime = getYoutubeCurrentTime()
   actions.push({ team, action, start: startTime, labels: [] })
 }
 
 export const stopAction = (team: string, action: string) => {
-  const endTime = Date.now()
+  const endTime = getYoutubeCurrentTime()
   const actionItem = actions.find(
     (a) => a.team === team && a.action === action && !a.end
   )
@@ -55,12 +101,19 @@ export const saveActionsToStorage = async () => {
 // ローカルストレージからアクションを読み込み
 export const loadActionsFromStorage = async () => {
   try {
-    const result = await chrome.storage.local.get(["actions", "labels"])
-    console.log("Loaded actions from storage:", result)
+    const result = await chrome.storage.local.get([
+      "actions",
+      "labels",
+      "teams"
+    ])
+    console.log("Loaded data from storage:", result)
+    if (result.teams) {
+      teams = result.teams
+    }
     return result
   } catch (error) {
-    console.error("Failed to load actions:", error)
-    return { actions: {}, labels: {} }
+    console.error("Failed to load data:", error)
+    return { actions: {}, labels: {}, teams: [] }
   }
 }
 

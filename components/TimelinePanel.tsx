@@ -1,0 +1,96 @@
+import React from "react"
+import Draggable from "react-draggable"
+
+type Action = {
+  team: string
+  action: string
+  start: number
+  end?: number
+  labels: string[]
+}
+
+interface TimelinePanelProps {
+  actions: Action[]
+}
+
+const TimelinePanel: React.FC<TimelinePanelProps> = ({ actions }) => {
+  const formatTime = (timestamp: number) => {
+    const totalSeconds = Math.floor(timestamp / 1000)
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    const milliseconds = timestamp % 1000
+
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(milliseconds).padStart(3, "0")}`
+  }
+
+  return (
+    <Draggable>
+      <div
+        style={{
+          position: "fixed",
+          bottom: 20,
+          left: 20,
+          width: "80%",
+          maxHeight: "200px",
+          backgroundColor: "white",
+          padding: "10px",
+          borderRadius: "8px",
+          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+          overflow: "auto",
+          cursor: "move",
+          zIndex: 1000
+        }}>
+        <h3
+          style={{
+            margin: "0 0 10px 0",
+            paddingBottom: "5px",
+            borderBottom: "1px solid #eee"
+          }}>
+          タイムライン
+        </h3>
+        <div style={{ overflowX: "auto" }}>
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              fontSize: "14px"
+            }}>
+            <thead>
+              <tr>
+                <th style={{ padding: "8px", textAlign: "left" }}>チーム</th>
+                <th style={{ padding: "8px", textAlign: "left" }}>
+                  アクション
+                </th>
+                <th style={{ padding: "8px", textAlign: "left" }}>開始時間</th>
+                <th style={{ padding: "8px", textAlign: "left" }}>終了時間</th>
+                <th style={{ padding: "8px", textAlign: "left" }}>ラベル</th>
+              </tr>
+            </thead>
+            <tbody>
+              {actions.map((action, index) => (
+                <tr
+                  key={index}
+                  style={{
+                    borderBottom: "1px solid #eee",
+                    backgroundColor: index % 2 === 0 ? "#f9f9f9" : "white"
+                  }}>
+                  <td style={{ padding: "8px" }}>{action.team}</td>
+                  <td style={{ padding: "8px" }}>{action.action}</td>
+                  <td style={{ padding: "8px" }}>{formatTime(action.start)}</td>
+                  <td style={{ padding: "8px" }}>
+                    {action.end ? formatTime(action.end) : "進行中"}
+                  </td>
+                  <td style={{ padding: "8px" }}>
+                    {action.labels.join(", ") || "-"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </Draggable>
+  )
+}
+
+export default TimelinePanel
