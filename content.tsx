@@ -20,25 +20,19 @@ export const config: PlasmoContentScript = {
   matches: ["*://*.youtube.com/*"]
 }
 
-export const getRootContainer = () => {
-  const container = document.createElement("div")
-  container.id = "youcoder-root"
-  document.body.appendChild(container)
-  return container
+export const getStyle = () => {
+  const style = document.createElement("style")
+  style.textContent = cssText
+  return style
 }
 
-const Content = () => {
+const MainContent: React.FC = () => {
   const [activeActions, setActiveActions] = useState<Set<string>>(new Set())
   const [hotkeys, setHotkeys] = useState(loadHotkeysFromStorage())
   const [actions, setActions] = useState<Record<string, string>>({})
   const [labels, setLabels] = useState<Record<string, string>>({})
-  const [isLoading, setIsLoading] = useState(true)
-  const [timelineActions, setTimelineActions] = useState(getActions())
-  const [newAction, setNewAction] = useState("")
-  const [newLabel, setNewLabel] = useState("")
-  const [newTeam, setNewTeam] = useState("")
   const [teams, setTeams] = useState<string[]>([])
-  const [selectedTeam, setSelectedTeam] = useState<string>("")
+  const [timelineActions, setTimelineActions] = useState(getActions())
 
   useEffect(() => {
     const loadData = async () => {
@@ -53,8 +47,6 @@ const Content = () => {
         if (result.teams) setTeams(result.teams)
       } catch (error) {
         console.error("Failed to load data:", error)
-      } finally {
-        setIsLoading(false)
       }
     }
 
@@ -95,7 +87,6 @@ const Content = () => {
   }
 
   const handleLabel = (label: string) => {
-    // アクティブなアクションがある場合のみラベルを追加
     for (const actionKey of activeActions) {
       const [team, action] = actionKey.split("_")
       addLabel(team, action, label)
@@ -103,45 +94,8 @@ const Content = () => {
     setTimelineActions(getActions())
   }
 
-  const handleAddTeam = () => {
-    if (newTeam.trim()) {
-      const updatedTeams = [...teams, newTeam]
-      setTeams(updatedTeams)
-      chrome.storage.local.set({ teams: updatedTeams })
-      setNewTeam("")
-    }
-  }
-
-  const handleAddAction = () => {
-    if (newAction.trim()) {
-      setActions((prev) => ({
-        ...prev,
-        [newAction]: newAction
-      }))
-      chrome.storage.local.set({
-        actions: { ...actions, [newAction]: newAction }
-      })
-      setNewAction("")
-    }
-  }
-
-  const handleAddLabel = () => {
-    if (newLabel.trim()) {
-      setLabels((prev) => ({
-        ...prev,
-        [newLabel]: newLabel
-      }))
-      chrome.storage.local.set({ labels: { ...labels, [newLabel]: newLabel } })
-      setNewLabel("")
-    }
-  }
-
-  if (isLoading) {
-    return <div>Loading...</div>
-  }
-
   return (
-    <>
+    <div style={{ position: "relative", zIndex: 9999 }}>
       <Draggable>
         <div
           style={{
@@ -156,110 +110,62 @@ const Content = () => {
             cursor: "move",
             minWidth: "300px"
           }}>
-          <h3>チーム設定</h3>
-          <div style={{ marginBottom: "10px" }}>
-            <input
-              type="text"
-              value={newTeam}
-              onChange={(e) => setNewTeam(e.target.value)}
-              placeholder="新しいチーム名"
-              style={{ marginRight: "5px", padding: "5px" }}
-            />
-            <button onClick={handleAddTeam}>チーム追加</button>
-          </div>
+          <h3>タグ付けパネル</h3>
           <div style={{ marginBottom: "20px" }}>
             {teams.map((team) => (
-              <button
-                key={team}
-                onClick={() => setSelectedTeam(team)}
-                style={{
-                  margin: "0 5px 5px 0",
-                  padding: "5px 10px",
-                  backgroundColor:
-                    selectedTeam === team ? "#007bff" : "#e9ecef",
-                  color: selectedTeam === team ? "white" : "black",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }}>
-                {team}
-              </button>
+              <div key={team} style={{ marginBottom: "10px" }}>
+                <h4>{team}</h4>
+                {Object.keys(actions).map((action) => (
+                  <button
+                    key={action}
+                    onClick={() => handleActionToggle(team, action)}
+                    style={{
+                      margin: "0 5px 5px 0",
+                      padding: "5px 10px",
+                      backgroundColor: activeActions.has(`${team}_${action}`)
+                        ? "#dc3545"
+                        : "#e9ecef",
+                      color: activeActions.has(`${team}_${action}`)
+                        ? "white"
+                        : "black",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer"
+                    }}>
+                    {action}
+                  </button>
+                ))}
+              </div>
             ))}
           </div>
 
-          <h3>アクション追加</h3>
-          <div style={{ marginBottom: "10px" }}>
-            <input
-              type="text"
-              value={newAction}
-              onChange={(e) => setNewAction(e.target.value)}
-              placeholder="新しいアクション"
-              style={{ marginRight: "5px", padding: "5px" }}
-            />
-            <button onClick={handleAddAction}>アクション追加</button>
-          </div>
-          <div style={{ marginBottom: "20px" }}>
-            {Object.keys(actions).map((action) => (
-              <button
-                key={action}
-                onClick={() =>
-                  selectedTeam && handleActionToggle(selectedTeam, action)
-                }
-                style={{
-                  margin: "0 5px 5px 0",
-                  padding: "5px 10px",
-                  backgroundColor:
-                    selectedTeam &&
-                    activeActions.has(`${selectedTeam}_${action}`)
-                      ? "#dc3545"
-                      : "#e9ecef",
-                  color:
-                    selectedTeam &&
-                    activeActions.has(`${selectedTeam}_${action}`)
-                      ? "white"
-                      : "black",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }}>
-                {action}
-              </button>
-            ))}
-          </div>
-
-          <h3>ラベル追加</h3>
-          <div style={{ marginBottom: "10px" }}>
-            <input
-              type="text"
-              value={newLabel}
-              onChange={(e) => setNewLabel(e.target.value)}
-              placeholder="新しいラベル"
-              style={{ marginRight: "5px", padding: "5px" }}
-            />
-            <button onClick={handleAddLabel}>ラベル追加</button>
-          </div>
-          <div style={{ marginBottom: "10px" }}>
-            {Object.keys(labels).map((label) => (
-              <button
-                key={label}
-                onClick={() => handleLabel(label)}
-                style={{
-                  margin: "0 5px 5px 0",
-                  padding: "5px 10px",
-                  backgroundColor: "#e9ecef",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }}>
-                {label}
-              </button>
-            ))}
+          <div>
+            <h4>ラベル</h4>
+            <div style={{ marginBottom: "10px" }}>
+              {Object.keys(labels).map((label) => (
+                <button
+                  key={label}
+                  onClick={() => handleLabel(label)}
+                  disabled={activeActions.size === 0}
+                  style={{
+                    margin: "0 5px 5px 0",
+                    padding: "5px 10px",
+                    backgroundColor: "#e9ecef",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: activeActions.size > 0 ? "pointer" : "not-allowed",
+                    opacity: activeActions.size > 0 ? 1 : 0.5
+                  }}>
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </Draggable>
       <TimelinePanel actions={timelineActions} />
-    </>
+    </div>
   )
 }
 
-export default Content
+export default MainContent

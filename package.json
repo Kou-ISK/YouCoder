@@ -12,7 +12,7 @@
   "dependencies": {
     "events": "^3.3.0",
     "googleapis": "^148.0.0",
-    "plasmo": "0.90.3",
+    "plasmo": "0.90.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-draggable": "^4.4.6"
@@ -34,7 +34,18 @@
       "https://*/*"
     ],
     "permissions": [
-      "storage"
+      "storage",
+      "activeTab"
+    ],
+    "web_accessible_resources": [
+      {
+        "resources": [
+          "*.css"
+        ],
+        "matches": [
+          "*://*.youtube.com/*"
+        ]
+      }
     ]
   }
 }

@@ -1,0 +1,54 @@
+/* タグ付けパネルのスタイル */
+.tag-panel {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  background-color: white;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  cursor: move;
+  min-width: 300px;
+}
+
+/* ボタンの基本スタイル */
+.action-button {
+  margin: 0 5px 5px 0;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* アクティブなアクションボタン */
+.action-button.active {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* 非アクティブなアクションボタン */
+.action-button.inactive {
+  background-color: #e9ecef;
+  color: black;
+}
+
+/* ラベルボタン */
+.label-button {
+  margin: 0 5px 5px 0;
+  padding: 5px 10px;
+  background-color: #e9ecef;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* チーム名のスタイル */
+.team-heading {
+  margin-bottom: 10px;
+}
+
+/* セクションのスタイル */
+.section {
+  margin-bottom: 20px;
+}

@@ -86,10 +86,30 @@ const Popup = () => {
     closeModal()
   }
 
-  const handleRemoveTeam = async (teamName: string) => {
-    const updatedTeams = teams.filter((team) => team !== teamName)
-    await chrome.storage.local.set({ teams: updatedTeams })
-    setTeams(updatedTeams)
+  const handleRemoveItem = async (
+    type: "action" | "label" | "team",
+    key: string
+  ) => {
+    switch (type) {
+      case "action": {
+        const { [key]: _, ...rest } = actions
+        await chrome.storage.local.set({ actions: rest })
+        setActions(rest)
+        break
+      }
+      case "label": {
+        const { [key]: _, ...rest } = labels
+        await chrome.storage.local.set({ labels: rest })
+        setLabels(rest)
+        break
+      }
+      case "team": {
+        const updatedTeams = teams.filter((team) => team !== key)
+        await chrome.storage.local.set({ teams: updatedTeams })
+        setTeams(updatedTeams)
+        break
+      }
+    }
   }
 
   const handleSave = async () => {
@@ -97,175 +117,246 @@ const Popup = () => {
       saveHotkeysToStorage(hotkeys)
       await chrome.storage.local.set({
         actions,
-        labels
+        labels,
+        teams
       })
-      alert("Settings saved!")
+      window.close()
     } catch (error) {
       console.error("Failed to save settings:", error)
-      alert("Failed to save settings!")
-    }
-  }
-
-  const handleAuth = async () => {
-    const url = await getAuthUrl() // Await the promise to resolve
-    setAuthUrl(url)
-    window.open(url, "_blank")
-  }
-
-  const handleSetCredentials = async () => {
-    const code = prompt("Enter the authorization code:")
-    if (code) {
-      await setCredentials(code)
-      alert("Authorization successful!")
-    }
-  }
-
-  const handleExportToSheet = async () => {
-    if (!spreadsheetId) {
-      alert("Please enter a Spreadsheet ID.")
-      return
-    }
-    try {
-      const data = [
-        ["Action", "Label", "Start Time", "End Time"],
-        // Example data, replace with actual actions
-        ["Jump", "Athletics", "00:01:23", "00:01:30"]
-      ]
-      await appendToSheet(spreadsheetId, "Sheet1!A1", data)
-      alert("Data exported successfully!")
-    } catch (error) {
-      console.error(error)
-      alert("Failed to export data.")
     }
   }
 
   return (
-    <div style={{ padding: "1rem", fontFamily: "Arial, sans-serif" }}>
-      <div style={{ marginBottom: "2rem" }}>
-        <h3>Teams</h3>
+    <div style={{ minWidth: "400px", padding: "20px" }}>
+      <h2 style={{ marginBottom: "20px" }}>設定</h2>
+
+      <div style={{ marginBottom: "20px" }}>
+        <h3>チーム</h3>
+        <button
+          onClick={() => openModal("team")}
+          style={{
+            marginBottom: "10px",
+            padding: "5px 10px",
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}>
+          チームを追加
+        </button>
         <div>
           {teams.map((team) => (
             <div
               key={team}
               style={{
                 display: "flex",
+                justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: "0.5rem"
+                marginBottom: "5px",
+                padding: "5px",
+                backgroundColor: "#f8f9fa",
+                borderRadius: "4px"
               }}>
               <span>{team}</span>
               <button
-                onClick={() => handleRemoveTeam(team)}
-                style={{ marginLeft: "1rem", padding: "0.2rem 0.5rem" }}>
+                onClick={() => handleRemoveItem("team", team)}
+                style={{
+                  padding: "2px 8px",
+                  backgroundColor: "#dc3545",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer"
+                }}>
                 削除
               </button>
             </div>
           ))}
-          <button onClick={() => openModal("team")}>チームを追加</button>
         </div>
       </div>
 
-      <div style={{ marginBottom: "2rem" }}>
-        <h3>Actions</h3>
-        {Object.entries(hotkeys.actions).map(([action, key]) => (
-          <div key={action}>
-            <label>
-              {action}:{" "}
-              <input
-                type="text"
-                value={key}
-                onChange={(e) =>
-                  handleHotkeyChange("actions", action, e.target.value)
-                }
-              />
-            </label>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ marginBottom: "2rem" }}>
-        <h3>Labels</h3>
-        {Object.entries(hotkeys.labels).map(([label, key]) => (
-          <div key={label}>
-            <label>
-              {label}:{" "}
-              <input
-                type="text"
-                value={key}
-                onChange={(e) =>
-                  handleHotkeyChange("labels", label, e.target.value)
-                }
-              />
-            </label>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ marginBottom: "2rem" }}>
-        <h3>Google Sheets Integration</h3>
+      <div style={{ marginBottom: "20px" }}>
+        <h3>アクション</h3>
+        <button
+          onClick={() => openModal("action")}
+          style={{
+            marginBottom: "10px",
+            padding: "5px 10px",
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}>
+          アクションを追加
+        </button>
         <div>
-          <label>
-            Spreadsheet ID:{" "}
-            <input
-              type="text"
-              value={spreadsheetId}
-              onChange={(e) => setSpreadsheetId(e.target.value)}
-            />
-          </label>
+          {Object.keys(actions).map((action) => (
+            <div
+              key={action}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "5px",
+                padding: "5px",
+                backgroundColor: "#f8f9fa",
+                borderRadius: "4px"
+              }}>
+              <span>{action}</span>
+              <button
+                onClick={() => handleRemoveItem("action", action)}
+                style={{
+                  padding: "2px 8px",
+                  backgroundColor: "#dc3545",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer"
+                }}>
+                削除
+              </button>
+            </div>
+          ))}
         </div>
-        <button onClick={handleAuth} style={{ marginTop: "1rem" }}>
-          Authenticate with Google
-        </button>
-        <button onClick={handleSetCredentials} style={{ marginTop: "1rem" }}>
-          Set Credentials
-        </button>
-        <button onClick={handleExportToSheet} style={{ marginTop: "1rem" }}>
-          Export to Google Sheets
-        </button>
       </div>
 
-      <button onClick={handleSave} style={{ marginTop: "1rem" }}>
-        Save Hotkeys
-      </button>
+      <div style={{ marginBottom: "20px" }}>
+        <h3>ラベル</h3>
+        <button
+          onClick={() => openModal("label")}
+          style={{
+            marginBottom: "10px",
+            padding: "5px 10px",
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}>
+          ラベルを追加
+        </button>
+        <div>
+          {Object.keys(labels).map((label) => (
+            <div
+              key={label}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "5px",
+                padding: "5px",
+                backgroundColor: "#f8f9fa",
+                borderRadius: "4px"
+              }}>
+              <span>{label}</span>
+              <button
+                onClick={() => handleRemoveItem("label", label)}
+                style={{
+                  padding: "2px 8px",
+                  backgroundColor: "#dc3545",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer"
+                }}>
+                削除
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {isModalOpen && (
         <div
           style={{
             position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            backgroundColor: "white",
-            padding: "1rem",
-            boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-            borderRadius: "4px"
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center"
           }}>
-          <h4>
-            {modalType === "team"
-              ? "チームを追加"
-              : modalType === "action"
-                ? "アクションを追加"
-                : "ラベルを追加"}
-          </h4>
-          <input
-            type="text"
-            value={modalInput}
-            onChange={(e) => setModalInput(e.target.value)}
-            placeholder={
-              modalType === "team"
-                ? "チーム名"
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "20px",
+              borderRadius: "8px",
+              minWidth: "300px"
+            }}>
+            <h3>
+              {modalType === "team"
+                ? "チームを追加"
                 : modalType === "action"
-                  ? "アクション名"
-                  : "ラベル名"
-            }
-          />
-          <div style={{ marginTop: "1rem" }}>
-            <button onClick={handleModalSubmit}>保存</button>
-            <button onClick={closeModal} style={{ marginLeft: "0.5rem" }}>
-              キャンセル
-            </button>
+                  ? "アクションを追加"
+                  : "ラベルを追加"}
+            </h3>
+            <input
+              type="text"
+              value={modalInput}
+              onChange={(e) => setModalInput(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                marginBottom: "10px",
+                borderRadius: "4px",
+                border: "1px solid #ced4da"
+              }}
+            />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "10px"
+              }}>
+              <button
+                onClick={closeModal}
+                style={{
+                  padding: "5px 10px",
+                  backgroundColor: "#6c757d",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer"
+                }}>
+                キャンセル
+              </button>
+              <button
+                onClick={handleModalSubmit}
+                style={{
+                  padding: "5px 10px",
+                  backgroundColor: "#28a745",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer"
+                }}>
+                追加
+              </button>
+            </div>
           </div>
         </div>
       )}
+
+      <div style={{ marginTop: "20px" }}>
+        <button
+          onClick={handleSave}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#28a745",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            width: "100%"
+          }}>
+          保存して閉じる
+        </button>
+      </div>
     </div>
   )
 }
