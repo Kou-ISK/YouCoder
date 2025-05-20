@@ -1,14 +1,8 @@
 import React, { useEffect, useState } from "react"
 
-import {
-  loadHotkeysFromStorage,
-  saveHotkeysToStorage,
-  type HotkeyConfig
-} from "./lib/hotkeys"
 import { appendToSheet, getAuthUrl, setCredentials } from "./lib/sheets"
 
 const Popup = () => {
-  const [hotkeys, setHotkeys] = useState<HotkeyConfig>(loadHotkeysFromStorage())
   const [spreadsheetId, setSpreadsheetId] = useState("")
   const [authUrl, setAuthUrl] = useState<string | null>(null)
   const [actions, setActions] = useState<Record<string, string>>({})
@@ -38,20 +32,6 @@ const Popup = () => {
     loadData()
   }, [])
 
-  const handleHotkeyChange = (
-    type: "actions" | "labels",
-    key: string,
-    value: string
-  ) => {
-    setHotkeys((prev) => ({
-      ...prev,
-      [type]: {
-        ...prev[type],
-        [key]: value
-      }
-    }))
-  }
-
   const openModal = (type: "action" | "label" | "team") => {
     setModalType(type)
     setModalInput("")
@@ -68,12 +48,12 @@ const Popup = () => {
 
     switch (modalType) {
       case "action":
-        const updatedActions = { ...actions, [modalInput]: "" }
+        const updatedActions = { ...actions, [modalInput]: modalInput }
         await chrome.storage.local.set({ actions: updatedActions })
         setActions(updatedActions)
         break
       case "label":
-        const updatedLabels = { ...labels, [modalInput]: "" }
+        const updatedLabels = { ...labels, [modalInput]: modalInput }
         await chrome.storage.local.set({ labels: updatedLabels })
         setLabels(updatedLabels)
         break
@@ -114,7 +94,6 @@ const Popup = () => {
 
   const handleSave = async () => {
     try {
-      saveHotkeysToStorage(hotkeys)
       await chrome.storage.local.set({
         actions,
         labels,

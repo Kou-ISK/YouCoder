@@ -14,7 +14,6 @@ import {
   startAction,
   stopAction
 } from "./lib/actionsManager"
-import { loadHotkeysFromStorage } from "./lib/hotkeys"
 
 export const config: PlasmoContentScript = {
   matches: ["*://*.youtube.com/*"]
@@ -28,7 +27,6 @@ export const getStyle = () => {
 
 const MainContent: React.FC = () => {
   const [activeActions, setActiveActions] = useState<Set<string>>(new Set())
-  const [hotkeys, setHotkeys] = useState(loadHotkeysFromStorage())
   const [actions, setActions] = useState<Record<string, string>>({})
   const [labels, setLabels] = useState<Record<string, string>>({})
   const [teams, setTeams] = useState<string[]>([])
