@@ -161,7 +161,13 @@ const MainContent: React.FC = () => {
           </div>
         </div>
       </Draggable>
-      <TimelinePanel actions={timelineActions} />
+      <TimelinePanel
+        actions={timelineActions}
+        onDelete={async () => {
+          const result = await loadActionsFromStorage()
+          setTimelineActions(getActions())
+        }}
+      />
     </div>
   )
 }

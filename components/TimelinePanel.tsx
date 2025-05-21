@@ -1,6 +1,8 @@
 import React from "react"
 import Draggable from "react-draggable"
 
+import { deleteAction, exportActionsToCSV } from "../lib/actionsManager"
+
 type Action = {
   team: string
   action: string
@@ -11,9 +13,10 @@ type Action = {
 
 interface TimelinePanelProps {
   actions: Action[]
+  onDelete?: () => void
 }
 
-const TimelinePanel: React.FC<TimelinePanelProps> = ({ actions }) => {
+const TimelinePanel: React.FC<TimelinePanelProps> = ({ actions, onDelete }) => {
   const formatTime = (timestamp: number) => {
     const totalSeconds = Math.floor(timestamp / 1000)
     const minutes = Math.floor(totalSeconds / 60)
@@ -40,14 +43,35 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ actions }) => {
           cursor: "move",
           zIndex: 1000
         }}>
-        <h3
+        <div
           style={{
-            margin: "0 0 10px 0",
-            paddingBottom: "5px",
-            borderBottom: "1px solid #eee"
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 8
           }}>
-          タイムライン
-        </h3>
+          <h3
+            style={{
+              margin: "0 0 10px 0",
+              paddingBottom: "5px",
+              borderBottom: "1px solid #eee"
+            }}>
+            タイムライン
+          </h3>
+          <button
+            onClick={exportActionsToCSV}
+            style={{
+              padding: "6px 12px",
+              backgroundColor: "#007bff",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: "13px"
+            }}>
+            CSV出力
+          </button>
+        </div>
         <div style={{ overflowX: "auto" }}>
           <table
             style={{
@@ -64,6 +88,7 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ actions }) => {
                 <th style={{ padding: "8px", textAlign: "left" }}>開始時間</th>
                 <th style={{ padding: "8px", textAlign: "left" }}>終了時間</th>
                 <th style={{ padding: "8px", textAlign: "left" }}>ラベル</th>
+                <th style={{ padding: "8px", textAlign: "left" }}></th>
               </tr>
             </thead>
             <tbody>
@@ -82,6 +107,31 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ actions }) => {
                   </td>
                   <td style={{ padding: "8px" }}>
                     {action.labels.join(", ") || "-"}
+                  </td>
+                  <td style={{ padding: "8px" }}>
+                    <button
+                      onClick={async () => {
+                        const confirmed = window.confirm("本当に削除しますか？")
+                        if (confirmed) {
+                          await deleteAction(
+                            action.team,
+                            action.action,
+                            action.start
+                          )
+                          // ここでonDeleteをawaitして即時反映
+                          if (onDelete) await onDelete()
+                        }
+                      }}
+                      style={{
+                        padding: "2px 8px",
+                        backgroundColor: "#dc3545",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer"
+                      }}>
+                      削除
+                    </button>
                   </td>
                 </tr>
               ))}
