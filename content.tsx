@@ -31,6 +31,7 @@ const MainContent: React.FC = () => {
   const [labels, setLabels] = useState<Record<string, string>>({})
   const [teams, setTeams] = useState<string[]>([])
   const [timelineActions, setTimelineActions] = useState(getActions())
+  const [activeLabels, setActiveLabels] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const loadData = async () => {
@@ -90,6 +91,20 @@ const MainContent: React.FC = () => {
       addLabel(team, action, label)
     }
     setTimelineActions(getActions())
+    // ラベルをアクティブ状態に追加
+    setActiveLabels((prev) => {
+      const updated = new Set(prev)
+      updated.add(label)
+      // 1秒後にラベルのアクティブ状態を解除
+      setTimeout(() => {
+        setActiveLabels((current) => {
+          const next = new Set(current)
+          next.delete(label)
+          return next
+        })
+      }, 1000)
+      return updated
+    })
   }
 
   return (
@@ -148,11 +163,15 @@ const MainContent: React.FC = () => {
                   style={{
                     margin: "0 5px 5px 0",
                     padding: "5px 10px",
-                    backgroundColor: "#e9ecef",
+                    backgroundColor: activeLabels.has(label)
+                      ? "#28a745"
+                      : "#e9ecef", // クリック時は緑色に
+                    color: activeLabels.has(label) ? "white" : "black",
                     border: "none",
                     borderRadius: "4px",
                     cursor: activeActions.size > 0 ? "pointer" : "not-allowed",
-                    opacity: activeActions.size > 0 ? 1 : 0.5
+                    opacity: activeActions.size > 0 ? 1 : 0.5,
+                    transition: "all 0.3s ease" // スムーズな色の変化のためのトランジション
                   }}>
                   {label}
                 </button>

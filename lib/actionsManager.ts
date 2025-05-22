@@ -57,6 +57,7 @@ const getYoutubeCurrentTime = (): number => {
 export const startAction = (team: string, action: string) => {
   const startTime = getYoutubeCurrentTime()
   actions.push({ team, action, start: startTime, labels: [] })
+  saveActionsToStorage()
 }
 
 export const stopAction = (team: string, action: string) => {
@@ -66,6 +67,7 @@ export const stopAction = (team: string, action: string) => {
   )
   if (actionItem) {
     actionItem.end = endTime
+    saveActionsToStorage()
   }
 }
 
@@ -75,6 +77,7 @@ export const addLabel = (team: string, action: string, label: string) => {
   )
   if (actionItem) {
     actionItem.labels.push(label)
+    saveActionsToStorage()
   }
 }
 
