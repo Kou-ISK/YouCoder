@@ -118,7 +118,6 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ actions, onDelete }) => {
                             action.action,
                             action.start
                           )
-                          // ここでonDeleteをawaitして即時反映
                           if (onDelete) await onDelete()
                         }
                       }}

@@ -7,10 +7,8 @@ import TimelinePanel from "~components/TimelinePanel"
 
 import {
   addLabel,
-  exportActionsToCSV,
   getActions,
   loadActionsFromStorage,
-  saveActionsToStorage,
   startAction,
   stopAction
 } from "./lib/actionsManager"
@@ -124,10 +122,12 @@ const MainContent: React.FC = () => {
             minWidth: "300px"
           }}>
           <h3>タグ付けパネル</h3>
-          <div style={{ marginBottom: "20px" }}>
+          <div
+            style={{
+              marginBottom: "20px"
+            }}>
             {teams.map((team) => (
               <div key={team} style={{ marginBottom: "10px" }}>
-                <h4>{team}</h4>
                 {Object.keys(actions).map((action) => (
                   <button
                     key={action}
@@ -145,7 +145,7 @@ const MainContent: React.FC = () => {
                       borderRadius: "4px",
                       cursor: "pointer"
                     }}>
-                    {action}
+                    {team} {action}
                   </button>
                 ))}
               </div>
