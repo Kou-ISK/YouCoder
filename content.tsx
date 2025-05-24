@@ -1,8 +1,8 @@
 import cssText from "data-text:~/styles/style.css"
 import type { PlasmoContentScript } from "plasmo"
 import React, { useEffect, useState } from "react"
-import Draggable from "react-draggable"
 
+import { TaggingPanel } from "~components/TaggingPanel"
 import TimelinePanel from "~components/TimelinePanel"
 
 import {
@@ -89,11 +89,9 @@ const MainContent: React.FC = () => {
       addLabel(team, action, label)
     }
     setTimelineActions(getActions())
-    // ラベルをアクティブ状態に追加
     setActiveLabels((prev) => {
       const updated = new Set(prev)
       updated.add(label)
-      // 1秒後にラベルのアクティブ状態を解除
       setTimeout(() => {
         setActiveLabels((current) => {
           const next = new Set(current)
@@ -107,79 +105,15 @@ const MainContent: React.FC = () => {
 
   return (
     <div style={{ position: "relative", zIndex: 9999 }}>
-      <Draggable>
-        <div
-          style={{
-            position: "fixed",
-            top: 10,
-            right: 10,
-            zIndex: 1000,
-            backgroundColor: "white",
-            padding: "10px",
-            borderRadius: "8px",
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-            cursor: "move",
-            minWidth: "300px"
-          }}>
-          <h3>タグ付けパネル</h3>
-          <div
-            style={{
-              marginBottom: "20px"
-            }}>
-            {teams.map((team) => (
-              <div key={team} style={{ marginBottom: "10px" }}>
-                {Object.keys(actions).map((action) => (
-                  <button
-                    key={action}
-                    onClick={() => handleActionToggle(team, action)}
-                    style={{
-                      margin: "0 5px 5px 0",
-                      padding: "5px 10px",
-                      backgroundColor: activeActions.has(`${team}_${action}`)
-                        ? "#dc3545"
-                        : "#e9ecef",
-                      color: activeActions.has(`${team}_${action}`)
-                        ? "white"
-                        : "black",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer"
-                    }}>
-                    {team} {action}
-                  </button>
-                ))}
-              </div>
-            ))}
-          </div>
-
-          <div>
-            <h4>ラベル</h4>
-            <div style={{ marginBottom: "10px" }}>
-              {Object.keys(labels).map((label) => (
-                <button
-                  key={label}
-                  onClick={() => handleLabel(label)}
-                  disabled={activeActions.size === 0}
-                  style={{
-                    margin: "0 5px 5px 0",
-                    padding: "5px 10px",
-                    backgroundColor: activeLabels.has(label)
-                      ? "#28a745"
-                      : "#e9ecef", // クリック時は緑色に
-                    color: activeLabels.has(label) ? "white" : "black",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: activeActions.size > 0 ? "pointer" : "not-allowed",
-                    opacity: activeActions.size > 0 ? 1 : 0.5,
-                    transition: "all 0.3s ease" // スムーズな色の変化のためのトランジション
-                  }}>
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Draggable>
+      <TaggingPanel
+        teams={teams}
+        actions={actions}
+        labels={labels}
+        activeActions={activeActions}
+        activeLabels={activeLabels}
+        onActionToggle={handleActionToggle}
+        onLabelClick={handleLabel}
+      />
       <TimelinePanel
         actions={timelineActions}
         onDelete={async () => {
