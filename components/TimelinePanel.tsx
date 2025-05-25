@@ -14,9 +14,14 @@ type Action = {
 interface TimelinePanelProps {
   actions: Action[]
   onDelete?: () => void
+  onSave?: () => void
 }
 
-const TimelinePanel: React.FC<TimelinePanelProps> = ({ actions, onDelete }) => {
+const TimelinePanel: React.FC<TimelinePanelProps> = ({
+  actions,
+  onDelete,
+  onSave
+}) => {
   const formatTime = (timestamp: number) => {
     const totalSeconds = Math.floor(timestamp / 1000)
     const minutes = Math.floor(totalSeconds / 60)
@@ -58,19 +63,35 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ actions, onDelete }) => {
             }}>
             タイムライン
           </h3>
-          <button
-            onClick={exportActionsToCSV}
-            style={{
-              padding: "6px 12px",
-              backgroundColor: "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "13px"
-            }}>
-            CSV出力
-          </button>
+          <div>
+            <button
+              onClick={exportActionsToCSV}
+              style={{
+                padding: "6px 12px",
+                backgroundColor: "#007bff",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "13px",
+                marginRight: "10px"
+              }}>
+              CSV出力
+            </button>
+            <button
+              onClick={onSave}
+              style={{
+                padding: "6px 12px",
+                backgroundColor: "#28a745",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "13px"
+              }}>
+              保存
+            </button>
+          </div>
         </div>
         <div style={{ overflowX: "auto" }}>
           <table

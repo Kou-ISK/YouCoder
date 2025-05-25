@@ -23,7 +23,6 @@ export const removeTeam = (teamName: string) => {
 
 export const getTeams = () => teams
 
-// チーム名をストレージに保存
 const saveTeamsToStorage = async () => {
   try {
     await chrome.storage.local.set({ teams })
@@ -31,72 +30,6 @@ const saveTeamsToStorage = async () => {
     return true
   } catch (error) {
     console.error("Failed to save teams:", error)
-    return false
-  }
-}
-
-// チーム名をストレージから読み込み
-const loadTeamsFromStorage = async () => {
-  try {
-    const result = await chrome.storage.local.get(["teams"])
-    if (result.teams) {
-      teams = result.teams
-    }
-    console.log("Loaded teams from storage:", teams)
-  } catch (error) {
-    console.error("Failed to load teams:", error)
-  }
-}
-
-// YouTubeの再生時刻を取得する関数
-const getYoutubeCurrentTime = (): number => {
-  const video = document.querySelector("video")
-  return video ? Math.floor(video.currentTime * 1000) : 0 // ミリ秒単位で返す
-}
-
-export const startAction = (team: string, action: string) => {
-  const startTime = getYoutubeCurrentTime()
-  actions.push({ team, action, start: startTime, labels: [] })
-  saveActionsToStorage()
-}
-
-export const stopAction = (team: string, action: string) => {
-  const endTime = getYoutubeCurrentTime()
-  const actionItem = actions.find(
-    (a) => a.team === team && a.action === action && !a.end
-  )
-  if (actionItem) {
-    actionItem.end = endTime
-    saveActionsToStorage()
-  }
-}
-
-export const addLabel = (team: string, action: string, label: string) => {
-  const actionItem = actions.find(
-    (a) => a.team === team && a.action === action && !a.end
-  )
-  if (actionItem) {
-    actionItem.labels.push(label)
-    saveActionsToStorage()
-  }
-}
-
-export const getActions = () => actions
-
-// ローカルストレージキー
-const STORAGE_KEY = "youcoder_actions"
-
-// ローカルストレージにアクションを保存
-export const saveActionsToStorage = async () => {
-  try {
-    // Get current actions and labels
-    const data = await chrome.storage.local.get(["actions", "labels"])
-    console.log("Saving current data:", data)
-    await chrome.storage.local.set(data)
-    console.log("Data saved successfully")
-    return true
-  } catch (error) {
-    console.error("Failed to save actions:", error)
     return false
   }
 }
@@ -120,19 +53,93 @@ export const loadActionsFromStorage = async () => {
   }
 }
 
+const loadTeamsFromStorage = async () => {
+  try {
+    const result = await chrome.storage.local.get(["teams"])
+    if (result.teams) {
+      teams = result.teams
+    }
+    console.log("Loaded teams from storage:", teams)
+  } catch (error) {
+    console.error("Failed to load teams:", error)
+  }
+}
+
+const getYoutubeCurrentTime = (): number => {
+  const video = document.querySelector("video")
+  return video ? Math.floor(video.currentTime * 1000) : 0
+}
+
+const getYoutubeVideoId = (): string | null => {
+  const urlParams = new URLSearchParams(window.location.search)
+  return urlParams.get("v")
+}
+
+export const startAction = (team: string, action: string) => {
+  const startTime = getYoutubeCurrentTime()
+  actions.push({ team, action, start: startTime, labels: [] })
+  saveTimelineForVideo(getYoutubeVideoId())
+}
+
+export const stopAction = (team: string, action: string) => {
+  const endTime = getYoutubeCurrentTime()
+  const actionItem = actions.find(
+    (a) => a.team === team && a.action === action && !a.end
+  )
+  if (actionItem) {
+    actionItem.end = endTime
+    saveTimelineForVideo(getYoutubeVideoId())
+  }
+}
+
+export const addLabel = (team: string, action: string, label: string) => {
+  const actionItem = actions.find(
+    (a) => a.team === team && a.action === action && !a.end
+  )
+  if (actionItem) {
+    actionItem.labels.push(label)
+    saveTimelineForVideo(getYoutubeVideoId())
+  }
+}
+
+export const getActions = () => actions
+
+export const saveTimelineForVideo = async (videoId: string | null) => {
+  if (!videoId) return
+  try {
+    const timelines = await chrome.storage.local.get(["timelines"])
+    timelines[videoId] = actions
+    await chrome.storage.local.set({ timelines })
+    console.log("Timeline saved for video:", videoId)
+  } catch (error) {
+    console.error("Failed to save timeline for video:", error)
+  }
+}
+
+export const loadTimelineForVideo = async (videoId: string | null) => {
+  if (!videoId) return []
+  try {
+    const timelines = await chrome.storage.local.get(["timelines"])
+    return timelines[videoId] || []
+  } catch (error) {
+    console.error("Failed to load timeline for video:", error)
+    return []
+  }
+}
+
 export const deleteAction = (team: string, action: string, start: number) => {
   const index = actions.findIndex(
     (a) => a.team === team && a.action === action && a.start === start
   )
   if (index !== -1) {
     actions.splice(index, 1)
-    saveActionsToStorage() // 削除後に保存
+    saveTimelineForVideo(getYoutubeVideoId())
   }
 }
 
 export const exportActionsToCSV = () => {
   const csvRows = [
-    ["Team", "Action", "Start", "End", "Labels"], // ヘッダー行
+    ["Team", "Action", "Start", "End", "Labels"],
     ...actions.map((a) => [
       a.team,
       a.action,

@@ -9,6 +9,7 @@ import {
   addLabel,
   getActions,
   loadActionsFromStorage,
+  saveTimelineForVideo,
   startAction,
   stopAction
 } from "./lib/actionsManager"
@@ -23,6 +24,11 @@ export const getStyle = () => {
   return style
 }
 
+const getYoutubeVideoId = () => {
+  const urlParams = new URLSearchParams(window.location.search)
+  return urlParams.get("v")
+}
+
 const MainContent: React.FC = () => {
   const [activeActions, setActiveActions] = useState<Set<string>>(new Set())
   const [actions, setActions] = useState<Record<string, string>>({})
@@ -34,11 +40,16 @@ const MainContent: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
+        const videoId = getYoutubeVideoId()
         const result = await chrome.storage.local.get([
           "actions",
           "labels",
-          "teams"
+          "teams",
+          "timelines"
         ])
+        if (videoId && result.timelines) {
+          setTimelineActions(result.timelines[videoId] || [])
+        }
         if (result.actions) setActions(result.actions)
         if (result.labels) setLabels(result.labels)
         if (result.teams) setTeams(result.teams)
@@ -103,6 +114,13 @@ const MainContent: React.FC = () => {
     })
   }
 
+  const handleSaveTimeline = async () => {
+    const videoId = getYoutubeVideoId()
+    if (videoId) {
+      await saveTimelineForVideo(videoId)
+    }
+  }
+
   return (
     <div style={{ position: "relative", zIndex: 9999 }}>
       <TaggingPanel
@@ -120,6 +138,7 @@ const MainContent: React.FC = () => {
           const result = await loadActionsFromStorage()
           setTimelineActions(getActions())
         }}
+        onSave={handleSaveTimeline}
       />
     </div>
   )
