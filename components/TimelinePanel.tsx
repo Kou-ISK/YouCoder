@@ -122,8 +122,42 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
                   }}>
                   <td style={{ padding: "8px" }}>{action.team}</td>
                   <td style={{ padding: "8px" }}>{action.action}</td>
-                  <td style={{ padding: "8px" }}>{formatTime(action.start)}</td>
-                  <td style={{ padding: "8px" }}>
+                  <td
+                    style={{
+                      padding: "8px",
+                      cursor: "pointer",
+                      textDecoration: "underline"
+                    }}
+                    onClick={() => {
+                      const video = document.querySelector("video")
+                      if (video) {
+                        const wasPaused = video.paused
+                        video.currentTime = action.start / 1000
+                        if (!wasPaused) {
+                          video.play()
+                        }
+                      }
+                    }}>
+                    {formatTime(action.start)}
+                  </td>
+                  <td
+                    style={{
+                      padding: "8px",
+                      cursor: "pointer",
+                      textDecoration: "underline"
+                    }}
+                    onClick={() => {
+                      const video = document.querySelector("video")
+                      if (video) {
+                        const wasPaused = video.paused
+                        video.currentTime = action.end
+                          ? action.end / 1000
+                          : action.start / 1000
+                        if (!wasPaused) {
+                          video.play()
+                        }
+                      }
+                    }}>
                     {action.end ? formatTime(action.end) : "進行中"}
                   </td>
                   <td style={{ padding: "8px" }}>

@@ -17,6 +17,7 @@ const Popup = () => {
   const [modalType, setModalType] = useState<
     "action" | "label" | "team" | null
   >(null)
+  const [showExtension, setShowExtension] = useState<boolean>(true)
 
   useEffect(() => {
     const loadData = async () => {
@@ -24,11 +25,15 @@ const Popup = () => {
         const data = await chrome.storage.local.get([
           "actions",
           "labels",
-          "teams"
+          "teams",
+          "showExtension"
         ])
         setActions(data.actions || {})
         setLabels(data.labels || {})
         setTeams(data.teams || [])
+        setShowExtension(
+          data.showExtension !== undefined ? data.showExtension : true
+        )
       } catch (error) {
         console.error("Failed to load data:", error)
       }
@@ -101,7 +106,11 @@ const Popup = () => {
       await chrome.storage.local.set({
         actions,
         labels,
-        teams
+        teams,
+        showExtension
+      })
+      ;(chrome as any).runtime.sendMessage({
+        type: "EXTENSION_VISIBILITY_UPDATED"
       })
       window.close()
     } catch (error) {
@@ -109,9 +118,40 @@ const Popup = () => {
     }
   }
 
+  const handleVisibilityToggle = async () => {
+    const newVisibility = !showExtension
+    setShowExtension(newVisibility)
+    try {
+      await chrome.storage.local.set({ showExtension: newVisibility })
+      ;(chrome as any).runtime.sendMessage({
+        type: "EXTENSION_VISIBILITY_UPDATED"
+      })
+    } catch (error) {
+      console.error("Failed to update visibility:", error)
+    }
+  }
+
   return (
     <div style={{ minWidth: "400px", padding: "20px" }}>
       <h2 style={{ marginBottom: "20px" }}>設定</h2>
+      <div style={{ marginBottom: "20px" }}>
+        <button
+          onClick={() => {
+            setShowExtension((prev) => !prev)
+            handleVisibilityToggle()
+          }}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: showExtension ? "#dc3545" : "#28a745",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            width: "100%"
+          }}>
+          {showExtension ? "拡張機能を非表示にする" : "拡張機能を表示する"}
+        </button>
+      </div>
       <TeamList
         teams={teams}
         onAdd={() => openModal("team")}
