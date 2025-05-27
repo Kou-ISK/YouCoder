@@ -34,9 +34,11 @@ const MainContent: React.FC = () => {
   const [isVideoPage, setIsVideoPage] = useState<boolean>(
     window.location.pathname.startsWith("/watch")
   )
-  const [actions, setActions] = useState<Record<string, string>>({})
-  const [labels, setLabels] = useState<Record<string, string>>({})
   const [teams, setTeams] = useState<string[]>([])
+  const [buttonSets, setButtonSets] = useState<any[]>([])
+  const [selectedButtonSet, setSelectedButtonSet] = useState<string | null>(
+    null
+  )
   const [timelineActions, setTimelineActions] = useState(getActions())
   const [activeLabels, setActiveLabels] = useState<Set<string>>(new Set())
   const [showExtension, setShowExtension] = useState<boolean>(true)
@@ -64,32 +66,42 @@ const MainContent: React.FC = () => {
       try {
         const videoId = getYoutubeVideoId()
         const result = await chrome.storage.local.get([
-          "actions",
-          "labels",
           "teams",
-          "timelines"
+          "buttonSets",
+          "timelines",
+          "selectedButtonSet"
         ])
         if (videoId && result.timelines) {
           setTimelineActions(result.timelines[videoId] || [])
         }
-        if (result.actions) setActions(result.actions)
-        if (result.labels) setLabels(result.labels)
         if (result.teams) setTeams(result.teams)
+        if (result.buttonSets) {
+          setButtonSets(result.buttonSets)
+        }
+        if (result.selectedButtonSet) {
+          setSelectedButtonSet(result.selectedButtonSet)
+        } else if (result.buttonSets && result.buttonSets.length > 0) {
+          setSelectedButtonSet(result.buttonSets[0].setName)
+        }
       } catch (error) {
         console.error("Failed to load data:", error)
       }
     }
 
     loadData()
+  }, [])
 
+  useEffect(() => {
     const handleStorageChange = (
       changes: { [key: string]: chrome.storage.StorageChange },
       areaName: string
     ) => {
       if (areaName === "local") {
-        if (changes.actions?.newValue) setActions(changes.actions.newValue)
-        if (changes.labels?.newValue) setLabels(changes.labels.newValue)
         if (changes.teams?.newValue) setTeams(changes.teams.newValue)
+        if (changes.buttonSets?.newValue)
+          setButtonSets(changes.buttonSets.newValue)
+        if (changes.selectedButtonSet?.newValue)
+          setSelectedButtonSet(changes.selectedButtonSet.newValue)
         if (changes.showExtension?.newValue !== undefined)
           setShowExtension(changes.showExtension.newValue)
       }
@@ -176,14 +188,41 @@ const MainContent: React.FC = () => {
     }
   }
 
+  // 選択中のボタンセットに基づくアクション・ラベルを抽出
+  const currentSet = buttonSets.find((set) => set.setName === selectedButtonSet)
+  const actions = currentSet
+    ? currentSet.buttons.reduce(
+        (acc, btn) => {
+          acc[btn.action] = btn.action
+          return acc
+        },
+        {} as Record<string, string>
+      )
+    : {}
+  const labels = currentSet
+    ? currentSet.buttons.reduce(
+        (acc, btn) => {
+          btn.labels.forEach((label) => {
+            acc[label] = label
+          })
+          return acc
+        },
+        {} as Record<string, string>
+      )
+    : {}
+
   return (
     <div style={{ position: "relative", zIndex: 9999 }}>
       {isVideoPage && showExtension && (
         <>
           <TaggingPanel
             teams={teams}
-            actions={actions}
-            labels={labels}
+            actions={Object.fromEntries(
+              Object.entries(actions).map(([k, v]) => [v, v])
+            )}
+            labels={Object.fromEntries(
+              Object.entries(labels).map(([k, v]) => [v, v])
+            )}
             activeActions={activeActions}
             activeLabels={activeLabels}
             onActionToggle={handleActionToggle}

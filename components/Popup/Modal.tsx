@@ -3,7 +3,15 @@ import React from "react"
 interface ModalProps {
   isOpen: boolean
   inputValue: string
-  modalType: "action" | "label" | "team" | null
+  modalType:
+    | "action"
+    | "label"
+    | "team"
+    | "buttonSet"
+    | "buttonInSet"
+    | "addAction"
+    | "addLabel"
+    | null
   onInputChange: (v: string) => void
   onClose: () => void
   onSubmit: () => void
@@ -41,9 +49,15 @@ export const Modal: React.FC<ModalProps> = ({
         <h3>
           {modalType === "team"
             ? "チームを追加"
-            : modalType === "action"
+            : modalType === "action" || modalType === "addAction"
               ? "アクションを追加"
-              : "ラベルを追加"}
+              : modalType === "addLabel"
+                ? "ラベルを追加"
+                : modalType === "buttonSet"
+                  ? "ボタンセットを追加"
+                  : modalType === "buttonInSet"
+                    ? "ボタンセット内にアクションを追加"
+                    : ""}
         </h3>
         <input
           type="text"
