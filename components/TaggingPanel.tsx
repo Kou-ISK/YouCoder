@@ -7,13 +7,21 @@ import { LabelButton } from "./LabelButton"
 interface TaggingPanelProps {
   teams: string[]
   actions: Record<string, string>
-  labels: Record<string, string>
+  labels: Record<string, string[]> // 修正: ラベルを配列として扱う
   activeActions: Set<string>
   activeLabels: Set<string>
   onActionToggle: (team: string, action: string) => void
   onLabelClick: (label: string) => void
 }
 
+// TaggingPanelコンポーネントは、アクションとラベルの管理UIを提供します。
+// - teams: チーム名のリスト。
+// - actions: 各チームに関連付けられたアクション。
+// - labels: 各アクションに関連付けられたラベル。
+// - activeActions: 現在アクティブなアクションのセット。
+// - activeLabels: 現在アクティブなラベルのセット。
+// - onActionToggle: アクションのオン/オフを切り替えるコールバック。
+// - onLabelClick: ラベルクリック時のコールバック。
 export const TaggingPanel: React.FC<TaggingPanelProps> = ({
   teams,
   actions,
@@ -62,8 +70,8 @@ export const TaggingPanel: React.FC<TaggingPanelProps> = ({
               key={label}
               label={label}
               isActive={activeLabels.has(label)}
-              isDisabled={activeActions.size === 0}
-              onClick={onLabelClick}
+              isDisabled={false}
+              onClick={() => onLabelClick(label)}
             />
           ))}
         </div>

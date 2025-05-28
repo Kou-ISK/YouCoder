@@ -1,17 +1,26 @@
 import React from "react"
 
+// LabelButtonコンポーネントは、ラベルを表すボタンを提供します。
+// - label: ラベル名。
+// - isActive: ボタンがアクティブかどうか。
+// - isDisabled: ボタンが無効化されているかどうか。
+// - onClick: ボタンがクリックされたときのコールバック。
 interface LabelButtonProps {
+  // ラベル名。
   label: string
+  // ボタンがアクティブかどうか。
   isActive: boolean
+  // ボタンが無効化されているかどうか。
   isDisabled: boolean
+  // ボタンがクリックされたときのコールバック。
   onClick: (label: string) => void
 }
 
 export const LabelButton: React.FC<LabelButtonProps> = ({
-  label,
-  isActive,
-  isDisabled,
-  onClick
+  label, // ラベル名。
+  isActive, // ボタンがアクティブかどうか。
+  isDisabled, // ボタンが無効化されているかどうか。
+  onClick // ボタンがクリックされたときのコールバック。
 }) => (
   <button
     onClick={() => onClick(label)}

@@ -24,27 +24,43 @@ export const getStyle = () => {
   return style
 }
 
+// YouTubeの動画IDを取得する関数。URLのクエリパラメータから"v"を抽出します。
 const getYoutubeVideoId = () => {
   const urlParams = new URLSearchParams(window.location.search)
   return urlParams.get("v")
 }
 
 const MainContent: React.FC = () => {
+  // 現在アクティブなアクションのセット。
   const [activeActions, setActiveActions] = useState<Set<string>>(new Set())
+
+  // 現在のページが動画ページかどうかを判定。
   const [isVideoPage, setIsVideoPage] = useState<boolean>(
     window.location.pathname.startsWith("/watch")
   )
+
+  // チーム名のリスト。
   const [teams, setTeams] = useState<string[]>([])
+
+  // ボタンセットのリスト。
   const [buttonSets, setButtonSets] = useState<any[]>([])
+
+  // 選択されたボタンセット。
   const [selectedButtonSet, setSelectedButtonSet] = useState<string | null>(
     null
   )
+
+  // タイムラインに関連付けられたアクション。
   const [timelineActions, setTimelineActions] = useState(getActions())
+
+  // 現在アクティブなラベルのセット。
   const [activeLabels, setActiveLabels] = useState<Set<string>>(new Set())
+
+  // 拡張機能の表示状態。
   const [showExtension, setShowExtension] = useState<boolean>(true)
 
   useEffect(() => {
-    // Fallback polling mechanism for SPA navigation changes
+    // SPAナビゲーションの変更を監視するためのポーリングメカニズム。
     const timer = setInterval(() => {
       setIsVideoPage(!!getYoutubeVideoId())
     }, 500)
@@ -52,6 +68,7 @@ const MainContent: React.FC = () => {
   }, [])
 
   useEffect(() => {
+    // YouTubeのナビゲーションイベントを監視します。
     const handleNavigateFinish = () => {
       setIsVideoPage(!!getYoutubeVideoId())
     }
@@ -62,6 +79,7 @@ const MainContent: React.FC = () => {
   }, [])
 
   useEffect(() => {
+    // ローカルストレージからデータを読み込みます。
     const loadData = async () => {
       try {
         const videoId = getYoutubeVideoId()
@@ -92,6 +110,7 @@ const MainContent: React.FC = () => {
   }, [])
 
   useEffect(() => {
+    // ストレージの変更を監視します。
     const handleStorageChange = (
       changes: { [key: string]: chrome.storage.StorageChange },
       areaName: string
@@ -114,6 +133,7 @@ const MainContent: React.FC = () => {
   }, [])
 
   useEffect(() => {
+    // 拡張機能の表示設定を読み込みます。
     const loadSetting = async () => {
       try {
         const data = await chrome.storage.local.get(["showExtension"])
@@ -128,6 +148,7 @@ const MainContent: React.FC = () => {
   }, [])
 
   useEffect(() => {
+    // 拡張機能の可視性に関するメッセージを処理します。
     const handleMessage = (message: any) => {
       if (message.type === "EXTENSION_VISIBILITY_UPDATED") {
         chrome.storage.local.get(["showExtension"]).then((data: any) => {
@@ -144,24 +165,25 @@ const MainContent: React.FC = () => {
     }
   }, [])
 
-  const handleActionToggle = (team: string, action: string) => {
-    const actionKey = `${team}_${action}`
+  // 新たに選択中のアクションを管理し、ラベル表示を絞り込む
+  const [selectedActions, setSelectedActions] = useState<Set<string>>(new Set())
 
-    if (activeActions.has(actionKey)) {
-      stopAction(team, action)
-      setActiveActions((prev) => {
-        const updated = new Set(prev)
-        updated.delete(actionKey)
-        return updated
-      })
-    } else {
-      startAction(team, action)
-      setActiveActions((prev) => new Set(prev).add(actionKey))
-    }
-    setTimelineActions(getActions())
+  const handleActionSelect = (team: string, action: string) => {
+    // アクションの選択状態を切り替えます。
+    const key = `${team}_${action}`
+    setSelectedActions((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(key)) {
+        newSet.delete(key)
+      } else {
+        newSet.add(key)
+      }
+      return newSet
+    })
   }
 
   const handleLabel = (label: string) => {
+    // ラベルをアクションに追加します。
     for (const actionKey of activeActions) {
       const [team, action] = actionKey.split("_")
       addLabel(team, action, label)
@@ -182,6 +204,7 @@ const MainContent: React.FC = () => {
   }
 
   const handleSaveTimeline = async () => {
+    // タイムラインを保存します。
     const videoId = getYoutubeVideoId()
     if (videoId) {
       await saveTimelineForVideo(videoId)
@@ -190,26 +213,66 @@ const MainContent: React.FC = () => {
 
   // 選択中のボタンセットに基づくアクション・ラベルを抽出
   const currentSet = buttonSets.find((set) => set.setName === selectedButtonSet)
-  const actions = currentSet
-    ? currentSet.buttons.reduce(
-        (acc, btn) => {
-          acc[btn.action] = btn.action
-          return acc
-        },
-        {} as Record<string, string>
-      )
-    : {}
-  const labels = currentSet
-    ? currentSet.buttons.reduce(
-        (acc, btn) => {
-          btn.labels.forEach((label) => {
-            acc[label] = label
-          })
-          return acc
-        },
-        {} as Record<string, string>
-      )
-    : {}
+
+  const actions =
+    currentSet?.buttons.reduce(
+      (acc, btn) => {
+        acc[btn.action] = btn.action
+        return acc
+      },
+      {} as Record<string, string>
+    ) || {}
+
+  const labels =
+    currentSet?.buttons.reduce(
+      (acc, btn) => {
+        btn.labels.forEach((label) => {
+          acc[label] = label
+        })
+        return acc
+      },
+      {} as Record<string, string>
+    ) || {}
+
+  const filteredLabels = Object.fromEntries(
+    buttonSets
+      .find((set) => set.setName === selectedButtonSet)
+      ?.buttons.filter((btn) => selectedActions.has(btn.action))
+      .flatMap((btn) => btn.labels.map((label) => [label, label])) || []
+  )
+
+  console.log("Filtered Labels:", filteredLabels)
+
+  const handleActionToggle = (team: string, action: string) => {
+    // アクションの開始・停止を切り替えます。
+    const actionKey = `${team}_${action}`
+
+    setActiveActions((prev) => {
+      const updated = new Set(prev)
+      if (updated.has(actionKey)) {
+        stopAction(team, action)
+        updated.delete(actionKey)
+      } else {
+        startAction(team, action)
+        updated.add(actionKey)
+      }
+      console.log("Updated activeActions:", Array.from(updated))
+      return updated
+    })
+
+    setSelectedActions((prev) => {
+      const updated = new Set(prev)
+      if (updated.has(action)) {
+        updated.delete(action)
+      } else {
+        updated.add(action)
+      }
+      console.log("Updated selectedActions:", Array.from(updated))
+      return updated
+    })
+
+    setTimelineActions(getActions())
+  }
 
   return (
     <div style={{ position: "relative", zIndex: 9999 }}>
@@ -217,12 +280,8 @@ const MainContent: React.FC = () => {
         <>
           <TaggingPanel
             teams={teams}
-            actions={Object.fromEntries(
-              Object.entries(actions).map(([k, v]) => [v, v])
-            )}
-            labels={Object.fromEntries(
-              Object.entries(labels).map(([k, v]) => [v, v])
-            )}
+            actions={actions}
+            labels={filteredLabels}
             activeActions={activeActions}
             activeLabels={activeLabels}
             onActionToggle={handleActionToggle}

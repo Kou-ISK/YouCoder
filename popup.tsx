@@ -48,6 +48,7 @@ const Popup = () => {
   const [showExtension, setShowExtension] = useState<boolean>(true)
   const [selectedButtonSet, setSelectedButtonSet] = useState<string>("A")
   const [buttonSets, setButtonSets] = useState<ButtonSet[]>([])
+  const [selectedAction, setSelectedAction] = useState<string | null>(null)
 
   useEffect(() => {
     const loadData = async () => {
@@ -56,7 +57,8 @@ const Popup = () => {
           "teams",
           "showExtension",
           "buttonSets",
-          "selectedButtonSet"
+          "selectedButtonSet",
+          "selectedAction"
         ])
         setTeams(data.teams || [])
         setShowExtension(
@@ -67,6 +69,9 @@ const Popup = () => {
           setSelectedButtonSet(data.selectedButtonSet)
         } else if (data.buttonSets && data.buttonSets.length > 0) {
           setSelectedButtonSet(data.buttonSets[0].setName)
+        }
+        if (data.selectedAction) {
+          setSelectedAction(data.selectedAction)
         }
       } catch (error) {
         console.error("Failed to load data:", error)
@@ -83,6 +88,14 @@ const Popup = () => {
   const openModal = (
     type: "team" | "buttonSet" | "buttonInSet" | "addAction" | "addLabel"
   ) => {
+    if (!selectedButtonSet && (type === "addAction" || type === "addLabel")) {
+      alert("ボタンセットを選択してください")
+      return
+    }
+    if (type === "addLabel" && !selectedAction) {
+      alert("ラベルを追加するアクションを選択してください")
+      return
+    }
     if (type === "buttonSet") {
       setModalType("buttonSet")
     } else if (type === "buttonInSet") {
@@ -127,12 +140,18 @@ const Popup = () => {
           })
           await chrome.storage.local.set({ buttonSets: updatedButtonSets })
           setButtonSets(updatedButtonSets)
+          // 新規追加時に自動選択しないように変更
+          // setSelectedAction(modalInput) // 追加したアクションを選択状態にする
         }
         break
       case "addLabel":
         {
           if (!selectedButtonSet) {
             alert("ラベルを追加するボタンセットが選択されていません")
+            return
+          }
+          if (!selectedAction) {
+            alert("ラベルを追加するアクションが選択されていません")
             return
           }
           const targetSetIndex = buttonSets.findIndex(
@@ -142,14 +161,17 @@ const Popup = () => {
             alert("選択中のボタンセットが存在しません")
             return
           }
-          // ラベルは最後に追加したアクションに紐づける想定（要要件確認）
+          // ラベルは選択中のアクションに紐づける
           const updatedButtonSets = [...buttonSets]
           const buttons = updatedButtonSets[targetSetIndex].buttons
-          if (buttons.length === 0) {
-            alert("アクションが存在しないためラベルを追加できません")
+          const targetButtonIndex = buttons.findIndex(
+            (btn) => btn.action === selectedAction
+          )
+          if (targetButtonIndex === -1) {
+            alert("選択中のアクションが存在しません")
             return
           }
-          buttons[buttons.length - 1].labels.push(modalInput)
+          buttons[targetButtonIndex].labels.push(modalInput)
           await chrome.storage.local.set({ buttonSets: updatedButtonSets })
           setButtonSets(updatedButtonSets)
         }
@@ -307,6 +329,17 @@ const Popup = () => {
       {renderButtonSetSelector()}
       <ButtonSetComponent
         buttonSet={buttonSets.find((set) => set.setName === selectedButtonSet)}
+        onUpdateButtonSet={(updatedSet) => {
+          const updatedButtonSets = buttonSets.map((set) =>
+            set.setName === updatedSet.setName ? updatedSet : set
+          )
+          setButtonSets(updatedButtonSets)
+          chrome.storage.local.set({ buttonSets: updatedButtonSets })
+          // 選択中のボタンセットも更新
+          if (selectedButtonSet === updatedSet.setName) {
+            chrome.storage.local.set({ selectedButtonSet: updatedSet.setName })
+          }
+        }}
       />
       <TeamList
         teams={teams}

@@ -1,5 +1,10 @@
 import React from "react"
 
+// ActionButtonコンポーネントは、アクションを表すボタンを提供します。
+// - team: アクションが属するチーム名。
+// - action: アクション名。
+// - isActive: ボタンがアクティブかどうか。
+// - onClick: ボタンがクリックされたときのコールバック。
 interface ActionButtonProps {
   team: string
   action: string
