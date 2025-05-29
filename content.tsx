@@ -168,20 +168,6 @@ const MainContent: React.FC = () => {
   // 新たに選択中のアクションを管理し、ラベル表示を絞り込む
   const [selectedActions, setSelectedActions] = useState<Set<string>>(new Set())
 
-  const handleActionSelect = (team: string, action: string) => {
-    // アクションの選択状態を切り替えます。
-    const key = `${team}_${action}`
-    setSelectedActions((prev) => {
-      const newSet = new Set(prev)
-      if (newSet.has(key)) {
-        newSet.delete(key)
-      } else {
-        newSet.add(key)
-      }
-      return newSet
-    })
-  }
-
   const handleLabel = (label: string) => {
     // ラベルをアクションに追加します。
     for (const actionKey of activeActions) {
@@ -223,21 +209,16 @@ const MainContent: React.FC = () => {
       {} as Record<string, string>
     ) || {}
 
-  const labels =
-    currentSet?.buttons.reduce(
-      (acc, btn) => {
-        btn.labels.forEach((label) => {
-          acc[label] = label
-        })
-        return acc
-      },
-      {} as Record<string, string>
-    ) || {}
-
   const filteredLabels = Object.fromEntries(
     buttonSets
       .find((set) => set.setName === selectedButtonSet)
-      ?.buttons.filter((btn) => selectedActions.has(btn.action))
+      ?.buttons.filter((btn) => {
+        // 同一アクションが複数チームで選択されている場合も考慮
+        const actionCount = Array.from(selectedActions).filter((key) =>
+          key.endsWith(`_${btn.action}`)
+        ).length
+        return actionCount > 0 // 1つ以上選択されている場合にラベルを表示
+      })
       .flatMap((btn) => btn.labels.map((label) => [label, label])) || []
   )
 
@@ -262,10 +243,10 @@ const MainContent: React.FC = () => {
 
     setSelectedActions((prev) => {
       const updated = new Set(prev)
-      if (updated.has(action)) {
-        updated.delete(action)
+      if (updated.has(actionKey)) {
+        updated.delete(actionKey)
       } else {
-        updated.add(action)
+        updated.add(actionKey)
       }
       console.log("Updated selectedActions:", Array.from(updated))
       return updated
