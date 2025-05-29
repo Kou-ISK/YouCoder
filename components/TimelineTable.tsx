@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect, useRef } from "react"
 
 import { deleteAction } from "../lib/actionsManager"
 
@@ -8,6 +8,19 @@ interface TimelineTableProps {
 }
 
 const TimelineTable: React.FC<TimelineTableProps> = ({ actions, onDelete }) => {
+  // テーブルボディのrefを作成して、自動スクロール用に使用します
+  const tbodyRef = useRef<HTMLTableSectionElement>(null)
+
+  // アクションが追加された時に一番下にスクロールします
+  useEffect(() => {
+    if (tbodyRef.current && actions.length > 0) {
+      const lastRow = tbodyRef.current.lastElementChild
+      if (lastRow) {
+        lastRow.scrollIntoView({ behavior: "smooth", block: "end" })
+      }
+    }
+  }, [actions.length])
+
   const formatTime = (timestamp: number) => {
     const totalSeconds = Math.floor(timestamp / 1000)
     const minutes = Math.floor(totalSeconds / 60)
@@ -24,7 +37,13 @@ const TimelineTable: React.FC<TimelineTableProps> = ({ actions, onDelete }) => {
         borderCollapse: "collapse",
         fontSize: "14px"
       }}>
-      <thead>
+      <thead
+        style={{
+          position: "sticky",
+          top: 0,
+          backgroundColor: "white",
+          zIndex: 1
+        }}>
         <tr>
           <th style={{ padding: "8px", textAlign: "left" }}>チーム</th>
           <th style={{ padding: "8px", textAlign: "left" }}>アクション</th>
@@ -34,7 +53,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({ actions, onDelete }) => {
           <th style={{ padding: "8px", textAlign: "left" }}></th>
         </tr>
       </thead>
-      <tbody>
+      <tbody ref={tbodyRef}>
         {actions.map((action, index) => (
           <tr
             key={index}

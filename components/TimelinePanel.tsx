@@ -61,7 +61,13 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
             exportActionsToCSV={exportActionsToCSV}
           />
         </div>
-        <div style={{ overflowX: "auto" }}>
+        <div
+          style={{
+            overflowX: "auto",
+            overflowY: "auto",
+            maxHeight: "140px",
+            position: "relative"
+          }}>
           <TimelineTable actions={actions} onDelete={onDelete} />
         </div>
       </div>
