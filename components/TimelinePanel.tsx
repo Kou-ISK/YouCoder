@@ -15,7 +15,7 @@ type Action = {
 
 interface TimelinePanelProps {
   actions: Action[]
-  onDelete?: () => void
+  onDelete?: (team: string, action: string, start: number) => void
   onSave?: () => void
 }
 

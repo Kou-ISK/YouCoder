@@ -75,6 +75,9 @@ const Popup = () => {
         }
       } catch (error) {
         console.error("Failed to load data:", error)
+        alert(
+          "設定データの読み込みに失敗しました。拡張機能を再読み込みしてください。"
+        )
       }
     }
     loadData()
@@ -237,6 +240,7 @@ const Popup = () => {
       window.close()
     } catch (error) {
       console.error("Failed to save settings:", error)
+      alert("設定の保存に失敗しました。もう一度お試しください。")
     }
   }
 
@@ -250,6 +254,7 @@ const Popup = () => {
       })
     } catch (error) {
       console.error("Failed to update visibility:", error)
+      alert("表示設定の更新に失敗しました。ページを再読み込みしてください。")
     }
   }
 

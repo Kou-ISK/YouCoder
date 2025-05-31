@@ -4,7 +4,7 @@ import { deleteAction } from "../lib/actionsManager"
 
 interface TimelineTableProps {
   actions: any[]
-  onDelete: () => void
+  onDelete: (team: string, action: string, start: number) => void
 }
 
 const TimelineTable: React.FC<TimelineTableProps> = ({ actions, onDelete }) => {
@@ -110,7 +110,8 @@ const TimelineTable: React.FC<TimelineTableProps> = ({ actions, onDelete }) => {
                   const confirmed = window.confirm("本当に削除しますか？")
                   if (confirmed) {
                     await deleteAction(action.team, action.action, action.start)
-                    if (onDelete) await onDelete()
+                    if (onDelete)
+                      await onDelete(action.team, action.action, action.start)
                   }
                 }}
                 style={{

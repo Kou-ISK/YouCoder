@@ -32,7 +32,9 @@ export const getTeams = () => teams // 現在のチーム名のリストを取�
 const saveTeamsToStorage = async () => {
   try {
     await chrome.storage.local.set({ teams })
-    console.log("Teams saved successfully")
+    console.log(
+      `[YouCoder] チーム情報を保存しました - チーム数: ${teams.length}`
+    )
     return true
   } catch (error) {
     console.error("Failed to save teams:", error)
@@ -48,7 +50,9 @@ export const loadActionsFromStorage = async () => {
       "labels",
       "teams"
     ])
-    console.log("Loaded data from storage:", result)
+    console.log(
+      `[YouCoder] ストレージからデータを読み込みました - チーム数: ${result.teams?.length || 0}`
+    )
     if (result.teams) {
       teams = result.teams // ローカルストレージからチーム名を読み込みます。
     }
@@ -65,38 +69,128 @@ const loadTeamsFromStorage = async () => {
     if (result.teams) {
       teams = result.teams // ローカルストレージからチーム名を読み込みます。
     }
-    console.log("Loaded teams from storage:", teams)
+    console.log(
+      `[YouCoder] チーム情報を読み込みました - チーム数: ${teams.length}`
+    )
   } catch (error) {
     console.error("Failed to load teams:", error)
   }
 }
 
 const getYoutubeCurrentTime = (): number => {
-  const video = document.querySelector("video")
-  return video ? Math.floor(video.currentTime * 1000) : 0 // YouTube動画の現在の再生時間を取得します。
+  try {
+    const video = document.querySelector("video") as HTMLVideoElement
+    if (!video) {
+      console.warn("[YouCoder] 動画要素が見つかりません")
+      return 0
+    }
+
+    // 動画の状態をチェック
+    if (video.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) {
+      console.error("[YouCoder] 動画ソースが利用できません (403エラーの可能性)")
+      return 0
+    }
+
+    if (video.readyState < HTMLMediaElement.HAVE_METADATA) {
+      console.warn("[YouCoder] 動画メタデータがまだ読み込まれていません")
+      return 0
+    }
+
+    // エラー状態をチェック
+    if (video.error) {
+      let errorMsg = "不明な動画エラー"
+      switch (video.error.code) {
+        case MediaError.MEDIA_ERR_ABORTED:
+          errorMsg = "動画の読み込みが中断されました"
+          break
+        case MediaError.MEDIA_ERR_NETWORK:
+          errorMsg = "ネットワークエラー (403 Forbiddenの可能性)"
+          break
+        case MediaError.MEDIA_ERR_DECODE:
+          errorMsg = "動画デコードエラー"
+          break
+        case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+          errorMsg = "サポートされていない動画形式"
+          break
+      }
+      console.error(`[YouCoder] 動画エラー検出: ${errorMsg}`)
+      return 0
+    }
+
+    const currentTime = Math.floor(video.currentTime * 1000)
+    if (currentTime === 0 && video.currentTime > 0) {
+      console.warn("[YouCoder] 動画時間の変換で問題が発生しました")
+    }
+
+    return currentTime
+  } catch (error) {
+    console.error("[YouCoder] 動画時間の取得に失敗:", error)
+    return 0
+  }
 }
 
 const getYoutubeVideoId = (): string | null => {
-  const urlParams = new URLSearchParams(window.location.search)
-  return urlParams.get("v") // YouTube動画のIDを取得します。
+  try {
+    const urlParams = new URLSearchParams(window.location.search)
+    const videoId = urlParams.get("v")
+    if (!videoId) {
+      console.warn(
+        "[YouCoder] 動画IDが取得できません - YouTube動画ページではない可能性があります"
+      )
+    }
+    return videoId // YouTube動画のIDを取得します。
+  } catch (error) {
+    console.error("[YouCoder] 動画ID取得エラー:", error)
+    return null
+  }
 }
 
 // アクションを開始する関数。
 export const startAction = (team: string, action: string) => {
-  const startTime = getYoutubeCurrentTime()
-  actions.push({ team, action, start: startTime, labels: [] }) // 新しいアクションを開始します。
-  saveTimelineForVideo(getYoutubeVideoId())
+  try {
+    const startTime = getYoutubeCurrentTime()
+    if (startTime === 0) {
+      console.warn(
+        `[YouCoder] 動画時間が0です。動画が正常に再生されているか確認してください。`
+      )
+    }
+    actions.push({ team, action, start: startTime, labels: [] }) // 新しいアクションを開始します。
+    console.log(
+      `[YouCoder] アクション開始: ${team} - ${action} (時間: ${startTime}ms)`
+    )
+    saveTimelineForVideo(getYoutubeVideoId())
+  } catch (error) {
+    console.error(
+      `[YouCoder] アクション開始エラー (${team} - ${action}):`,
+      error
+    )
+  }
 }
 
 // アクションを停止する関数。
 export const stopAction = (team: string, action: string) => {
-  const endTime = getYoutubeCurrentTime()
-  const actionItem = actions.find(
-    (a) => a.team === team && a.action === action && !a.end
-  )
-  if (actionItem) {
-    actionItem.end = endTime // アクションを停止します。
-    saveTimelineForVideo(getYoutubeVideoId())
+  try {
+    const endTime = getYoutubeCurrentTime()
+    const actionItem = actions.find(
+      (a) => a.team === team && a.action === action && !a.end
+    )
+    if (actionItem) {
+      actionItem.end = endTime // アクションを停止します。
+      const duration = endTime - actionItem.start
+      console.log(
+        `[YouCoder] アクション終了: ${team} - ${action} (継続時間: ${duration}ms)`
+      )
+      saveTimelineForVideo(getYoutubeVideoId())
+    } else {
+      console.warn(
+        `[YouCoder] 停止対象のアクションが見つかりません: ${team} - ${action}`
+      )
+    }
+  } catch (error) {
+    console.error(
+      `[YouCoder] アクション停止エラー (${team} - ${action}):`,
+      error
+    )
   }
 }
 
@@ -121,7 +215,9 @@ export const saveTimelineForVideo = async (videoId: string | null) => {
     const timelines = await chrome.storage.local.get(["timelines"])
     timelines[videoId] = actions // 動画のタイムラインを保存します。
     await chrome.storage.local.set({ timelines })
-    console.log("Timeline saved for video:", videoId)
+    console.log(
+      `[YouCoder] タイムラインを保存しました - 動画ID: ${videoId}, アクション数: ${actions.length}`
+    )
   } catch (error) {
     console.error("Failed to save timeline for video:", error)
   }
@@ -131,8 +227,17 @@ export const saveTimelineForVideo = async (videoId: string | null) => {
 export const loadTimelineForVideo = async (videoId: string | null) => {
   if (!videoId) return []
   try {
-    const timelines = await chrome.storage.local.get(["timelines"])
-    return timelines[videoId] || [] // 動画のタイムラインを読み込みます。
+    const result = await chrome.storage.local.get(["timelines"])
+    const videoTimeline = result.timelines?.[videoId] || []
+
+    // actionsManagerの内部状態も更新する
+    actions.length = 0 // 配列をクリア
+    actions.push(...videoTimeline) // 読み込んだデータで配列を更新
+
+    console.log(
+      `[YouCoder] タイムラインを読み込みました - 動画ID: ${videoId}, アクション数: ${videoTimeline.length}`
+    )
+    return videoTimeline // 動画のタイムラインを読み込みます。
   } catch (error) {
     console.error("Failed to load timeline for video:", error)
     return []
