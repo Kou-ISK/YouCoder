@@ -26,27 +26,49 @@ export const getStyle = () => {
 
 // ネットワークエラー監視のための設定
 let networkErrorCount = 0
-const NETWORK_ERROR_THRESHOLD = 5 // 5回以上のエラーで警告
+let videoPlaybackErrorCount = 0
+const NETWORK_ERROR_THRESHOLD = 10 // 閾値を上げる
+const VIDEO_ERROR_THRESHOLD = 3 // 動画エラーの閾値
+
+// 完全に無視すべきドメイン（YouTubeの内部システム）
 const ignoredNetworkDomains = [
   "googleads.g.doubleclick.net",
   "googlesyndication.com",
   "google-analytics.com",
   "googletagmanager.com",
-  "googlevideo.com",
-  "accounts.youtube.com"
+  "accounts.youtube.com",
+  "pagead/viewthroughconversion",
+  "doubleclick.net"
 ]
 
-// CORSエラーやYouTube内部のエラーをフィルタリング
+// 無視すべきエラーメッセージパターン
 const ignoredErrorMessages = [
   "CORS policy",
   "frame-ancestors",
   "Content Security Policy",
-  "403 (Forbidden)",
-  "Access to fetch"
+  "Access to fetch",
+  "requestStorageAccessFor",
+  "Permission denied",
+  "viewthroughconversion",
+  "pagead"
 ]
+
+// 動画本体のエラーかどうかを判定
+const isVideoPlaybackError = (url: string): boolean => {
+  return (
+    url.includes("googlevideo.com/videoplayback") &&
+    !url.includes("pagead") &&
+    !url.includes("ads")
+  )
+}
 
 // ネットワークエラーをフィルタリングする関数
 const shouldIgnoreNetworkError = (url: string, message?: string): boolean => {
+  // 動画本体のエラーは無視しない
+  if (isVideoPlaybackError(url)) {
+    return false
+  }
+
   // ドメインベースのフィルタリング
   const domainIgnored = ignoredNetworkDomains.some((domain) =>
     url.includes(domain)
@@ -65,20 +87,19 @@ const originalConsoleError = console.error
 console.error = function (...args) {
   const message = args.join(" ")
 
-  // YouTubeの内部エラーをフィルタリング
+  // YouTubeの内部エラー（広告、アナリティクス等）をフィルタリング
   if (shouldIgnoreNetworkError("", message)) {
-    // 開発環境でのみログ出力（localhostの場合）
-    if (window.location.hostname === "localhost") {
-      originalConsoleError.call(
-        console,
-        "[YouCoder] フィルタされたエラー:",
-        ...args
-      )
-    }
+    // 完全に無視（ログも出力しない）
     return
   }
 
-  // YouTubeの動画関連エラーのみを拡張機能のエラーとして扱う
+  // 動画本体のエラーのみを拡張機能のエラーとして扱う
+  if (message.includes("googlevideo.com") && message.includes("403")) {
+    videoPlaybackErrorCount++
+    console.warn("[YouCoder] 動画再生403エラーを検出:", message)
+  }
+
+  // その他の重要なエラーのみログ出力
   originalConsoleError.apply(console, args)
 }
 
@@ -189,7 +210,7 @@ const MainContent: React.FC = () => {
           if (
             video &&
             video.currentSrc &&
-            video.currentSrc.includes("googlevideo.com")
+            isVideoPlaybackError(video.currentSrc)
           ) {
             setVideoError("動画へのアクセスが拒否されました (403 Forbidden)")
             console.error(
@@ -226,10 +247,7 @@ const MainContent: React.FC = () => {
 
       if (error) {
         // 動画本体のソースエラーのみを処理（広告やアナリティクスエラーは除外）
-        if (
-          !video.currentSrc ||
-          !video.currentSrc.includes("googlevideo.com")
-        ) {
+        if (!video.currentSrc || !isVideoPlaybackError(video.currentSrc)) {
           return // 動画本体以外のエラーは無視
         }
 
@@ -243,6 +261,7 @@ const MainContent: React.FC = () => {
           case MediaError.MEDIA_ERR_NETWORK:
             errorMessage = "ネットワークエラーが発生しました"
             shouldAlert = true // ネットワークエラーの場合のみアラート
+            videoPlaybackErrorCount++
             break
           case MediaError.MEDIA_ERR_DECODE:
             errorMessage = "動画のデコードエラーが発生しました"
@@ -255,10 +274,11 @@ const MainContent: React.FC = () => {
         setVideoError(errorMessage)
         console.error("[YouCoder] 動画再生エラー:", errorMessage, error)
 
-        if (shouldAlert) {
+        if (shouldAlert && videoPlaybackErrorCount >= VIDEO_ERROR_THRESHOLD) {
           alert(
             `[YouCoder] 動画再生エラー\n\n${errorMessage}\n\n403 Forbiddenエラーや接続の問題が発生している可能性があります。`
           )
+          videoPlaybackErrorCount = 0 // リセット
         }
       }
     }
@@ -283,84 +303,93 @@ const MainContent: React.FC = () => {
 
   // ネットワークエラー監視のuseEffect
   useEffect(() => {
-    // CORSエラーやその他のネットワークエラーを監視
-    const originalFetch = window.fetch
-    const originalXHROpen = XMLHttpRequest.prototype.open
-
     // Fetch API のエラー監視
+    const originalFetch = window.fetch
     window.fetch = async function (...args) {
       try {
         const response = await originalFetch.apply(this, args)
-        if (!response.ok && !shouldIgnoreNetworkError(args[0] as string)) {
-          networkErrorCount++
-          console.warn(
-            `[YouCoder] ネットワークエラー検出: ${response.status} ${response.statusText} - URL: ${args[0]}`
-          )
+        const url = args[0] as string
 
-          if (response.status === 403) {
-            console.error(`[YouCoder] 403エラー検出: ${args[0]}`)
+        if (!response.ok) {
+          if (isVideoPlaybackError(url)) {
+            // 動画本体のエラーのみ処理
+            videoPlaybackErrorCount++
+            console.error(
+              `[YouCoder] 動画再生エラー: ${response.status} ${response.statusText} - URL: ${url}`
+            )
+
+            if (
+              response.status === 403 &&
+              videoPlaybackErrorCount >= VIDEO_ERROR_THRESHOLD
+            ) {
+              alert(
+                "[YouCoder] 動画再生エラー\n\n動画へのアクセスが拒否されました (403 Forbidden)。\n\nページを更新するか、別の動画でお試しください。"
+              )
+              videoPlaybackErrorCount = 0
+            }
+          } else if (!shouldIgnoreNetworkError(url)) {
+            // その他の重要でないエラーは静かにカウントのみ
+            networkErrorCount++
           }
         }
         return response
       } catch (error) {
-        if (!shouldIgnoreNetworkError(args[0] as string)) {
+        const url = args[0] as string
+        if (isVideoPlaybackError(url)) {
+          videoPlaybackErrorCount++
+          console.error(`[YouCoder] 動画Fetchエラー: ${error} - URL: ${url}`)
+        } else if (!shouldIgnoreNetworkError(url)) {
           networkErrorCount++
-          console.warn(`[YouCoder] Fetchエラー: ${error} - URL: ${args[0]}`)
         }
         throw error
       }
     }
 
     // XMLHttpRequest のエラー監視
+    const originalXHROpen = XMLHttpRequest.prototype.open
     XMLHttpRequest.prototype.open = function (method, url, ...rest) {
       this.addEventListener("error", () => {
-        if (!shouldIgnoreNetworkError(url as string)) {
+        if (isVideoPlaybackError(url as string)) {
+          videoPlaybackErrorCount++
+          console.error(`[YouCoder] 動画XHRエラー: ${method} ${url}`)
+        } else if (!shouldIgnoreNetworkError(url as string)) {
           networkErrorCount++
-          console.warn(`[YouCoder] XHRエラー: ${method} ${url}`)
         }
       })
 
       this.addEventListener("load", () => {
-        if (this.status === 403 && !shouldIgnoreNetworkError(url as string)) {
-          console.error(`[YouCoder] XHR 403エラー: ${method} ${url}`)
+        if (this.status === 403) {
+          if (isVideoPlaybackError(url as string)) {
+            videoPlaybackErrorCount++
+            console.error(`[YouCoder] 動画XHR 403エラー: ${method} ${url}`)
+          }
         }
       })
 
       return originalXHROpen.call(this, method, url, ...rest)
     }
 
-    // コンソールエラー監視
-    const originalConsoleError = console.error
-    console.error = function (...args) {
-      const message = args.join(" ")
-
-      // CORSエラーの検出
-      if (message.includes("CORS") && message.includes("blocked")) {
-        const corsMatch = message.match(/https?:\/\/[^\s]+/)
-        if (corsMatch && !shouldIgnoreNetworkError(corsMatch[0])) {
-          console.warn("[YouCoder] 重要なCORSエラーが検出されました:", message)
-        }
-      }
-
-      return originalConsoleError.apply(this, args)
-    }
-
-    // 定期的にネットワークエラー数をチェック
-    const errorCheckInterval = setInterval(() => {
-      if (networkErrorCount >= NETWORK_ERROR_THRESHOLD) {
-        console.warn(
-          `[YouCoder] 多数のネットワークエラーが検出されました (${networkErrorCount}件)`
+    // 定期的にエラー数をリセット
+    const errorResetInterval = setInterval(() => {
+      if (networkErrorCount > 0) {
+        console.log(
+          `[YouCoder] ネットワークエラー数をリセット: ${networkErrorCount}件`
         )
-        networkErrorCount = 0 // リセット
+        networkErrorCount = 0
       }
-    }, 30000) // 30秒ごと
+      if (videoPlaybackErrorCount > 0) {
+        console.log(
+          `[YouCoder] 動画エラー数をリセット: ${videoPlaybackErrorCount}件`
+        )
+        videoPlaybackErrorCount = 0
+      }
+    }, 60000) // 1分ごとにリセット
 
     return () => {
       // クリーンアップ
       window.fetch = originalFetch
       XMLHttpRequest.prototype.open = originalXHROpen
-      console.error = originalConsoleError
-      clearInterval(errorCheckInterval)
+      clearInterval(errorResetInterval)
     }
   }, [])
 
@@ -465,12 +494,19 @@ const MainContent: React.FC = () => {
   // 新たに選択中のアクションを管理し、ラベル表示を絞り込む
   const [selectedActions, setSelectedActions] = useState<Set<string>>(new Set())
 
-  const handleLabel = (label: string) => {
+  const handleLabel = async (label: string) => {
     // ラベルをアクションに追加します。
     for (const actionKey of activeActions) {
       const [team, action] = actionKey.split("_")
       addLabel(team, action, label)
     }
+
+    // 自動保存を実行
+    const videoId = getYoutubeVideoId()
+    if (videoId) {
+      await saveTimelineForVideo(videoId)
+    }
+
     setTimelineActions(getActions())
     setActiveLabels((prev) => {
       const updated = new Set(prev)
@@ -559,7 +595,10 @@ const MainContent: React.FC = () => {
       return updated
     })
 
-    setTimelineActions(getActions())
+    // アクション変更後にタイムラインの状態を更新
+    setTimeout(() => {
+      setTimelineActions(getActions())
+    }, 100) // 少し遅延させてアクションの更新を確実に反映
   }
 
   return (
@@ -598,7 +637,7 @@ const MainContent: React.FC = () => {
           <TimelinePanel
             actions={timelineActions}
             onDelete={async () => {
-              const result = await loadActionsFromStorage()
+              // 削除後にタイムラインの状態を即座に更新
               setTimelineActions(getActions())
             }}
             onSave={handleSaveTimeline}

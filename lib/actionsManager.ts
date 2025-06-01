@@ -1,3 +1,10 @@
+// Window型の拡張
+declare global {
+  interface Window {
+    youCoderCache?: { [key: string]: any[] }
+  }
+}
+
 // Action型は、チーム、アクション名、開始時刻、終了時刻、関連付けられたラベルを含むデータ構造です。
 type Action = {
   team: string
@@ -31,20 +38,41 @@ export const getTeams = () => teams // 現在のチーム名のリストを取�
 // チーム名をローカルストレージに保存する非同期関数。
 const saveTeamsToStorage = async () => {
   try {
+    // Chrome拡張機能のストレージAPIが利用可能かチェック
+    if (!chrome?.storage?.local) {
+      throw new Error("Chrome storage API not available")
+    }
+
     await chrome.storage.local.set({ teams })
     console.log(
       `[YouCoder] チーム情報を保存しました - チーム数: ${teams.length}`
     )
     return true
   } catch (error) {
-    console.error("Failed to save teams:", error)
-    return false
+    console.error("[YouCoder] チーム保存エラー:", error)
+
+    // 代替手段として、sessionStorageに保存を試行
+    try {
+      sessionStorage.setItem("youCoder_teams", JSON.stringify(teams))
+      console.log(
+        "[YouCoder] 代替保存（sessionStorage）でチーム情報を保存しました"
+      )
+      return true
+    } catch (fallbackError) {
+      console.error("[YouCoder] 代替保存も失敗:", fallbackError)
+      return false
+    }
   }
 }
 
 // ローカルストレージからアクションを読み込む非同期関数。
 export const loadActionsFromStorage = async () => {
   try {
+    // Chrome拡張機能のストレージAPIが利用可能かチェック
+    if (!chrome?.storage?.local) {
+      throw new Error("Chrome storage API not available")
+    }
+
     const result = await chrome.storage.local.get([
       "actions",
       "labels",
@@ -58,13 +86,32 @@ export const loadActionsFromStorage = async () => {
     }
     return result
   } catch (error) {
-    console.error("Failed to load data:", error)
-    return { actions: {}, labels: {}, teams: [] }
+    console.error("[YouCoder] データ読み込みエラー:", error)
+
+    // 代替手段として、sessionStorageから読み込みを試行
+    try {
+      const teamsData = sessionStorage.getItem("youCoder_teams")
+      if (teamsData) {
+        teams = JSON.parse(teamsData)
+        console.log(
+          "[YouCoder] 代替読み込み（sessionStorage）でチーム情報を読み込みました"
+        )
+      }
+      return { actions: {}, labels: {}, teams: teams }
+    } catch (fallbackError) {
+      console.error("[YouCoder] 代替読み込みも失敗:", fallbackError)
+      return { actions: {}, labels: {}, teams: [] }
+    }
   }
 }
 
 const loadTeamsFromStorage = async () => {
   try {
+    // Chrome拡張機能のストレージAPIが利用可能かチェック
+    if (!chrome?.storage?.local) {
+      throw new Error("Chrome storage API not available")
+    }
+
     const result = await chrome.storage.local.get(["teams"])
     if (result.teams) {
       teams = result.teams // ローカルストレージからチーム名を読み込みます。
@@ -73,7 +120,20 @@ const loadTeamsFromStorage = async () => {
       `[YouCoder] チーム情報を読み込みました - チーム数: ${teams.length}`
     )
   } catch (error) {
-    console.error("Failed to load teams:", error)
+    console.error("[YouCoder] チーム読み込みエラー:", error)
+
+    // 代替手段として、sessionStorageから読み込みを試行
+    try {
+      const teamsData = sessionStorage.getItem("youCoder_teams")
+      if (teamsData) {
+        teams = JSON.parse(teamsData)
+        console.log(
+          "[YouCoder] 代替読み込み（sessionStorage）でチーム情報を読み込みました"
+        )
+      }
+    } catch (fallbackError) {
+      console.error("[YouCoder] 代替読み込みも失敗:", fallbackError)
+    }
   }
 }
 
@@ -146,8 +206,17 @@ const getYoutubeVideoId = (): string | null => {
 }
 
 // アクションを開始する関数。
-export const startAction = (team: string, action: string) => {
+export const startAction = async (team: string, action: string) => {
   try {
+    // まず現在の動画のタイムラインを読み込んで、既存データを確保
+    const videoId = getYoutubeVideoId()
+    if (videoId) {
+      await loadTimelineForVideo(videoId)
+      console.log(
+        `[YouCoder] 既存タイムライン読み込み完了 - 動画ID: ${videoId}, 既存アクション数: ${actions.length}`
+      )
+    }
+
     const startTime = getYoutubeCurrentTime()
     if (startTime === 0) {
       console.warn(
@@ -156,9 +225,15 @@ export const startAction = (team: string, action: string) => {
     }
     actions.push({ team, action, start: startTime, labels: [] }) // 新しいアクションを開始します。
     console.log(
-      `[YouCoder] アクション開始: ${team} - ${action} (時間: ${startTime}ms)`
+      `[YouCoder] アクション開始: ${team} - ${action} (時間: ${startTime}ms) - 総アクション数: ${actions.length}`
     )
-    saveTimelineForVideo(getYoutubeVideoId())
+    // 非同期でタイムラインを保存（エラーが発生してもアクション自体は継続）
+    saveTimelineForVideo(videoId).catch((error) => {
+      console.error(
+        `[YouCoder] アクション開始時の保存エラー (${team} - ${action}):`,
+        error
+      )
+    })
   } catch (error) {
     console.error(
       `[YouCoder] アクション開始エラー (${team} - ${action}):`,
@@ -168,8 +243,14 @@ export const startAction = (team: string, action: string) => {
 }
 
 // アクションを停止する関数。
-export const stopAction = (team: string, action: string) => {
+export const stopAction = async (team: string, action: string) => {
   try {
+    // まず現在の動画のタイムラインを読み込んで、既存データを確保
+    const videoId = getYoutubeVideoId()
+    if (videoId) {
+      await loadTimelineForVideo(videoId)
+    }
+
     const endTime = getYoutubeCurrentTime()
     const actionItem = actions.find(
       (a) => a.team === team && a.action === action && !a.end
@@ -178,9 +259,15 @@ export const stopAction = (team: string, action: string) => {
       actionItem.end = endTime // アクションを停止します。
       const duration = endTime - actionItem.start
       console.log(
-        `[YouCoder] アクション終了: ${team} - ${action} (継続時間: ${duration}ms)`
+        `[YouCoder] アクション終了: ${team} - ${action} (継続時間: ${duration}ms) - 総アクション数: ${actions.length}`
       )
-      saveTimelineForVideo(getYoutubeVideoId())
+      // 非同期でタイムラインを保存
+      saveTimelineForVideo(videoId).catch((error) => {
+        console.error(
+          `[YouCoder] アクション停止時の保存エラー (${team} - ${action}):`,
+          error
+        )
+      })
     } else {
       console.warn(
         `[YouCoder] 停止対象のアクションが見つかりません: ${team} - ${action}`
@@ -195,13 +282,40 @@ export const stopAction = (team: string, action: string) => {
 }
 
 // アクションにラベルを追加する関数。
-export const addLabel = (team: string, action: string, label: string) => {
-  const actionItem = actions.find(
-    (a) => a.team === team && a.action === action && !a.end
-  )
-  if (actionItem) {
-    actionItem.labels.push(label) // アクションにラベルを追加します。
-    saveTimelineForVideo(getYoutubeVideoId())
+export const addLabel = async (team: string, action: string, label: string) => {
+  try {
+    // まず現在の動画のタイムラインを読み込んで、既存データを確保
+    const videoId = getYoutubeVideoId()
+    if (videoId) {
+      await loadTimelineForVideo(videoId)
+    }
+
+    const actionItem = actions.find(
+      (a) => a.team === team && a.action === action && !a.end
+    )
+    if (actionItem) {
+      actionItem.labels.push(label) // アクションにラベルを追加します。
+      console.log(
+        `[YouCoder] ラベル追加: ${team} - ${action} にラベル "${label}" を追加 - 総アクション数: ${actions.length}`
+      )
+
+      // 非同期で自動保存（エラーが発生してもラベル追加自体は継続）
+      saveTimelineForVideo(videoId).catch((error) => {
+        console.error(
+          `[YouCoder] ラベル追加時の保存エラー (${team} - ${action} - ${label}):`,
+          error
+        )
+      })
+    } else {
+      console.warn(
+        `[YouCoder] ラベル追加対象のアクションが見つかりません: ${team} - ${action}`
+      )
+    }
+  } catch (error) {
+    console.error(
+      `[YouCoder] ラベル追加エラー (${team} - ${action} - ${label}):`,
+      error
+    )
   }
 }
 
@@ -209,24 +323,99 @@ export const addLabel = (team: string, action: string, label: string) => {
 export const getActions = () => actions // 現在のアクションのリストを取得します。
 
 // 動画のタイムラインをローカルストレージに保存する非同期関数。
-export const saveTimelineForVideo = async (videoId: string | null) => {
-  if (!videoId) return
-  try {
-    const timelines = await chrome.storage.local.get(["timelines"])
-    timelines[videoId] = actions // 動画のタイムラインを保存します。
-    await chrome.storage.local.set({ timelines })
-    console.log(
-      `[YouCoder] タイムラインを保存しました - 動画ID: ${videoId}, アクション数: ${actions.length}`
+export const saveTimelineForVideo = async (
+  videoId: string | null,
+  retryCount = 3
+) => {
+  if (!videoId) {
+    console.warn(
+      "[YouCoder] 動画IDが提供されていないため、保存をスキップします"
     )
-  } catch (error) {
-    console.error("Failed to save timeline for video:", error)
+    return false
   }
+
+  for (let attempt = 1; attempt <= retryCount; attempt++) {
+    try {
+      // Chrome拡張機能のストレージAPIが利用可能かチェック
+      if (!chrome?.storage?.local) {
+        throw new Error("Chrome storage API is not available")
+      }
+
+      // ストレージアクセス権限をチェック
+      if (typeof chrome.storage.local.get !== "function") {
+        throw new Error("Storage API methods are not accessible")
+      }
+
+      const result = await chrome.storage.local.get(["timelines"])
+      const timelines = result.timelines || {}
+      timelines[videoId] = [...actions] // 配列のコピーを作成して保存
+
+      await chrome.storage.local.set({ timelines })
+      console.log(
+        `[YouCoder] タイムラインを保存しました - 動画ID: ${videoId}, アクション数: ${actions.length} (試行回数: ${attempt})`
+      )
+      return true // 成功
+    } catch (error) {
+      console.error(
+        `[YouCoder] タイムライン保存エラー (試行 ${attempt}/${retryCount}):`,
+        error
+      )
+
+      // 権限エラーの場合は代替保存を試行
+      if (
+        error.message?.includes("Permission denied") ||
+        error.message?.includes("requestStorageAccessFor") ||
+        attempt === retryCount
+      ) {
+        try {
+          // 代替手段として、sessionStorageに保存
+          const sessionKey = `youCoder_timeline_${videoId}`
+          sessionStorage.setItem(sessionKey, JSON.stringify(actions))
+          console.log(
+            `[YouCoder] 代替保存（sessionStorage）でタイムラインを保存しました - 動画ID: ${videoId}`
+          )
+          return true
+        } catch (fallbackError) {
+          console.error("[YouCoder] 代替保存も失敗:", fallbackError)
+
+          // 最後の手段として、メモリ内の一時保存システムを使用
+          if (!window.youCoderCache) {
+            window.youCoderCache = {}
+          }
+          window.youCoderCache[videoId] = [...actions]
+          console.log(
+            `[YouCoder] メモリ内キャッシュにタイムラインを保存しました - 動画ID: ${videoId}`
+          )
+          return true
+        }
+      }
+
+      if (attempt < retryCount) {
+        // リトライ前に少し待機
+        await new Promise((resolve) => setTimeout(resolve, 100 * attempt))
+      }
+    }
+  }
+
+  console.error("[YouCoder] すべての保存試行が失敗しました")
+  return false
 }
 
 // 動画のタイムラインをローカルストレージから読み込む非同期関数。
 export const loadTimelineForVideo = async (videoId: string | null) => {
-  if (!videoId) return []
+  if (!videoId) {
+    console.warn(
+      "[YouCoder] 動画IDが提供されていないため、読み込みをスキップします"
+    )
+    return []
+  }
+
   try {
+    // Chrome拡張機能のストレージAPIが利用可能かチェック
+    if (!chrome?.storage?.local) {
+      throw new Error("Chrome storage API is not available")
+    }
+
     const result = await chrome.storage.local.get(["timelines"])
     const videoTimeline = result.timelines?.[videoId] || []
 
@@ -239,7 +428,43 @@ export const loadTimelineForVideo = async (videoId: string | null) => {
     )
     return videoTimeline // 動画のタイムラインを読み込みます。
   } catch (error) {
-    console.error("Failed to load timeline for video:", error)
+    console.error("[YouCoder] タイムライン読み込みエラー:", error)
+
+    // 代替手段として、sessionStorageから読み込みを試行
+    try {
+      const sessionKey = `youCoder_timeline_${videoId}`
+      const sessionData = sessionStorage.getItem(sessionKey)
+      if (sessionData) {
+        const videoTimeline = JSON.parse(sessionData)
+        actions.length = 0
+        actions.push(...videoTimeline)
+        console.log(
+          `[YouCoder] 代替読み込み（sessionStorage）でタイムラインを読み込みました - 動画ID: ${videoId}`
+        )
+        return videoTimeline
+      }
+    } catch (fallbackError) {
+      console.error("[YouCoder] sessionStorage読み込みエラー:", fallbackError)
+    }
+
+    // 最後の手段として、メモリ内キャッシュから読み込み
+    try {
+      if (window.youCoderCache && window.youCoderCache[videoId]) {
+        const videoTimeline = window.youCoderCache[videoId]
+        actions.length = 0
+        actions.push(...videoTimeline)
+        console.log(
+          `[YouCoder] メモリ内キャッシュからタイムラインを読み込みました - 動画ID: ${videoId}`
+        )
+        return videoTimeline
+      }
+    } catch (cacheError) {
+      console.error("[YouCoder] メモリキャッシュ読み込みエラー:", cacheError)
+    }
+
+    console.warn(
+      `[YouCoder] すべての読み込み試行が失敗しました - 動画ID: ${videoId}`
+    )
     return []
   }
 }

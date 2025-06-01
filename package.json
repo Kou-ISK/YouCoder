@@ -31,13 +31,18 @@
   },
   "manifest": {
     "host_permissions": [
-      "https://*/*"
+      "https://*/*",
+      "https://www.youtube.com/*"
     ],
     "permissions": [
       "storage",
       "unlimitedStorage",
-      "activeTab"
+      "activeTab",
+      "scripting"
     ],
+    "content_security_policy": {
+      "extension_pages": "script-src 'self'; object-src 'self';"
+    },
     "web_accessible_resources": [
       {
         "resources": [

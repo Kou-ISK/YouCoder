@@ -34,3 +34,10 @@ declare namespace chrome {
     export const onChanged: StorageEventTarget
   }
 }
+
+// Window型の拡張
+declare global {
+  interface Window {
+    youCoderCache?: { [key: string]: any[] }
+  }
+}
