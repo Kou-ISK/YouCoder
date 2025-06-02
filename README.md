@@ -1,8 +1,33 @@
-This is a [Plasmo extension](https://docs.plasmo.com/) project bootstrapped with [`plasmo init`](https://www.npmjs.com/package/plasmo).
+# YouCoder
 
-## Getting Started
+YouCoder is a browser extension developed using the Plasmo framework.  
+The project was bootstrapped with the `plasmo init` command and is designed to help developers build and debug extensions efficiently.
 
-First, run the development server:
+## Features
+
+- Modern browser extension development with the Plasmo framework  
+- Built using TypeScript and React  
+- Hot-reloading development server  
+- Compatible with Chrome Manifest V3  
+
+## Demo
+
+🚧 Demo coming soon!  
+*(Screenshots or animated GIFs will be added once the UI is finalized.)*
+
+## Installation
+
+To set up the project locally:
+
+```bash
+git clone https://github.com/Kou-ISK/YouCoder.git
+cd YouCoder
+pnpm install
+```
+
+## Development
+
+To start the development server:
 
 ```bash
 pnpm dev
@@ -10,24 +35,34 @@ pnpm dev
 npm run dev
 ```
 
-Open your browser and load the appropriate development build. For example, if you are developing for the chrome browser, using manifest v3, use: `build/chrome-mv3-dev`.
+To load the development build in Chrome:
 
-You can start editing the popup by modifying `popup.tsx`. It should auto-update as you make changes. To add an options page, simply add a `options.tsx` file to the root of the project, with a react component default exported. Likewise to add a content page, add a `content.ts` file to the root of the project, importing some module and do some logic, then reload the extension on your browser.
-
-For further guidance, [visit our Documentation](https://docs.plasmo.com/)
-
-## Making production build
-
-Run the following:
-
-```bash
-pnpm build
-# or
-npm run build
+```text
+1. Open Chrome and go to chrome://extensions  
+2. Enable Developer Mode  
+3. Click "Load unpacked"  
+4. Select the build/chrome-mv3-dev directory  
 ```
 
-This should create a production bundle for your extension, ready to be zipped and published to the stores.
+## Project Structure
 
-## Submit to the webstores
+```text
+.
+├── popup.tsx           # Entry point for the popup UI
+├── content.tsx         # Entry point for content script
+├── components/         # Reusable React components
+├── lib/                # Utility functions and services
+├── styles/             # CSS or styling resources
+├── docs/               # Project documentation
+├── tsconfig.json       # TypeScript configuration
+├── package.json        # Project metadata and dependencies
+└── ...
+```
 
-The easiest way to deploy your Plasmo extension is to use the built-in [bpp](https://bpp.browser.market) GitHub action. Prior to using this action however, make sure to build your extension and upload the first version to the store to establish the basic credentials. Then, simply follow [this setup instruction](https://docs.plasmo.com/framework/workflows/submit) and you should be on your way for automated submission!
+## Technologies Used
+
+- [Plasmo](https://docs.plasmo.com/)
+- React
+- TypeScript
+- pnpm
+- Chrome Extension (Manifest V3)
