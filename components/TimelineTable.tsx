@@ -21,13 +21,29 @@ const TimelineTable: React.FC<TimelineTableProps> = ({ actions, onDelete }) => {
     }
   }, [actions.length])
 
+  // YouTube動画の再生位置を変更する関数
+  const seekToTime = (timeInMs: number) => {
+    const video = document.querySelector("video") as HTMLVideoElement
+    if (video) {
+      // ミリ秒を秒に変換
+      const timeInSeconds = timeInMs / 1000
+      video.currentTime = timeInSeconds
+      console.log(`[YouCoder] 動画を${timeInSeconds}秒の位置に移動しました`)
+    } else {
+      console.warn("[YouCoder] 動画要素が見つかりませんでした")
+    }
+  }
+
   const formatTime = (timestamp: number) => {
     const totalSeconds = Math.floor(timestamp / 1000)
     const minutes = Math.floor(totalSeconds / 60)
     const seconds = totalSeconds % 60
     const milliseconds = timestamp % 1000
 
-    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(milliseconds).padStart(3, "0")}`
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
+      2,
+      "0"
+    )}.${String(milliseconds).padStart(3, "0")}`
   }
 
   return (
@@ -35,22 +51,86 @@ const TimelineTable: React.FC<TimelineTableProps> = ({ actions, onDelete }) => {
       style={{
         width: "100%",
         borderCollapse: "collapse",
-        fontSize: "14px"
+        borderSpacing: 0,
+        fontSize: "12px",
+        fontFamily:
+          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
       }}>
       <thead
         style={{
           position: "sticky",
           top: 0,
-          backgroundColor: "white",
-          zIndex: 1
+          backgroundColor: "#f1f5f9",
+          zIndex: 1,
+          borderBottom: "1px solid #cbd5e1"
         }}>
         <tr>
-          <th style={{ padding: "8px", textAlign: "left" }}>チーム</th>
-          <th style={{ padding: "8px", textAlign: "left" }}>アクション</th>
-          <th style={{ padding: "8px", textAlign: "left" }}>開始時間</th>
-          <th style={{ padding: "8px", textAlign: "left" }}>終了時間</th>
-          <th style={{ padding: "8px", textAlign: "left" }}>ラベル</th>
-          <th style={{ padding: "8px", textAlign: "left" }}></th>
+          <th
+            style={{
+              padding: "10px 12px",
+              textAlign: "left",
+              fontWeight: "600",
+              color: "#1e293b",
+              borderBottom: "none",
+              fontSize: "12px"
+            }}>
+            チーム
+          </th>
+          <th
+            style={{
+              padding: "10px 12px",
+              textAlign: "left",
+              fontWeight: "600",
+              color: "#1e293b",
+              borderBottom: "none",
+              fontSize: "12px"
+            }}>
+            アクション
+          </th>
+          <th
+            style={{
+              padding: "10px 12px",
+              textAlign: "left",
+              fontWeight: "600",
+              color: "#1e293b",
+              borderBottom: "none",
+              fontSize: "12px"
+            }}>
+            開始時間
+          </th>
+          <th
+            style={{
+              padding: "10px 12px",
+              textAlign: "left",
+              fontWeight: "600",
+              color: "#1e293b",
+              borderBottom: "none",
+              fontSize: "12px"
+            }}>
+            終了時間
+          </th>
+          <th
+            style={{
+              padding: "10px 12px",
+              textAlign: "left",
+              fontWeight: "600",
+              color: "#1e293b",
+              borderBottom: "none",
+              fontSize: "12px"
+            }}>
+            ラベル
+          </th>
+          <th
+            style={{
+              padding: "10px 12px",
+              textAlign: "center",
+              fontWeight: "600",
+              color: "#1e293b",
+              borderBottom: "none",
+              fontSize: "12px"
+            }}>
+            操作
+          </th>
         </tr>
       </thead>
       <tbody ref={tbodyRef}>
@@ -58,68 +138,96 @@ const TimelineTable: React.FC<TimelineTableProps> = ({ actions, onDelete }) => {
           <tr
             key={index}
             style={{
-              borderBottom: "1px solid #eee",
-              backgroundColor: index % 2 === 0 ? "#f9f9f9" : "white"
+              backgroundColor: index % 2 === 0 ? "#ffffff" : "#f9fafb",
+              borderBottom: "1px solid #e5e7eb"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#f0f9ff"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor =
+                index % 2 === 0 ? "#ffffff" : "#f9fafb"
             }}>
-            <td style={{ padding: "8px" }}>{action.team}</td>
-            <td style={{ padding: "8px" }}>{action.action}</td>
             <td
               style={{
-                padding: "8px",
-                cursor: "pointer",
-                textDecoration: "underline"
-              }}
-              onClick={() => {
-                const video = document.querySelector("video")
-                if (video) {
-                  const wasPaused = video.paused
-                  video.currentTime = action.start / 1000
-                  if (!wasPaused) {
-                    video.play()
-                  }
-                }
+                padding: "8px 12px",
+                color: "#374151",
+                fontWeight: "400",
+                borderBottom: "1px solid #e5e7eb"
               }}>
+              {action.team}
+            </td>
+            <td
+              style={{
+                padding: "8px 12px",
+                color: "#111827",
+                fontWeight: "500",
+                borderBottom: "1px solid #e5e7eb"
+              }}>
+              {action.action}
+            </td>
+            <td
+              onClick={() => seekToTime(action.start)}
+              style={{
+                padding: "8px 12px",
+                color: "#3b82f6",
+                fontFamily: "monospace",
+                fontSize: "12px",
+                fontWeight: "500",
+                borderBottom: "1px solid #e5e7eb",
+                cursor: "pointer",
+                textDecoration: "underline dotted"
+              }}
+              title="クリックすると動画の該当位置にジャンプします">
               {formatTime(action.start)}
             </td>
             <td
+              onClick={action.end ? () => seekToTime(action.end) : undefined}
               style={{
-                padding: "8px",
-                cursor: "pointer",
-                textDecoration: "underline"
+                padding: "8px 12px",
+                color: action.end ? "#3b82f6" : "#f59e0b",
+                fontFamily: "monospace",
+                fontSize: "12px",
+                fontWeight: "500",
+                borderBottom: "1px solid #e5e7eb",
+                cursor: action.end ? "pointer" : "default",
+                textDecoration: action.end ? "underline dotted" : "none"
               }}
-              onClick={() => {
-                const video = document.querySelector("video")
-                if (video) {
-                  const wasPaused = video.paused
-                  video.currentTime = action.end
-                    ? action.end / 1000
-                    : action.start / 1000
-                  if (!wasPaused) {
-                    video.play()
-                  }
-                }
-              }}>
+              title={
+                action.end
+                  ? "クリックすると動画の該当位置にジャンプします"
+                  : "進行中のアクション"
+              }>
               {action.end ? formatTime(action.end) : "進行中"}
             </td>
-            <td style={{ padding: "8px" }}>
-              {action.labels.join(", ") || "-"}
+            <td
+              style={{
+                padding: "8px 12px",
+                color: "#6b7280",
+                fontSize: "12px",
+                borderBottom: "1px solid #e5e7eb"
+              }}>
+              {action.labels && action.labels.length > 0
+                ? action.labels.join(", ")
+                : "-"}
             </td>
-            <td style={{ padding: "8px" }}>
+            <td
+              style={{
+                padding: "8px 12px",
+                textAlign: "center",
+                borderBottom: "1px solid #e5e7eb"
+              }}>
               <button
-                onClick={async () => {
-                  const confirmed = window.confirm("本当に削除しますか？")
-                  if (confirmed) {
-                    await deleteAction(action.team, action.action, action.start)
-                    if (onDelete)
-                      await onDelete(action.team, action.action, action.start)
-                  }
-                }}
+                onClick={() =>
+                  onDelete(action.team, action.action, action.start)
+                }
                 style={{
-                  padding: "2px 8px",
-                  backgroundColor: "#dc3545",
-                  color: "white",
+                  backgroundColor: "#fee2e2",
+                  color: "#b91c1c",
                   border: "none",
                   borderRadius: "4px",
+                  padding: "4px 8px",
+                  fontSize: "11px",
                   cursor: "pointer"
                 }}>
                 削除

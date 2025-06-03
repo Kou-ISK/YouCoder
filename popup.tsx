@@ -260,73 +260,200 @@ const Popup = () => {
 
   // ボタンセット切り替えUI
   const renderButtonSetSelector = () => (
-    <div style={{ marginBottom: "20px" }}>
-      <label style={{ marginRight: "8px" }}>ボタンセット:</label>
-      <select
-        value={selectedButtonSet}
-        onChange={(e) => setSelectedButtonSet(e.target.value)}>
-        {buttonSets.map((set) => (
-          <option key={set.setName} value={set.setName}>
-            {set.setName}
-          </option>
-        ))}
-      </select>
-      <button
+    <div
+      style={{
+        marginBottom: "24px",
+        padding: "16px",
+        backgroundColor: "white",
+        borderRadius: "8px",
+        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)"
+      }}>
+      <div
         style={{
-          marginLeft: "8px",
-          padding: "4px 8px",
-          cursor: "pointer"
-        }}
-        onClick={() => openModal("buttonSet")}>
-        追加
-      </button>
-      <button
+          display: "flex",
+          alignItems: "center",
+          marginBottom: "12px",
+          gap: "8px"
+        }}>
+        <label
+          style={{
+            fontSize: "14px",
+            fontWeight: "500",
+            color: "#374151",
+            minWidth: "80px"
+          }}>
+          ボタンセット:
+        </label>
+        <select
+          value={selectedButtonSet}
+          onChange={(e) => setSelectedButtonSet(e.target.value)}
+          style={{
+            padding: "6px 12px",
+            fontSize: "14px",
+            border: "1px solid #d1d5db",
+            borderRadius: "6px",
+            backgroundColor: "white",
+            color: "#374151",
+            cursor: "pointer",
+            flex: "1"
+          }}>
+          {buttonSets.map((set) => (
+            <option key={set.setName} value={set.setName}>
+              {set.setName}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div
         style={{
-          marginLeft: "8px",
-          padding: "4px 8px",
-          cursor: "pointer"
-        }}
-        onClick={() => handleRemoveItem("buttonSet", selectedButtonSet)}>
-        削除
-      </button>
-      <button
-        style={{
-          marginLeft: "8px",
-          padding: "4px 8px",
-          cursor: "pointer"
-        }}
-        onClick={() => openModal("addAction")}>
-        アクション追加
-      </button>
-      <button
-        style={{
-          marginLeft: "8px",
-          padding: "4px 8px",
-          cursor: "pointer"
-        }}
-        onClick={() => openModal("addLabel")}>
-        ラベル追加
-      </button>
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "8px"
+        }}>
+        <button
+          style={{
+            padding: "6px 12px",
+            fontSize: "12px",
+            fontWeight: "500",
+            backgroundColor: "#3b82f6",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            transition: "all 0.2s ease"
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "#2563eb")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "#3b82f6")
+          }
+          onClick={() => openModal("buttonSet")}>
+          追加
+        </button>
+
+        <button
+          style={{
+            padding: "6px 12px",
+            fontSize: "12px",
+            fontWeight: "500",
+            backgroundColor: "#ef4444",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            transition: "all 0.2s ease"
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "#dc2626")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "#ef4444")
+          }
+          onClick={() => handleRemoveItem("buttonSet", selectedButtonSet)}>
+          削除
+        </button>
+
+        <button
+          style={{
+            padding: "6px 12px",
+            fontSize: "12px",
+            fontWeight: "500",
+            backgroundColor: "#10b981",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            transition: "all 0.2s ease"
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "#059669")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "#10b981")
+          }
+          onClick={() => openModal("addAction")}>
+          アクション追加
+        </button>
+
+        <button
+          style={{
+            padding: "6px 12px",
+            fontSize: "12px",
+            fontWeight: "500",
+            backgroundColor: "#f59e0b",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            transition: "all 0.2s ease"
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "#d97706")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "#f59e0b")
+          }
+          onClick={() => openModal("addLabel")}>
+          ラベル追加
+        </button>
+      </div>
     </div>
   )
 
   return (
-    <div style={{ minWidth: "400px", padding: "20px" }}>
-      <h2 style={{ marginBottom: "20px" }}>設定</h2>
-      <div style={{ marginBottom: "20px" }}>
+    <div
+      style={{
+        minWidth: "450px",
+        padding: "24px",
+        fontFamily:
+          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        backgroundColor: "#fafafa",
+        borderRadius: "8px"
+      }}>
+      <h2
+        style={{
+          margin: "0 0 24px 0",
+          fontSize: "20px",
+          fontWeight: "600",
+          color: "#1a1a1a",
+          letterSpacing: "-0.025em"
+        }}>
+        設定
+      </h2>
+      <div style={{ marginBottom: "24px" }}>
         <button
           onClick={() => {
             setShowExtension((prev) => !prev)
             handleVisibilityToggle()
           }}
           style={{
-            padding: "8px 16px",
-            backgroundColor: showExtension ? "#dc3545" : "#28a745",
+            padding: "12px 16px",
+            fontSize: "14px",
+            fontWeight: "500",
+            backgroundColor: showExtension ? "#ef4444" : "#22c55e",
             color: "white",
             border: "none",
-            borderRadius: "4px",
+            borderRadius: "8px",
             cursor: "pointer",
-            width: "100%"
+            width: "100%",
+            transition: "all 0.2s ease",
+            boxShadow: showExtension
+              ? "0 2px 4px rgba(239, 68, 68, 0.2)"
+              : "0 2px 4px rgba(34, 197, 94, 0.2)"
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-1px)"
+            e.currentTarget.style.boxShadow = showExtension
+              ? "0 4px 8px rgba(239, 68, 68, 0.3)"
+              : "0 4px 8px rgba(34, 197, 94, 0.3)"
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)"
+            e.currentTarget.style.boxShadow = showExtension
+              ? "0 2px 4px rgba(239, 68, 68, 0.2)"
+              : "0 2px 4px rgba(34, 197, 94, 0.2)"
           }}>
           {showExtension ? "拡張機能を非表示にする" : "拡張機能を表示する"}
         </button>
@@ -366,17 +493,31 @@ const Popup = () => {
         onClose={closeModal}
         onSubmit={handleModalSubmit}
       />
-      <div style={{ marginTop: "20px" }}>
+      <div style={{ marginTop: "24px" }}>
         <button
           onClick={handleSave}
           style={{
-            padding: "8px 16px",
-            backgroundColor: "#28a745",
+            padding: "12px 16px",
+            fontSize: "14px",
+            fontWeight: "500",
+            backgroundColor: "#22c55e",
             color: "white",
             border: "none",
-            borderRadius: "4px",
+            borderRadius: "8px",
             cursor: "pointer",
-            width: "100%"
+            width: "100%",
+            transition: "all 0.2s ease",
+            boxShadow: "0 2px 4px rgba(34, 197, 94, 0.2)"
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "#16a34a"
+            e.currentTarget.style.transform = "translateY(-1px)"
+            e.currentTarget.style.boxShadow = "0 4px 8px rgba(34, 197, 94, 0.3)"
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "#22c55e"
+            e.currentTarget.style.transform = "translateY(0)"
+            e.currentTarget.style.boxShadow = "0 2px 4px rgba(34, 197, 94, 0.2)"
           }}>
           保存して閉じる
         </button>

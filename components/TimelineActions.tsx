@@ -10,18 +10,26 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
   exportActionsToCSV
 }) => {
   return (
-    <div>
+    <div style={{ display: "flex", gap: "8px" }}>
       <button
         onClick={exportActionsToCSV}
         style={{
           padding: "6px 12px",
-          backgroundColor: "#007bff",
+          backgroundColor: "#6366f1",
           color: "white",
-          border: "none",
-          borderRadius: "4px",
+          border: "1px solid #6366f1",
+          borderRadius: "6px",
           cursor: "pointer",
-          fontSize: "13px",
-          marginRight: "10px"
+          fontSize: "12px",
+          fontWeight: "500",
+          transition: "all 0.15s ease",
+          boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)"
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = "#4f46e5"
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = "#6366f1"
         }}>
         CSV出力
       </button>
@@ -29,12 +37,21 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
         onClick={onSave}
         style={{
           padding: "6px 12px",
-          backgroundColor: "#28a745",
+          backgroundColor: "#10b981",
           color: "white",
-          border: "none",
-          borderRadius: "4px",
+          border: "1px solid #10b981",
+          borderRadius: "6px",
           cursor: "pointer",
-          fontSize: "13px"
+          fontSize: "12px",
+          fontWeight: "500",
+          transition: "all 0.15s ease",
+          boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)"
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = "#059669"
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = "#10b981"
         }}>
         保存
       </button>

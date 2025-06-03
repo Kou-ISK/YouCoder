@@ -21,14 +21,35 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   <button
     onClick={() => onClick(team, action)}
     style={{
-      margin: "0 5px 5px 0",
-      padding: "5px 10px",
-      backgroundColor: isActive ? "#dc3545" : "#e9ecef",
-      color: isActive ? "white" : "black",
-      border: "none",
-      borderRadius: "4px",
-      cursor: "pointer"
+      margin: "0",
+      padding: "6px 12px",
+      backgroundColor: isActive ? "#ef4444" : "#ffffff",
+      color: isActive ? "white" : "#374151",
+      border: "1px solid",
+      borderColor: isActive ? "#ef4444" : "#d1d5db",
+      borderRadius: "6px",
+      cursor: "pointer",
+      fontSize: "12px",
+      fontWeight: "500",
+      transition: "all 0.15s ease",
+      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)"
+    }}
+    onMouseEnter={(e) => {
+      if (isActive) {
+        e.currentTarget.style.backgroundColor = "#dc2626"
+      } else {
+        e.currentTarget.style.backgroundColor = "#f8fafc"
+        e.currentTarget.style.borderColor = "#94a3b8"
+      }
+    }}
+    onMouseLeave={(e) => {
+      if (isActive) {
+        e.currentTarget.style.backgroundColor = "#ef4444"
+      } else {
+        e.currentTarget.style.backgroundColor = "#ffffff"
+        e.currentTarget.style.borderColor = "#d1d5db"
+      }
     }}>
-    {team} {action}
+    {action}
   </button>
 )

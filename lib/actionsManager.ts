@@ -487,10 +487,10 @@ export const deleteAction = (team: string, action: string, start: number) => {
 }
 
 // アクションをCSV形式でエクスポートする関数。
-export const exportActionsToCSV = () => {
+export const exportActionsToCSV = (actionsList: Action[] = actions) => {
   const csvRows = [
     ["Team", "Action", "Start", "End", "Labels"],
-    ...actions.map((a) => [
+    ...actionsList.map((a) => [
       a.team,
       a.action,
       new Date(a.start).toISOString(),

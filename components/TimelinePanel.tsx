@@ -25,48 +25,79 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
   onSave
 }) => {
   return (
-    <Draggable>
+    <Draggable handle=".drag-handle">
       <div
         style={{
           position: "fixed",
-          bottom: 20,
-          left: 20,
-          width: "80%",
-          maxHeight: "200px",
-          backgroundColor: "white",
-          padding: "10px",
+          bottom: 16,
+          left: 16,
+          width: "85%",
+          maxWidth: "1200px",
+          maxHeight: "300px",
+          backgroundColor: "#ffffff",
+          padding: "16px",
           borderRadius: "8px",
-          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-          overflow: "auto",
-          cursor: "move",
-          zIndex: 1000
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+          border: "1px solid #e5e7eb",
+          zIndex: 1000,
+          fontFamily:
+            "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
         }}>
+        <div
+          className="drag-handle"
+          style={{
+            cursor: "move",
+            padding: "4px",
+            marginBottom: "8px",
+            borderRadius: "4px"
+          }}>
+          <div
+            style={{
+              height: "16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between"
+            }}>
+            <span
+              style={{
+                fontSize: "14px",
+                fontWeight: "600",
+                color: "#374151"
+              }}>
+              Timeline
+            </span>
+            <div
+              style={{
+                width: "20px",
+                height: "4px",
+                backgroundColor: "#d1d5db",
+                borderRadius: "2px"
+              }}
+            />
+          </div>
+        </div>
+
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 8
+            marginBottom: "12px",
+            paddingBottom: "8px",
+            borderBottom: "1px solid #e5e7eb"
           }}>
-          <h3
-            style={{
-              margin: "0 0 10px 0",
-              paddingBottom: "5px",
-              borderBottom: "1px solid #eee"
-            }}>
-            タイムライン
-          </h3>
           <TimelineActions
             onSave={onSave}
-            exportActionsToCSV={exportActionsToCSV}
+            exportActionsToCSV={() => {
+              exportActionsToCSV(actions)
+            }}
           />
         </div>
+
         <div
           style={{
-            overflowX: "auto",
             overflowY: "auto",
-            maxHeight: "140px",
-            position: "relative"
+            maxHeight: "200px"
           }}>
           <TimelineTable actions={actions} onDelete={onDelete} />
         </div>

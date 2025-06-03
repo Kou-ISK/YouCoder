@@ -7,6 +7,7 @@ import TimelinePanel from "~components/TimelinePanel"
 
 import {
   addLabel,
+  deleteAction,
   getActions,
   loadActionsFromStorage,
   saveTimelineForVideo,
@@ -735,7 +736,9 @@ const MainContent: React.FC = () => {
           />
           <TimelinePanel
             actions={timelineActions}
-            onDelete={async () => {
+            onDelete={(team, action, start) => {
+              // deleteAction関数を呼び出して削除処理を実行
+              deleteAction(team, action, start)
               // 削除後にタイムラインの状態を即座に更新
               setTimelineActions(getActions())
             }}
