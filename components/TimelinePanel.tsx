@@ -48,33 +48,19 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
           style={{
             cursor: "move",
             padding: "4px",
-            marginBottom: "8px",
-            borderRadius: "4px"
+            marginBottom: "4px",
+            display: "flex",
+            justifyContent: "center",
+            height: "8px"
           }}>
           <div
             style={{
-              height: "16px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between"
-            }}>
-            <span
-              style={{
-                fontSize: "14px",
-                fontWeight: "600",
-                color: "#374151"
-              }}>
-              Timeline
-            </span>
-            <div
-              style={{
-                width: "20px",
-                height: "4px",
-                backgroundColor: "#d1d5db",
-                borderRadius: "2px"
-              }}
-            />
-          </div>
+              width: "20px",
+              height: "4px",
+              backgroundColor: "#d1d5db",
+              borderRadius: "2px"
+            }}
+          />
         </div>
 
         <div

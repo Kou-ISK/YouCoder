@@ -46,72 +46,71 @@ export const TaggingPanel: React.FC<TaggingPanelProps> = ({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: "16px",
+          marginBottom: "8px",
           paddingBottom: "8px",
           borderBottom: "1px solid #e5e7eb",
-          cursor: "move"
+          cursor: "move",
+          height: "8px"
         }}>
-        <h3
-          style={{
-            margin: "0",
-            fontSize: "16px",
-            fontWeight: "600",
-            color: "#1f2937"
-          }}>
-          タグ付けパネル
-        </h3>
         <div
           style={{
-            width: "8px",
-            height: "8px",
-            borderRadius: "50%",
-            backgroundColor: "#10b981"
+            width: "20px",
+            height: "4px",
+            backgroundColor: "#d1d5db",
+            borderRadius: "2px",
+            margin: "0 auto"
           }}
         />
       </div>
 
+      {/* チーム×アクションの表形式レイアウト */}
       <div style={{ marginBottom: "16px" }}>
-        {teams.map((team) => (
-          <div key={team} style={{ marginBottom: "12px" }}>
-            <h4
-              style={{
-                margin: "0 0 6px 0",
-                fontSize: "13px",
-                fontWeight: "500",
-                color: "#6b7280"
-              }}>
-              {team}
-            </h4>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "4px"
-              }}>
-              {Object.keys(actions).map((action) => (
-                <ActionButton
-                  key={action}
-                  team={team}
-                  action={action}
-                  isActive={activeActions.has(`${team}_${action}`)}
-                  onClick={onActionToggle}
-                />
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "separate",
+            borderSpacing: "4px"
+          }}>
+          <thead>
+            <tr>
+              {teams.map((team) => (
+                <th
+                  key={team}
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: "500",
+                    color: "#6b7280",
+                    textAlign: "center",
+                    padding: "0 4px 6px 4px"
+                  }}>
+                  {team}
+                </th>
               ))}
-            </div>
-          </div>
-        ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Object.keys(actions).map((action) => (
+              <tr key={action}>
+                {teams.map((team) => (
+                  <td
+                    key={`${team}-${action}`}
+                    style={{ padding: "2px", textAlign: "center" }}>
+                    <ActionButton
+                      team={team}
+                      action={action}
+                      isActive={activeActions.has(`${team}_${action}`)}
+                      onClick={onActionToggle}
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      <div>
-        <h4
-          style={{
-            margin: "0 0 6px 0",
-            fontSize: "13px",
-            fontWeight: "500",
-            color: "#6b7280"
-          }}>
-          ラベル
-        </h4>
+      {/* ラベル部分 - 見出しなし */}
+      <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "12px" }}>
         <div
           style={{
             display: "flex",
