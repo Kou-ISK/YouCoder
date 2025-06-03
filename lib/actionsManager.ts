@@ -208,12 +208,13 @@ const getYoutubeVideoId = (): string | null => {
 // アクションを開始する関数。
 export const startAction = async (team: string, action: string) => {
   try {
-    // まず現在の動画のタイムラインを読み込んで、既存データを確保
     const videoId = getYoutubeVideoId()
-    if (videoId) {
+
+    // 初回のみ、または配列が空の場合のみタイムラインを読み込む
+    if (videoId && actions.length === 0) {
       await loadTimelineForVideo(videoId)
       console.log(
-        `[YouCoder] 既存タイムライン読み込み完了 - 動画ID: ${videoId}, 既存アクション数: ${actions.length}`
+        `[YouCoder] 初回タイムライン読み込み完了 - 動画ID: ${videoId}, 既存アクション数: ${actions.length}`
       )
     }
 
@@ -245,11 +246,10 @@ export const startAction = async (team: string, action: string) => {
 // アクションを停止する関数。
 export const stopAction = async (team: string, action: string) => {
   try {
-    // まず現在の動画のタイムラインを読み込んで、既存データを確保
     const videoId = getYoutubeVideoId()
-    if (videoId) {
-      await loadTimelineForVideo(videoId)
-    }
+
+    // stopAction時はメモリ上のデータを優先し、読み込みを行わない
+    // （既に進行中のアクションの状態を保持するため）
 
     const endTime = getYoutubeCurrentTime()
     const actionItem = actions.find(
@@ -284,9 +284,13 @@ export const stopAction = async (team: string, action: string) => {
 // アクションにラベルを追加する関数。
 export const addLabel = async (team: string, action: string, label: string) => {
   try {
-    // まず現在の動画のタイムラインを読み込んで、既存データを確保
     const videoId = getYoutubeVideoId()
-    if (videoId) {
+
+    // actionsが空の場合のみタイムラインデータを読み込む（初期ロード時のみ）
+    if (actions.length === 0 && videoId) {
+      console.log(
+        "[YouCoder] 初期ロード: addLabel時にタイムラインデータを読み込みます"
+      )
       await loadTimelineForVideo(videoId)
     }
 
@@ -300,12 +304,14 @@ export const addLabel = async (team: string, action: string, label: string) => {
       )
 
       // 非同期で自動保存（エラーが発生してもラベル追加自体は継続）
-      saveTimelineForVideo(videoId).catch((error) => {
-        console.error(
-          `[YouCoder] ラベル追加時の保存エラー (${team} - ${action} - ${label}):`,
-          error
-        )
-      })
+      if (videoId) {
+        saveTimelineForVideo(videoId).catch((error) => {
+          console.error(
+            `[YouCoder] ラベル追加時の保存エラー (${team} - ${action} - ${label}):`,
+            error
+          )
+        })
+      }
     } else {
       console.warn(
         `[YouCoder] ラベル追加対象のアクションが見つかりません: ${team} - ${action}`

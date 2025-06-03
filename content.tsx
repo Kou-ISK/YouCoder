@@ -186,10 +186,50 @@ const MainContent: React.FC = () => {
   useEffect(() => {
     // SPAナビゲーションの変更を監視するためのポーリングメカニズム。
     const timer = setInterval(() => {
-      setIsVideoPage(!!getYoutubeVideoId())
+      const currentVideoPage = !!getYoutubeVideoId()
+      if (currentVideoPage !== isVideoPage) {
+        setIsVideoPage(currentVideoPage)
+
+        // 動画が変わった際にタイムラインと UI 状態を同期
+        const syncTimelineAndUI = async () => {
+          const videoId = getYoutubeVideoId()
+          if (videoId) {
+            try {
+              const result = await chrome.storage.local.get(["timelines"])
+              const videoTimeline = result.timelines?.[videoId] || []
+              setTimelineActions(videoTimeline)
+
+              // 進行中のアクションをUI状態に同期
+              const inProgressActions = new Set<string>()
+              videoTimeline.forEach((action: any) => {
+                if (!action.end) {
+                  const actionKey = `${action.team}_${action.action}`
+                  inProgressActions.add(actionKey)
+                }
+              })
+
+              setActiveActions(inProgressActions)
+              setSelectedActions(new Set(inProgressActions))
+
+              console.log(
+                `[YouCoder] 動画変更時にUI状態を同期しました - 動画ID: ${videoId}, 進行中アクション数: ${inProgressActions.size}`
+              )
+            } catch (error) {
+              console.error("[YouCoder] 動画変更時の同期エラー:", error)
+            }
+          } else {
+            // 動画ページでない場合は状態をクリア
+            setActiveActions(new Set())
+            setSelectedActions(new Set())
+            setTimelineActions([])
+          }
+        }
+
+        syncTimelineAndUI()
+      }
     }, 500)
     return () => clearInterval(timer)
-  }, [])
+  }, [isVideoPage])
 
   // 動画エラー監視のuseEffect
   useEffect(() => {
@@ -395,9 +435,46 @@ const MainContent: React.FC = () => {
 
   useEffect(() => {
     // YouTubeのナビゲーションイベントを監視します。
-    const handleNavigateFinish = () => {
-      setIsVideoPage(!!getYoutubeVideoId())
+    const handleNavigateFinish = async () => {
+      const currentVideoPage = !!getYoutubeVideoId()
+      setIsVideoPage(currentVideoPage)
+
+      // ナビゲーション後にタイムラインとUI状態を同期
+      if (currentVideoPage) {
+        const videoId = getYoutubeVideoId()
+        if (videoId) {
+          try {
+            const result = await chrome.storage.local.get(["timelines"])
+            const videoTimeline = result.timelines?.[videoId] || []
+            setTimelineActions(videoTimeline)
+
+            // 進行中のアクションをUI状態に同期
+            const inProgressActions = new Set<string>()
+            videoTimeline.forEach((action: any) => {
+              if (!action.end) {
+                const actionKey = `${action.team}_${action.action}`
+                inProgressActions.add(actionKey)
+              }
+            })
+
+            setActiveActions(inProgressActions)
+            setSelectedActions(new Set(inProgressActions))
+
+            console.log(
+              `[YouCoder] ナビゲーション後にUI状態を同期しました - 動画ID: ${videoId}, 進行中アクション数: ${inProgressActions.size}`
+            )
+          } catch (error) {
+            console.error("[YouCoder] ナビゲーション後の同期エラー:", error)
+          }
+        }
+      } else {
+        // 動画ページでない場合は状態をクリア
+        setActiveActions(new Set())
+        setSelectedActions(new Set())
+        setTimelineActions([])
+      }
     }
+
     document.addEventListener("yt-navigate-finish", handleNavigateFinish)
     return () => {
       document.removeEventListener("yt-navigate-finish", handleNavigateFinish)
@@ -415,9 +492,31 @@ const MainContent: React.FC = () => {
           "timelines",
           "selectedButtonSet"
         ])
+
+        // 動画のタイムラインデータを読み込み、進行中のアクションの状態を同期
         if (videoId && result.timelines) {
-          setTimelineActions(result.timelines[videoId] || [])
+          const videoTimeline = result.timelines[videoId] || []
+          setTimelineActions(videoTimeline)
+
+          // 進行中のアクション（end プロパティがない）をUI状態に同期
+          const inProgressActions = new Set<string>()
+          videoTimeline.forEach((action: any) => {
+            if (!action.end) {
+              // 終了時間がない = 進行中
+              const actionKey = `${action.team}_${action.action}`
+              inProgressActions.add(actionKey)
+            }
+          })
+
+          // UI状態を進行中のアクションと同期
+          setActiveActions(inProgressActions)
+          setSelectedActions(new Set(inProgressActions))
+
+          console.log(
+            `[YouCoder] UI状態をタイムラインデータと同期しました - 進行中アクション数: ${inProgressActions.size}`
+          )
         }
+
         if (result.teams) setTeams(result.teams)
         if (result.buttonSets) {
           setButtonSets(result.buttonSets)
