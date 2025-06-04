@@ -22,21 +22,21 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
     onClick={() => onClick(team, action)}
     style={{
       margin: "0",
-      padding: "3px 6px",
+      padding: "3px 3px",
       backgroundColor: isActive ? "#ef4444" : "#ffffff",
       color: isActive ? "white" : "#374151",
       border: "1px solid",
       borderColor: isActive ? "#ef4444" : "#d1d5db",
       borderRadius: "3px",
       cursor: "pointer",
-      fontSize: "10px",
-      fontWeight: "500",
+      fontSize: "14px",
+      fontWeight: "1000",
       transition: "all 0.12s ease",
       boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
       width: "100%",
       minWidth: "50px",
       textAlign: "center",
-      lineHeight: "1.2"
+      lineHeight: "2"
     }}
     onMouseEnter={(e) => {
       if (isActive) {
