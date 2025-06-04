@@ -488,49 +488,81 @@ export const deleteAction = (team: string, action: string, start: number) => {
 
 // アクションをCSV形式でエクスポートする関数。
 export const exportActionsToCSV = (actionsList: Action[] = actions) => {
+  // 全アクションから使用されているカテゴリを抽出
+  const allCategories = new Set<string>()
+
+  actionsList.forEach((action) => {
+    action.labels.forEach((label) => {
+      if (label.includes(" - ")) {
+        const category = label.split(" - ")[0]
+        allCategories.add(category)
+      } else {
+        allCategories.add("一般")
+      }
+    })
+  })
+
+  // カテゴリをアルファベット順にソート
+  const sortedCategories = Array.from(allCategories).sort()
+
+  // ヘッダー行を作成
+  const headers = [
+    "Team",
+    "Action",
+    "Start",
+    "End",
+    ...sortedCategories.map((cat) => cat.replace(/\s+/g, "_")) // スペースをアンダースコアに
+  ]
+
   const csvRows = [
-    ["Team", "Action", "Start", "End", "Labels", "Categories"],
+    headers,
     ...actionsList.map((a) => {
-      // カテゴリ化されたラベルの処理
-      const labelDetails = a.labels.map((label) => {
+      // ラベルをカテゴリごとに分類
+      const categorizedLabels: Record<string, string[]> = {}
+
+      a.labels.forEach((label) => {
         if (label.includes(" - ")) {
-          const parts = label.split(" - ")
-          return {
-            full: label,
-            category: parts[0],
-            value: parts.slice(1).join(" - ")
+          const [category, ...valueParts] = label.split(" - ")
+          const value = valueParts.join(" - ")
+          if (!categorizedLabels[category]) {
+            categorizedLabels[category] = []
           }
-        }
-        return {
-          full: label,
-          category: "一般",
-          value: label
+          categorizedLabels[category].push(value)
+        } else {
+          if (!categorizedLabels["一般"]) {
+            categorizedLabels["一般"] = []
+          }
+          categorizedLabels["一般"].push(label)
         }
       })
 
-      const labelsString = labelDetails.map((l) => l.full).join(", ")
-      const categoriesString = labelDetails
-        .map((l) => `${l.category}: ${l.value}`)
-        .join(", ")
-
-      return [
+      // 行データを構築
+      const row = [
         a.team,
         a.action,
         new Date(a.start).toISOString(),
         a.end ? new Date(a.end).toISOString() : "",
-        labelsString,
-        categoriesString
+        ...sortedCategories.map((category) => {
+          return categorizedLabels[category]
+            ? categorizedLabels[category].join("; ")
+            : ""
+        })
       ]
+
+      return row
     })
   ]
 
-  const csvContent = csvRows.map((row) => row.join(",")).join("\n")
-  const blob = new Blob([csvContent], { type: "text/csv" })
+  const csvContent = csvRows
+    .map((row) => row.map((field) => `"${field}"`).join(","))
+    .join("\n")
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" })
   const url = URL.createObjectURL(blob)
 
   const a = document.createElement("a")
   a.href = url
-  a.download = "actions.csv" // アクションをCSV形式でエクスポートします。
+  a.download = `actions_${new Date().toISOString().split("T")[0]}.csv`
   a.click()
   URL.revokeObjectURL(url)
 }

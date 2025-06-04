@@ -217,10 +217,10 @@ const TimelineTable: React.FC<TimelineTableProps> = ({ actions, onDelete }) => {
                           <span style={{ fontSize: "11px" }}>
                             <span
                               style={{ color: "#9ca3af", fontWeight: "500" }}>
-                              {label.split(" - ")[0]}
+                              [{label.split(" - ")[0]}]
                             </span>
                             <span style={{ color: "#6b7280" }}>
-                              {" - " + label.split(" - ").slice(1).join(" - ")}
+                              {" " + label.split(" - ").slice(1).join(" - ")}
                             </span>
                           </span>
                         ) : (
