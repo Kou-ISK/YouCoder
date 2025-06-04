@@ -1,28 +1,27 @@
-# YouCoder
+# YouCoder - YouTubeスポーツ映像タグ付けツール
 
-YouCoder is a browser extension developed using the Plasmo framework.  
-The project was bootstrapped with the `plasmo init` command and is designed to help developers build and debug extensions efficiently.
+YouCoderは、YouTubeでスポーツ映像を視聴しながらリアルタイムでアクションにタグ付けができるChrome拡張機能です。  
+スポーツコーチ、アナリスト、指導者向けに設計され、効率的な映像分析とデータ収集を可能にします。
 
-## Features
+## 主な特徴
 
-- Modern browser extension development with the Plasmo framework
-- Built using TypeScript and React
-- Hot-reloading development server
-- Compatible with Chrome Manifest V3
-- YouTube video tagging with custom button sets
-- Timeline tracking with CSV export functionality
-- Click-to-jump timeline navigation
-- JSON import/export for button set configurations
-- Real-time data synchronization with Chrome storage
+- **リアルタイムタグ付け**: YouTube再生中にワンクリックでアクションとラベルを記録
+- **カスタマイズ可能なボタンセット**: スポーツやチームに応じてボタンをカスタマイズ
+- **カテゴリ化されたラベル機能**: ラベルをカテゴリ別に整理して詳細な分析が可能
+- **高度なCSV出力**: カテゴリごとに列を分けたExcel解析に適した形式で出力
+- **タイムラインナビゲーション**: 記録したアクションをクリックして動画の該当箇所にジャンプ
+- **JSON設定共有**: ボタンセット設定を他のユーザーと簡単に共有
+- **Plasmo + React**: モダンな技術スタックによる高速で安定した動作
+- **Chrome Manifest V3完全対応**: 最新のブラウザセキュリティ基準に準拠
 
-## Demo
+## デモ
 
-🚧 Demo coming soon!  
-_(Screenshots or animated GIFs will be added once the UI is finalized.)_
+🚧 デモは準備中です！  
+_(UIが完成次第、スクリーンショットやアニメーションGIFを追加予定です。)_
 
-## Installation
+## インストール
 
-To set up the project locally:
+プロジェクトをローカルでセットアップするには：
 
 ```bash
 git clone https://github.com/Kou-ISK/YouCoder.git
@@ -30,51 +29,51 @@ cd YouCoder
 pnpm install
 ```
 
-## Development
+## 開発
 
-To start the development server:
+開発サーバーを起動するには：
 
 ```bash
 pnpm dev
-# or
+# または
 npm run dev
 ```
 
-To load the development build in Chrome:
+Chrome で開発版をロードするには：
 
 ```text
-1. Open Chrome and go to chrome://extensions
-2. Enable Developer Mode
-3. Click "Load unpacked"
-4. Select the build/chrome-mv3-dev directory
+1. Chrome を開き、chrome://extensions にアクセス
+2. 開発者モードを有効にする
+3. 「パッケージ化されていない拡張機能を読み込む」をクリック
+4. build/chrome-mv3-dev ディレクトリを選択
 ```
 
-## Usage
+## 使い方
 
-### Button Set Management
+### ボタンセットの管理
 
-1. **Creating Button Sets**: Use the "セット追加" button to create new button sets
-2. **Adding Actions**: Add actions to button sets using the "アクション追加" button
-3. **Adding Labels**: Select an action and use "ラベル追加" to add labels
+1. **ボタンセットの作成**: 「セット追加」ボタンから新しいボタンセットを作成します
+2. **アクションの追加**: 「アクション追加」ボタンでボタンセットにアクションを追加します
+3. **ラベルの追加**: アクションを選択後、「ラベル追加」でラベルを追加します
 
-### JSON Import/Export
+### JSON形式でのインポート/エクスポート
 
-#### Exporting Button Sets
+#### ボタンセットのエクスポート
 
-1. Click the "エクスポート" button in the popup
-2. A JSON file will be automatically downloaded with the currently selected button set
+1. ポップアップで「エクスポート」ボタンをクリック
+2. 現在選択中のボタンセットがJSONファイルとして自動ダウンロードされます
 
-#### Importing Button Sets
+#### ボタンセットのインポート
 
-1. Click the "インポート" button in the popup
-2. Select a JSON file with the correct format
-3. The extension will validate and import the button set
+1. ポップアップで「インポート」ボタンをクリック
+2. 正しい形式のJSONファイルを選択
+3. 拡張機能がボタンセットを検証してインポートします
 
-#### JSON Format
+#### JSON形式
 
-Button sets can use either the **simple format** (string array) or the **categorized format** (object with categories).
+ボタンセットは**シンプル形式**（文字列配列）または**カテゴリ形式**（カテゴリ付きオブジェクト）のいずれかを使用できます。
 
-**Simple Format (Legacy):**
+**シンプル形式（レガシー）:**
 
 ```json
 {
@@ -92,7 +91,7 @@ Button sets can use either the **simple format** (string array) or the **categor
 }
 ```
 
-**Categorized Format (Recommended):**
+**カテゴリ形式（推奨）:**
 
 ```json
 {
@@ -116,81 +115,82 @@ Button sets can use either the **simple format** (string array) or the **categor
 }
 ```
 
-**Label Format Notes:**
+**ラベル形式について:**
 
-- **Simple Format**: Labels are stored as a flat array of strings
-- **Categorized Format**: Labels are organized by category (`Record<string, string[]>`)
-- The system supports both formats for backward compatibility
-- Categorized labels display as `"category - label"` in the timeline and exports
-- CSV exports include separate "Labels" and "Categories" columns for categorized data
+- **シンプル形式**: ラベルは文字列の配列として保存されます
+- **カテゴリ形式**: ラベルはカテゴリ別に整理されます（`Record<string, string[]>`）
+- システムは後方互換性のため両方の形式をサポートします
+- カテゴリ化されたラベルは、タイムラインとエクスポートで`[カテゴリ] 値`として表示されます
+- CSV出力では、各カテゴリが個別の列として出力されます
 
-### Sample Files
+### サンプルファイル
 
-The project includes several sample button set files demonstrating both simple and categorized label formats:
+プロジェクトには、シンプル形式とカテゴリ形式の両方を実演するサンプルボタンセットファイルが含まれています：
 
-- `sample-button-sets.json` - Rugby button set (simple format)
-- `sample-soccer.json` - Soccer button set (categorized format)
-- `sample-basketball.json` - Basketball button set (categorized format)
-- `sample-tennis.json` - Tennis button set (categorized format)
+- `sample-button-sets.json` - ラグビーボタンセット（シンプル形式）
+- `sample-soccer.json` - サッカーボタンセット（カテゴリ形式）
+- `sample-basketball.json` - バスケットボールボタンセット（カテゴリ形式）
+- `sample-tennis.json` - テニスボタンセット（カテゴリ形式）
 
-**Categorized Format Benefits:**
+**カテゴリ形式の利点:**
 
-- Organized label structure with meaningful categories
-- Enhanced CSV export with separate category information
-- Improved UI display with category groupings
-- Better data analysis capabilities
+- 意味のあるカテゴリによる整理されたラベル構造
+- 各カテゴリが個別の列として出力される強化されたCSV出力
+- カテゴリグループによる改善されたUI表示
+- より優れたデータ分析機能
 
-### Video Tagging
+### 動画のタグ付け
 
-1. Navigate to a YouTube video
-2. The tagging panel will appear on the right side
-3. Select a team and action to start tagging
-4. Click labels to add timestamps
-5. Use the timeline panel to view and manage recorded actions
-6. Export data as CSV using the export button
+1. YouTube動画にアクセス
+2. 右側にタグ付けパネルが表示されます
+3. チームとアクションを選択してタグ付けを開始
+4. ラベルをクリックしてタイムスタンプを記録
+5. タイムラインパネルで記録したアクションを表示・管理
+6. エクスポートボタンでデータをCSV形式で出力
 
-### CSV Export
+### CSV出力
 
-The extension supports CSV export of recorded actions with enhanced support for categorized labels:
+この拡張機能は、カテゴリ化されたラベルの強化されたサポートを含む、記録されたアクションのCSV出力をサポートしています：
 
-**Export Features:**
+**出力機能:**
 
-- All recorded actions with timestamps
-- Action names and labels
-- Separate category information for categorized labels
-- Time-based sorting
+- タイムスタンプ付きの全記録アクション
+- アクション名とラベル
+- カテゴリ化されたラベルの各カテゴリが個別の列として出力
+- 時間順でのソート
 
-**CSV Format:**
+**CSV形式:**
 
-- **Simple Labels**: Single "Labels" column with comma-separated values
-- **Categorized Labels**:
-  - "Labels" column: Display format (`"category - label"`)
-  - "Categories" column: Category names extracted from labels
+- **シンプルラベル**: カンマ区切り値の単一「Labels」列
+- **カテゴリ化されたラベル**:
+  - 各カテゴリが個別の列（Team, Action, Start, End, + カテゴリ列）
+  - カテゴリ名がアルファベット順でソート
+  - 該当するカテゴリがないアクションは空文字
 
-**Example CSV Output:**
+**CSV出力例:**
 
 ```csv
-Action,Labels,Categories,Timestamp
-serve,"Result - ace, Type - first serve","Result, Type",00:01:23
-rally,"Shot Type - forehand","Shot Type",00:01:45
+Team,Action,Start,End,Result,Shot Type,Type
+A,serve,00:01:23,00:01:25,ace,,first serve
+B,rally,00:01:45,00:01:47,,forehand,
 ```
 
-## Project Structure
+## プロジェクト構成
 
 ```text
 .
-├── popup.tsx           # Entry point for the popup UI
-├── content.tsx         # Entry point for content script
-├── components/         # Reusable React components
-├── lib/                # Utility functions and services
-├── styles/             # CSS or styling resources
-├── docs/               # Project documentation
-├── tsconfig.json       # TypeScript configuration
-├── package.json        # Project metadata and dependencies
+├── popup.tsx           # ポップアップUIのエントリーポイント
+├── content.tsx         # コンテンツスクリプトのエントリーポイント
+├── components/         # 再利用可能なReactコンポーネント
+├── lib/                # ユーティリティ関数とサービス
+├── styles/             # CSSやスタイリングリソース
+├── docs/               # プロジェクトドキュメント
+├── tsconfig.json       # TypeScript設定
+├── package.json        # プロジェクトメタデータと依存関係
 └── ...
 ```
 
-## Technologies Used
+## 使用技術
 
 - [Plasmo](https://docs.plasmo.com/)
 - React
