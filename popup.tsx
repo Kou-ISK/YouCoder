@@ -43,15 +43,17 @@ const Popup = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalInput, setModalInput] = useState("")
   const [modalType, setModalType] = useState<
-    "team" | "buttonSet" | "buttonInSet" | "addAction" | "addLabel"
-  >("buttonSet")
+    "team" | "buttonSet" | "buttonInSet" | "addAction" | "addLabel" | null
+  >(null)
   const [showExtension, setShowExtension] = useState<boolean>(true)
-  const [selectedButtonSet, setSelectedButtonSet] = useState<string>("A")
+  const [selectedButtonSet, setSelectedButtonSet] = useState<string>("RUGBY")
   const [buttonSets, setButtonSets] = useState<ButtonSet[]>([])
   const [selectedAction, setSelectedAction] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const loadData = async () => {
+      setIsLoading(true)
       try {
         const data = await chrome.storage.local.get([
           "teams",
@@ -60,28 +62,69 @@ const Popup = () => {
           "selectedButtonSet",
           "selectedAction"
         ])
+        console.log("Loaded data from chrome.storage:", data)
+
         setTeams(data.teams || [])
         setShowExtension(
           data.showExtension !== undefined ? data.showExtension : true
         )
-        setButtonSets(data.buttonSets || defaultButtonSets)
-        if (data.selectedButtonSet) {
-          setSelectedButtonSet(data.selectedButtonSet)
-        } else if (data.buttonSets && data.buttonSets.length > 0) {
-          setSelectedButtonSet(data.buttonSets[0].setName)
+        const loadedButtonSets = data.buttonSets || defaultButtonSets
+        setButtonSets(loadedButtonSets)
+
+        // selectedButtonSetの初期化を確実に行う
+        let initialSelectedButtonSet = data.selectedButtonSet
+        if (
+          !initialSelectedButtonSet &&
+          loadedButtonSets &&
+          loadedButtonSets.length > 0
+        ) {
+          initialSelectedButtonSet = loadedButtonSets[0].setName
         }
+
+        console.log("Setting selectedButtonSet to:", initialSelectedButtonSet)
+        setSelectedButtonSet(initialSelectedButtonSet || "")
+
         if (data.selectedAction) {
           setSelectedAction(data.selectedAction)
         }
+
+        console.log("Data loading completed. Final states:", {
+          selectedButtonSet: initialSelectedButtonSet,
+          buttonSets: loadedButtonSets,
+          teams: data.teams || []
+        })
       } catch (error) {
         console.error("Failed to load data:", error)
         alert(
           "設定データの読み込みに失敗しました。拡張機能を再読み込みしてください。"
         )
+      } finally {
+        setIsLoading(false)
       }
     }
     loadData()
   }, [])
+
+  // データ読み込み完了後にselectedButtonSetを確実に設定
+  useEffect(() => {
+    if (
+      !isLoading &&
+      buttonSets.length > 0 &&
+      (!selectedButtonSet || selectedButtonSet.trim() === "")
+    ) {
+      console.log(
+        "Force setting selectedButtonSet to first available:",
+        buttonSets[0].setName
+      )
+      setSelectedButtonSet(buttonSets[0].setName)
+      chrome.storage.local.set({ selectedButtonSet: buttonSets[0].setName })
+    }
+  }, [isLoading, buttonSets, selectedButtonSet])
+
+  // デバッグ用: selectedButtonSetの変更を監視
+  useEffect(() => {
+    console.log("selectedButtonSet changed:", selectedButtonSet)
+  }, [selectedButtonSet])
 
   // ボタン追加時にどのボタンセットに追加するかを管理するstate
   const [targetButtonSetForAdd, setTargetButtonSetForAdd] = useState<
@@ -91,40 +134,73 @@ const Popup = () => {
   const openModal = (
     type: "team" | "buttonSet" | "buttonInSet" | "addAction" | "addLabel"
   ) => {
+    console.log("=== openModal called ===")
+    console.log("Type:", type)
+    console.log(
+      "Selected ButtonSet:",
+      selectedButtonSet,
+      "type:",
+      typeof selectedButtonSet,
+      "length:",
+      selectedButtonSet ? selectedButtonSet.length : 0
+    )
+    console.log("ButtonSets:", buttonSets)
+    console.log("ButtonSets length:", buttonSets.length)
+
     if (!selectedButtonSet && (type === "addAction" || type === "addLabel")) {
+      console.log(
+        "ボタンセットが選択されていません - selectedButtonSet:",
+        selectedButtonSet
+      )
       alert("ボタンセットを選択してください")
       return
     }
     if (type === "addLabel" && !selectedAction) {
+      console.log("アクションが選択されていません")
       alert("ラベルを追加するアクションを選択してください")
       return
     }
-    if (type === "buttonSet") {
-      setModalType("buttonSet")
-    } else if (type === "buttonInSet") {
-      setModalType("buttonInSet")
-    } else if (type === "addAction") {
-      setModalType("addAction")
-    } else if (type === "addLabel") {
-      setModalType("addLabel")
-    } else {
-      setModalType(type)
-    }
+    console.log("モーダルを開いています:", type)
+    console.log("Setting modalType to:", type)
+    console.log("Setting modalInput to empty string")
+    console.log("Setting isModalOpen to true")
+
+    setModalType(type)
     setModalInput("")
     setIsModalOpen(true)
+
+    console.log("モーダル状態設定完了:", {
+      isModalOpen: true,
+      modalType: type,
+      modalInput: ""
+    })
   }
 
   const closeModal = () => {
     setIsModalOpen(false)
     setModalType(null)
+    setModalInput("")
   }
 
   const handleModalSubmit = async () => {
-    if (!modalInput) return
+    console.log("=== handleModalSubmit START ===")
+    console.log("handleModalSubmit called", {
+      modalType,
+      modalInput,
+      selectedButtonSet,
+      selectedAction,
+      modalInputTrimmed: modalInput.trim()
+    })
+
+    if (!modalInput.trim()) {
+      console.log("modalInput is empty or whitespace only, returning")
+      return
+    }
 
     switch (modalType) {
       case "addAction":
         {
+          console.log("Processing addAction case")
           if (!selectedButtonSet) {
             alert("アクションを追加するボタンセットが選択されていません")
             return
@@ -141,14 +217,19 @@ const Popup = () => {
             action: modalInput,
             labels: []
           })
-          await chrome.storage.local.set({ buttonSets: updatedButtonSets })
+
+          // ボタンセット全体と選択状態を同時に保存
+          await chrome.storage.local.set({
+            buttonSets: updatedButtonSets,
+            selectedButtonSet: selectedButtonSet
+          })
           setButtonSets(updatedButtonSets)
-          // 新規追加時に自動選択しないように変更
-          // setSelectedAction(modalInput) // 追加したアクションを選択状態にする
+          console.log("Action added and saved to localStorage:", modalInput)
         }
         break
       case "addLabel":
         {
+          console.log("Processing addLabel case")
           if (!selectedButtonSet) {
             alert("ラベルを追加するボタンセットが選択されていません")
             return
@@ -175,12 +256,20 @@ const Popup = () => {
             return
           }
           buttons[targetButtonIndex].labels.push(modalInput)
-          await chrome.storage.local.set({ buttonSets: updatedButtonSets })
+
+          // ボタンセット全体と選択状態を同時に保存
+          await chrome.storage.local.set({
+            buttonSets: updatedButtonSets,
+            selectedButtonSet: selectedButtonSet,
+            selectedAction: selectedAction
+          })
           setButtonSets(updatedButtonSets)
+          console.log("Label added and saved to localStorage:", modalInput)
         }
         break
       case "team":
         {
+          console.log("Processing team case")
           const updatedTeams = [...teams, modalInput]
           await chrome.storage.local.set({ teams: updatedTeams })
           setTeams(updatedTeams)
@@ -188,6 +277,7 @@ const Popup = () => {
         break
       case "buttonSet":
         {
+          console.log("Processing buttonSet case")
           if (buttonSets.find((set) => set.setName === modalInput)) {
             alert("同名のボタンセットが既に存在します")
             return
@@ -196,11 +286,22 @@ const Popup = () => {
             ...buttonSets,
             { setName: modalInput, buttons: [] }
           ]
-          await chrome.storage.local.set({ buttonSets: updatedButtonSets })
+
+          // 新しいボタンセットを作成し、それを選択状態にして保存
+          await chrome.storage.local.set({
+            buttonSets: updatedButtonSets,
+            selectedButtonSet: modalInput
+          })
           setButtonSets(updatedButtonSets)
+          setSelectedButtonSet(modalInput)
+          console.log(
+            "ButtonSet created and saved to localStorage:",
+            modalInput
+          )
         }
         break
     }
+    console.log("Modal submit completed, closing modal")
     closeModal()
   }
 
@@ -286,7 +387,23 @@ const Popup = () => {
         </label>
         <select
           value={selectedButtonSet}
-          onChange={(e) => setSelectedButtonSet(e.target.value)}
+          onChange={async (e) => {
+            console.log(
+              "Select changed from",
+              selectedButtonSet,
+              "to",
+              e.target.value
+            )
+            setSelectedButtonSet(e.target.value)
+            // 選択変更時に即座にlocalStorageに保存
+            await chrome.storage.local.set({
+              selectedButtonSet: e.target.value
+            })
+            console.log(
+              "Selected button set saved to localStorage:",
+              e.target.value
+            )
+          }}
           style={{
             padding: "6px 12px",
             fontSize: "14px",
@@ -373,7 +490,16 @@ const Popup = () => {
           onMouseLeave={(e) =>
             (e.currentTarget.style.backgroundColor = "#10b981")
           }
-          onClick={() => openModal("addAction")}>
+          onClick={() => {
+            console.log("=== アクション追加ボタンクリック ===")
+            console.log("現在の状態:", {
+              selectedButtonSet,
+              buttonSets,
+              isModalOpen,
+              modalType
+            })
+            openModal("addAction")
+          }}>
           アクション追加
         </button>
 
@@ -395,7 +521,17 @@ const Popup = () => {
           onMouseLeave={(e) =>
             (e.currentTarget.style.backgroundColor = "#f59e0b")
           }
-          onClick={() => openModal("addLabel")}>
+          onClick={() => {
+            console.log("=== ラベル追加ボタンクリック ===")
+            console.log("現在の状態:", {
+              selectedButtonSet,
+              selectedAction,
+              buttonSets,
+              isModalOpen,
+              modalType
+            })
+            openModal("addLabel")
+          }}>
           ラベル追加
         </button>
       </div>
@@ -461,16 +597,29 @@ const Popup = () => {
       {renderButtonSetSelector()}
       <ButtonSetComponent
         buttonSet={buttonSets.find((set) => set.setName === selectedButtonSet)}
-        onUpdateButtonSet={(updatedSet) => {
+        selectedAction={selectedAction}
+        onUpdateButtonSet={async (updatedSet) => {
           const updatedButtonSets = buttonSets.map((set) =>
             set.setName === updatedSet.setName ? updatedSet : set
           )
           setButtonSets(updatedButtonSets)
-          chrome.storage.local.set({ buttonSets: updatedButtonSets })
-          // 選択中のボタンセットも更新
-          if (selectedButtonSet === updatedSet.setName) {
-            chrome.storage.local.set({ selectedButtonSet: updatedSet.setName })
-          }
+
+          // ボタンセット全体と選択状態を同時に保存
+          await chrome.storage.local.set({
+            buttonSets: updatedButtonSets,
+            selectedButtonSet: selectedButtonSet
+          })
+          console.log(
+            "ButtonSet updated and saved to localStorage:",
+            updatedSet.setName
+          )
+        }}
+        onActionSelect={async (action) => {
+          console.log("Action selected:", action)
+          setSelectedAction(action)
+          // アクション選択変更時に即座にlocalStorageに保存
+          await chrome.storage.local.set({ selectedAction: action })
+          console.log("Selected action saved to localStorage:", action)
         }}
       />
       <TeamList
@@ -481,17 +630,19 @@ const Popup = () => {
       <Modal
         isOpen={isModalOpen}
         inputValue={modalInput}
-        modalType={
-          modalType as
-            | "team"
-            | "buttonSet"
-            | "buttonInSet"
-            | "addAction"
-            | "addLabel"
-        }
-        onInputChange={setModalInput}
-        onClose={closeModal}
-        onSubmit={handleModalSubmit}
+        modalType={modalType}
+        onInputChange={(value) => {
+          console.log("Modal input changed:", value)
+          setModalInput(value)
+        }}
+        onClose={() => {
+          console.log("Modal close called")
+          closeModal()
+        }}
+        onSubmit={() => {
+          console.log("Modal submit called")
+          handleModalSubmit()
+        }}
       />
       <div style={{ marginTop: "24px" }}>
         <button

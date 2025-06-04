@@ -15,21 +15,29 @@ type ButtonSet = {
 
 type ButtonSetComponentProps = {
   buttonSet: ButtonSet | undefined
+  selectedAction: string | null
   onUpdateButtonSet: (updatedSet: ButtonSet) => void
+  onActionSelect: (action: string | null) => void
 }
 
 const ButtonSetComponent: React.FC<ButtonSetComponentProps> = ({
   buttonSet,
-  onUpdateButtonSet
+  selectedAction,
+  onUpdateButtonSet,
+  onActionSelect
 }) => {
-  const [selectedAction, setSelectedAction] = useState<string | null>(null)
-
   if (!buttonSet) {
     return <div>選択されたボタンセットがありません</div>
   }
 
   const handleActionClick = (action: string) => {
-    setSelectedAction((prev) => (prev === action ? null : action))
+    const newSelection = selectedAction === action ? null : action
+    console.log("ButtonSetComponent: Action clicked", {
+      action,
+      currentSelection: selectedAction,
+      newSelection
+    })
+    onActionSelect(newSelection)
   }
 
   const handleAddLabelToAction = (action: string, label: string) => {

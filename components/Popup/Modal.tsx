@@ -25,6 +25,8 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   onSubmit
 }) => {
+  console.log("Modal render:", { isOpen, inputValue, modalType })
+
   if (!isOpen) return null
   return (
     <div
@@ -63,6 +65,12 @@ export const Modal: React.FC<ModalProps> = ({
           type="text"
           value={inputValue}
           onChange={(e) => onInputChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && inputValue.trim()) {
+              e.preventDefault()
+              onSubmit()
+            }
+          }}
           style={{
             width: "100%",
             padding: "8px",
@@ -70,6 +78,7 @@ export const Modal: React.FC<ModalProps> = ({
             borderRadius: "4px",
             border: "1px solid #ced4da"
           }}
+          autoFocus
         />
         <div
           style={{
@@ -90,7 +99,20 @@ export const Modal: React.FC<ModalProps> = ({
             キャンセル
           </button>
           <button
-            onClick={onSubmit}
+            onClick={() => {
+              console.log(
+                "Modal submit button clicked, modalType:",
+                modalType,
+                "inputValue:",
+                inputValue,
+                "inputValue.trim():",
+                inputValue.trim(),
+                "inputValue.trim() length:",
+                inputValue.trim().length
+              )
+              console.log("Calling onSubmit...")
+              onSubmit()
+            }}
             style={{
               padding: "5px 10px",
               backgroundColor: "#28a745",
