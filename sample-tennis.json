@@ -3,19 +3,34 @@
   "buttons": [
     {
       "action": "serve",
-      "labels": ["ace", "fault", "double fault", "first serve", "second serve"]
+      "labels": {
+        "Result": ["ace", "fault", "double fault"],
+        "Type": ["first serve", "second serve"]
+      }
     },
     {
       "action": "rally",
-      "labels": ["forehand", "backhand", "volley", "smash", "drop shot"]
+      "labels": {
+        "Shot Type": ["forehand", "backhand", "volley", "smash", "drop shot"]
+      }
     },
     {
       "action": "point",
-      "labels": ["winner", "error", "net", "out", "long"]
+      "labels": {
+        "Result": ["winner", "error"],
+        "Error Type": ["net", "out", "long"]
+      }
     },
     {
       "action": "game",
-      "labels": ["break point", "game point", "set point", "match point"]
+      "labels": {
+        "Critical Points": [
+          "break point",
+          "game point",
+          "set point",
+          "match point"
+        ]
+      }
     }
   ]
 }

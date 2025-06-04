@@ -3,23 +3,35 @@
   "buttons": [
     {
       "action": "pass",
-      "labels": ["short pass", "long pass", "through pass", "cross"]
+      "labels": {
+        "Pass Type": ["short pass", "long pass", "through pass", "cross"]
+      }
     },
     {
       "action": "shot",
-      "labels": ["penalty", "free kick", "corner kick", "header"]
+      "labels": {
+        "Shot Type": ["penalty", "free kick", "corner kick", "header"]
+      }
     },
     {
       "action": "dribble",
-      "labels": ["successful", "unsuccessful", "skill move", "nutmeg"]
+      "labels": {
+        "Result": ["successful", "unsuccessful"],
+        "Skill": ["skill move", "nutmeg"]
+      }
     },
     {
       "action": "tackle",
-      "labels": ["clean", "foul", "yellow card", "red card"]
+      "labels": {
+        "Result": ["clean", "foul"],
+        "Card": ["yellow card", "red card"]
+      }
     },
     {
       "action": "save",
-      "labels": ["diving", "reflex", "parry", "catch"]
+      "labels": {
+        "Save Type": ["diving", "reflex", "parry", "catch"]
+      }
     }
   ]
 }

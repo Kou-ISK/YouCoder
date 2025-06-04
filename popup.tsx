@@ -7,12 +7,70 @@ import { appendToSheet, getAuthUrl, setCredentials } from "./lib/sheets"
 
 type Button = {
   action: string
-  labels: string[]
+  labels: Record<string, string[]> | string[] // 新形式または旧形式
 }
 
 type ButtonSet = {
   setName: string
   buttons: Button[]
+}
+
+// ラベル形式の変換とユーティリティ関数
+const normalizeLabelsToCategorized = (
+  labels: Record<string, string[]> | string[]
+): Record<string, string[]> => {
+  if (Array.isArray(labels)) {
+    // 旧形式の場合、"一般" カテゴリに変換
+    return { 一般: labels }
+  }
+  return labels
+}
+
+const normalizeLabelsToFlat = (
+  labels: Record<string, string[]> | string[]
+): string[] => {
+  if (Array.isArray(labels)) {
+    return labels
+  }
+  // 新形式の場合、フラット配列に変換
+  return Object.values(labels).flat()
+}
+
+// カテゴリ付きラベルの配列を生成（表示用）
+const getCategorizedLabelList = (
+  labels: Record<string, string[]>
+): Array<{ category: string; label: string; displayLabel: string }> => {
+  const result: Array<{
+    category: string
+    label: string
+    displayLabel: string
+  }> = []
+
+  for (const [category, labelList] of Object.entries(labels)) {
+    for (const label of labelList) {
+      result.push({
+        category,
+        label,
+        displayLabel: `${category} - ${label}`
+      })
+    }
+  }
+
+  return result
+}
+
+// ラベル文字列からカテゴリとラベルを分解
+const parseCategorizedLabel = (
+  displayLabel: string
+): { category: string; label: string } => {
+  const parts = displayLabel.split(" - ")
+  if (parts.length >= 2) {
+    const category = parts[0]
+    const label = parts.slice(1).join(" - ") // "xxx - yyy - zzz"のような場合に対応
+    return { category, label }
+  }
+  // フォールバック: "一般"カテゴリとして扱う
+  return { category: "一般", label: displayLabel }
 }
 
 const defaultButtonSets: ButtonSet[] = [
@@ -43,7 +101,13 @@ const Popup = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalInput, setModalInput] = useState("")
   const [modalType, setModalType] = useState<
-    "team" | "buttonSet" | "buttonInSet" | "addAction" | "addLabel" | null
+    | "team"
+    | "buttonSet"
+    | "buttonInSet"
+    | "addAction"
+    | "addLabel"
+    | "addCategorizedLabel"
+    | null
   >(null)
   const [showExtension, setShowExtension] = useState<boolean>(true)
   const [selectedButtonSet, setSelectedButtonSet] = useState<string>("RUGBY")
@@ -147,7 +211,13 @@ const Popup = () => {
   >(null)
 
   const openModal = (
-    type: "team" | "buttonSet" | "buttonInSet" | "addAction" | "addLabel"
+    type:
+      | "team"
+      | "buttonSet"
+      | "buttonInSet"
+      | "addAction"
+      | "addLabel"
+      | "addCategorizedLabel"
   ) => {
     console.log("=== openModal called ===")
     console.log("Type:", type)
@@ -162,7 +232,12 @@ const Popup = () => {
     console.log("ButtonSets:", buttonSets)
     console.log("ButtonSets length:", buttonSets.length)
 
-    if (!selectedButtonSet && (type === "addAction" || type === "addLabel")) {
+    if (
+      !selectedButtonSet &&
+      (type === "addAction" ||
+        type === "addLabel" ||
+        type === "addCategorizedLabel")
+    ) {
       console.log(
         "ボタンセットが選択されていません - selectedButtonSet:",
         selectedButtonSet
@@ -170,7 +245,10 @@ const Popup = () => {
       alert("ボタンセットを選択してください")
       return
     }
-    if (type === "addLabel" && !selectedAction) {
+    if (
+      (type === "addLabel" || type === "addCategorizedLabel") &&
+      !selectedAction
+    ) {
       console.log("アクションが選択されていません")
       alert("ラベルを追加するアクションを選択してください")
       return
@@ -197,13 +275,14 @@ const Popup = () => {
     setModalInput("")
   }
 
-  const handleModalSubmit = async () => {
+  const handleModalSubmit = async (category?: string) => {
     console.log("=== handleModalSubmit START ===")
     console.log("handleModalSubmit called", {
       modalType,
       modalInput,
       selectedButtonSet,
       selectedAction,
+      category,
       modalInputTrimmed: modalInput.trim()
     })
 
@@ -243,8 +322,9 @@ const Popup = () => {
         }
         break
       case "addLabel":
+      case "addCategorizedLabel":
         {
-          console.log("Processing addLabel case")
+          console.log(`Processing ${modalType} case`)
           if (!selectedButtonSet) {
             alert("ラベルを追加するボタンセットが選択されていません")
             return
@@ -260,7 +340,7 @@ const Popup = () => {
             alert("選択中のボタンセットが存在しません")
             return
           }
-          // ラベルは選択中のアクションに紐づける
+
           const updatedButtonSets = [...buttonSets]
           const buttons = updatedButtonSets[targetSetIndex].buttons
           const targetButtonIndex = buttons.findIndex(
@@ -270,7 +350,52 @@ const Popup = () => {
             alert("選択中のアクションが存在しません")
             return
           }
-          buttons[targetButtonIndex].labels.push(modalInput)
+
+          // ラベルを選択中のアクションに紐づける
+          const targetButton = buttons[targetButtonIndex]
+
+          if (modalType === "addCategorizedLabel" && category) {
+            // カテゴリ付きラベルの場合
+            const categorizedLabels = normalizeLabelsToCategorized(
+              targetButton.labels
+            )
+
+            if (!categorizedLabels[category]) {
+              categorizedLabels[category] = []
+            }
+
+            // 重複チェック
+            if (!categorizedLabels[category].includes(modalInput)) {
+              categorizedLabels[category].push(modalInput)
+              targetButton.labels = categorizedLabels
+              console.log(`カテゴリ付きラベル追加: ${category} - ${modalInput}`)
+            } else {
+              alert(
+                `ラベル "${modalInput}" は既にカテゴリ "${category}" に存在します`
+              )
+              return
+            }
+          } else {
+            // 通常のラベル追加（互換性維持）
+            const flatLabels = normalizeLabelsToFlat(targetButton.labels)
+            if (!flatLabels.includes(modalInput)) {
+              if (Array.isArray(targetButton.labels)) {
+                targetButton.labels.push(modalInput)
+              } else {
+                // カテゴリ付きの場合、"一般"カテゴリに追加
+                const categorized = { ...targetButton.labels }
+                if (!categorized["一般"]) {
+                  categorized["一般"] = []
+                }
+                categorized["一般"].push(modalInput)
+                targetButton.labels = categorized
+              }
+              console.log("通常ラベル追加:", modalInput)
+            } else {
+              alert(`ラベル "${modalInput}" は既に存在します`)
+              return
+            }
+          }
 
           // ボタンセット全体と選択状態を同時に保存
           await chrome.storage.local.set({
@@ -411,19 +536,74 @@ const Popup = () => {
             continue
           }
 
-          if (!Array.isArray(button.labels)) {
-            console.log("Invalid button labels:", button)
+          // ラベルの型チェック：配列か Record<string, string[]> の両方をサポート
+          let validLabels: Record<string, string[]> | string[]
+
+          if (Array.isArray(button.labels)) {
+            // 旧形式：string[]
+            const stringLabels = button.labels.filter(
+              (label: any) => typeof label === "string"
+            )
+            if (stringLabels.length !== button.labels.length) {
+              console.log(
+                "Some labels in array are not strings:",
+                button.labels
+              )
+              hasErrors = true
+            }
+            validLabels = stringLabels
+          } else if (
+            typeof button.labels === "object" &&
+            button.labels !== null
+          ) {
+            // 新形式：Record<string, string[]>
+            const validCategories: Record<string, string[]> = {}
+            let categoryHasErrors = false
+
+            for (const [category, labelList] of Object.entries(button.labels)) {
+              if (typeof category !== "string") {
+                console.log("Invalid category name:", category)
+                categoryHasErrors = true
+                continue
+              }
+
+              if (!Array.isArray(labelList)) {
+                console.log(
+                  "Invalid label list for category:",
+                  category,
+                  labelList
+                )
+                categoryHasErrors = true
+                continue
+              }
+
+              const validCategoryLabels = labelList.filter(
+                (label: any) => typeof label === "string"
+              )
+
+              if (validCategoryLabels.length !== labelList.length) {
+                console.log(
+                  "Some labels in category are not strings:",
+                  category,
+                  labelList
+                )
+                categoryHasErrors = true
+              }
+
+              if (validCategoryLabels.length > 0) {
+                validCategories[category] = validCategoryLabels
+              }
+            }
+
+            if (categoryHasErrors) {
+              hasErrors = true
+            }
+
+            validLabels = validCategories
+          } else {
+            console.log("Invalid button labels format:", button.labels)
             hasErrors = true
             continue
-          }
-
-          // ラベルの型チェック
-          const validLabels = button.labels.filter(
-            (label: any) => typeof label === "string"
-          )
-          if (validLabels.length !== button.labels.length) {
-            console.log("Some labels are not strings:", button.labels)
-            hasErrors = true
           }
 
           validButtons.push({
@@ -787,6 +967,38 @@ const Popup = () => {
           }}>
           ラベル追加
         </button>
+
+        <button
+          style={{
+            padding: "6px 12px",
+            fontSize: "12px",
+            fontWeight: "500",
+            backgroundColor: "#8b5cf6",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            transition: "all 0.2s ease"
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "#7c3aed")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "#8b5cf6")
+          }
+          onClick={() => {
+            console.log("=== カテゴリ付きラベル追加ボタンクリック ===")
+            console.log("現在の状態:", {
+              selectedButtonSet,
+              selectedAction,
+              buttonSets,
+              isModalOpen,
+              modalType
+            })
+            openModal("addCategorizedLabel")
+          }}>
+          カテゴリ付きラベル追加
+        </button>
       </div>
     </div>
   )
@@ -921,9 +1133,9 @@ const Popup = () => {
           console.log("Modal close called")
           closeModal()
         }}
-        onSubmit={() => {
-          console.log("Modal submit called")
-          handleModalSubmit()
+        onSubmit={(category) => {
+          console.log("Modal submit called with category:", category)
+          handleModalSubmit(category)
         }}
       />
       <div style={{ marginTop: "24px" }}>

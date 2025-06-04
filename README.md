@@ -72,7 +72,9 @@ To load the development build in Chrome:
 
 #### JSON Format
 
-Button sets should be formatted as a single button set object:
+Button sets can use either the **simple format** (string array) or the **categorized format** (object with categories).
+
+**Simple Format (Legacy):**
 
 ```json
 {
@@ -90,14 +92,53 @@ Button sets should be formatted as a single button set object:
 }
 ```
 
+**Categorized Format (Recommended):**
+
+```json
+{
+  "setName": "TENNIS",
+  "buttons": [
+    {
+      "action": "serve",
+      "labels": {
+        "Result": ["ace", "fault", "double fault"],
+        "Type": ["first serve", "second serve"]
+      }
+    },
+    {
+      "action": "rally",
+      "labels": {
+        "Shot Type": ["forehand", "backhand", "volley"],
+        "Result": ["winner", "error"]
+      }
+    }
+  ]
+}
+```
+
+**Label Format Notes:**
+
+- **Simple Format**: Labels are stored as a flat array of strings
+- **Categorized Format**: Labels are organized by category (`Record<string, string[]>`)
+- The system supports both formats for backward compatibility
+- Categorized labels display as `"category - label"` in the timeline and exports
+- CSV exports include separate "Labels" and "Categories" columns for categorized data
+
 ### Sample Files
 
-The project includes several sample button set files:
+The project includes several sample button set files demonstrating both simple and categorized label formats:
 
-- `sample-button-sets.json` - Rugby button set
-- `sample-soccer.json` - Soccer button set
-- `sample-basketball.json` - Basketball button set
-- `sample-tennis.json` - Tennis button set
+- `sample-button-sets.json` - Rugby button set (simple format)
+- `sample-soccer.json` - Soccer button set (categorized format)
+- `sample-basketball.json` - Basketball button set (categorized format)
+- `sample-tennis.json` - Tennis button set (categorized format)
+
+**Categorized Format Benefits:**
+
+- Organized label structure with meaningful categories
+- Enhanced CSV export with separate category information
+- Improved UI display with category groupings
+- Better data analysis capabilities
 
 ### Video Tagging
 
@@ -107,6 +148,32 @@ The project includes several sample button set files:
 4. Click labels to add timestamps
 5. Use the timeline panel to view and manage recorded actions
 6. Export data as CSV using the export button
+
+### CSV Export
+
+The extension supports CSV export of recorded actions with enhanced support for categorized labels:
+
+**Export Features:**
+
+- All recorded actions with timestamps
+- Action names and labels
+- Separate category information for categorized labels
+- Time-based sorting
+
+**CSV Format:**
+
+- **Simple Labels**: Single "Labels" column with comma-separated values
+- **Categorized Labels**:
+  - "Labels" column: Display format (`"category - label"`)
+  - "Categories" column: Category names extracted from labels
+
+**Example CSV Output:**
+
+```csv
+Action,Labels,Categories,Timestamp
+serve,"Result - ace, Type - first serve","Result, Type",00:01:23
+rally,"Shot Type - forehand","Shot Type",00:01:45
+```
 
 ## Project Structure
 

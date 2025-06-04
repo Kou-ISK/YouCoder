@@ -3,23 +3,35 @@
   "buttons": [
     {
       "action": "shoot",
-      "labels": ["3-point", "2-point", "free throw", "dunk", "layup"]
+      "labels": {
+        "Shot Type": ["3-point", "2-point", "free throw", "dunk", "layup"]
+      }
     },
     {
       "action": "pass",
-      "labels": ["assist", "turnover", "steal", "alley-oop"]
+      "labels": {
+        "Result": ["assist", "turnover"],
+        "Play Type": ["steal", "alley-oop"]
+      }
     },
     {
       "action": "rebound",
-      "labels": ["offensive", "defensive", "contested", "uncontested"]
+      "labels": {
+        "Type": ["offensive", "defensive"],
+        "Contest": ["contested", "uncontested"]
+      }
     },
     {
       "action": "defense",
-      "labels": ["block", "steal", "deflection", "foul"]
+      "labels": {
+        "Defensive Play": ["block", "steal", "deflection", "foul"]
+      }
     },
     {
       "action": "timeout",
-      "labels": ["full", "20-second", "technical", "injury"]
+      "labels": {
+        "Timeout Type": ["full", "20-second", "technical", "injury"]
+      }
     }
   ]
 }

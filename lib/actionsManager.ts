@@ -489,14 +489,39 @@ export const deleteAction = (team: string, action: string, start: number) => {
 // アクションをCSV形式でエクスポートする関数。
 export const exportActionsToCSV = (actionsList: Action[] = actions) => {
   const csvRows = [
-    ["Team", "Action", "Start", "End", "Labels"],
-    ...actionsList.map((a) => [
-      a.team,
-      a.action,
-      new Date(a.start).toISOString(),
-      a.end ? new Date(a.end).toISOString() : "",
-      a.labels.join(", ")
-    ])
+    ["Team", "Action", "Start", "End", "Labels", "Categories"],
+    ...actionsList.map((a) => {
+      // カテゴリ化されたラベルの処理
+      const labelDetails = a.labels.map((label) => {
+        if (label.includes(" - ")) {
+          const parts = label.split(" - ")
+          return {
+            full: label,
+            category: parts[0],
+            value: parts.slice(1).join(" - ")
+          }
+        }
+        return {
+          full: label,
+          category: "一般",
+          value: label
+        }
+      })
+
+      const labelsString = labelDetails.map((l) => l.full).join(", ")
+      const categoriesString = labelDetails
+        .map((l) => `${l.category}: ${l.value}`)
+        .join(", ")
+
+      return [
+        a.team,
+        a.action,
+        new Date(a.start).toISOString(),
+        a.end ? new Date(a.end).toISOString() : "",
+        labelsString,
+        categoriesString
+      ]
+    })
   ]
 
   const csvContent = csvRows.map((row) => row.join(",")).join("\n")

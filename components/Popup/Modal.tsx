@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState } from "react"
 
 interface ModalProps {
   isOpen: boolean
@@ -11,10 +11,11 @@ interface ModalProps {
     | "buttonInSet"
     | "addAction"
     | "addLabel"
+    | "addCategorizedLabel"
     | null
   onInputChange: (v: string) => void
   onClose: () => void
-  onSubmit: () => void
+  onSubmit: (category?: string) => void
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -25,9 +26,13 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   onSubmit
 }) => {
+  const [category, setCategory] = useState("一般")
+
   console.log("Modal render:", { isOpen, inputValue, modalType })
 
   if (!isOpen) return null
+
+  const isCategorizedLabel = modalType === "addCategorizedLabel"
   return (
     <div
       style={{
@@ -55,31 +60,72 @@ export const Modal: React.FC<ModalProps> = ({
               ? "アクションを追加"
               : modalType === "addLabel"
                 ? "ラベルを追加"
-                : modalType === "buttonSet"
-                  ? "ボタンセットを追加"
-                  : modalType === "buttonInSet"
-                    ? "ボタンセット内にアクションを追加"
-                    : ""}
+                : modalType === "addCategorizedLabel"
+                  ? "カテゴリ付きラベルを追加"
+                  : modalType === "buttonSet"
+                    ? "ボタンセットを追加"
+                    : modalType === "buttonInSet"
+                      ? "ボタンセット内にアクションを追加"
+                      : ""}
         </h3>
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => onInputChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && inputValue.trim()) {
-              e.preventDefault()
-              onSubmit()
+
+        {/* カテゴリ付きラベルの場合、カテゴリ選択フィールドを表示 */}
+        {isCategorizedLabel && (
+          <div style={{ marginBottom: "10px" }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "4px",
+                fontWeight: "600"
+              }}>
+              カテゴリ:
+            </label>
+            <input
+              type="text"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="例: Shot Type, Result, Position"
+              style={{
+                width: "100%",
+                padding: "8px",
+                borderRadius: "4px",
+                border: "1px solid #ced4da"
+              }}
+            />
+          </div>
+        )}
+
+        <div style={{ marginBottom: "10px" }}>
+          <label
+            style={{
+              display: "block",
+              marginBottom: "4px",
+              fontWeight: "600"
+            }}>
+            {isCategorizedLabel ? "ラベル:" : "入力:"}
+          </label>
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => onInputChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && inputValue.trim()) {
+                e.preventDefault()
+                onSubmit(isCategorizedLabel ? category : undefined)
+              }
+            }}
+            placeholder={
+              isCategorizedLabel ? "例: forehand, winner, error" : ""
             }
-          }}
-          style={{
-            width: "100%",
-            padding: "8px",
-            marginBottom: "10px",
-            borderRadius: "4px",
-            border: "1px solid #ced4da"
-          }}
-          autoFocus
-        />
+            style={{
+              width: "100%",
+              padding: "8px",
+              borderRadius: "4px",
+              border: "1px solid #ced4da"
+            }}
+            autoFocus
+          />
+        </div>
         <div
           style={{
             display: "flex",
@@ -105,13 +151,15 @@ export const Modal: React.FC<ModalProps> = ({
                 modalType,
                 "inputValue:",
                 inputValue,
+                "category:",
+                category,
                 "inputValue.trim():",
                 inputValue.trim(),
                 "inputValue.trim() length:",
                 inputValue.trim().length
               )
               console.log("Calling onSubmit...")
-              onSubmit()
+              onSubmit(isCategorizedLabel ? category : undefined)
             }}
             style={{
               padding: "5px 10px",

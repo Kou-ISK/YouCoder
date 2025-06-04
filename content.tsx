@@ -642,18 +642,35 @@ const MainContent: React.FC = () => {
       {} as Record<string, string>
     ) || {}
 
-  const filteredLabels = Object.fromEntries(
+  // ラベルの正規化関数：新旧両方の形式に対応
+  const normalizeLabelsToFlat = (
+    labels: Record<string, string[]> | string[]
+  ): string[] => {
+    if (Array.isArray(labels)) {
+      return labels
+    }
+    // カテゴリ付きラベルの場合、カテゴリ情報を含めて平坦化
+    return Object.entries(labels).flatMap(([category, labelList]) =>
+      labelList.map((label) =>
+        category === "一般" ? label : `${category} - ${label}`
+      )
+    )
+  }
+
+  const filteredLabels =
     buttonSets
       .find((set) => set.setName === selectedButtonSet)
       ?.buttons.filter((btn) => {
         // 同一アクションが複数チームで選択されている場合も考慮
-        const actionCount = Array.from(selectedActions).filter((key) =>
+        const actionCount = Array.from(activeActions).filter((key) =>
           key.endsWith(`_${btn.action}`)
         ).length
         return actionCount > 0 // 1つ以上選択されている場合にラベルを表示
       })
-      .flatMap((btn) => btn.labels.map((label) => [label, label])) || []
-  )
+      .flatMap((btn) => {
+        const flatLabels = normalizeLabelsToFlat(btn.labels)
+        return flatLabels
+      }) || []
 
   // デバッグ用：フィルタリングされたラベルの確認（開発時のみ）
   if (

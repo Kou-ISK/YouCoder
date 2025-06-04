@@ -208,7 +208,30 @@ const TimelineTable: React.FC<TimelineTableProps> = ({ actions, onDelete }) => {
                 borderBottom: "1px solid #e5e7eb"
               }}>
               {action.labels && action.labels.length > 0
-                ? action.labels.join(", ")
+                ? action.labels.map((label: string, index: number) => {
+                    // カテゴリ付きラベルかどうかをチェック
+                    const isCategorizeDLabel = label.includes(" - ")
+                    return (
+                      <span key={index}>
+                        {isCategorizeDLabel ? (
+                          <span style={{ fontSize: "11px" }}>
+                            <span
+                              style={{ color: "#9ca3af", fontWeight: "500" }}>
+                              {label.split(" - ")[0]}
+                            </span>
+                            <span style={{ color: "#6b7280" }}>
+                              {" - " + label.split(" - ").slice(1).join(" - ")}
+                            </span>
+                          </span>
+                        ) : (
+                          <span style={{ color: "#374151" }}>{label}</span>
+                        )}
+                        {index < action.labels.length - 1 && (
+                          <span style={{ color: "#d1d5db" }}>, </span>
+                        )}
+                      </span>
+                    )
+                  })
                 : "-"}
             </td>
             <td
