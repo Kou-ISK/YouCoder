@@ -49,6 +49,13 @@ const Popup = () => {
   const [selectedButtonSet, setSelectedButtonSet] = useState<string>("RUGBY")
   const [buttonSets, setButtonSets] = useState<ButtonSet[]>([])
   const [selectedAction, setSelectedAction] = useState<string | null>(null)
+  const [importInputRef, setImportInputRef] = useState<HTMLInputElement | null>(
+    null
+  )
+  const [notification, setNotification] = useState<{
+    message: string
+    type: "success" | "error" | "info"
+  } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -104,6 +111,14 @@ const Popup = () => {
     }
     loadData()
   }, [])
+
+  const showNotification = (
+    message: string,
+    type: "success" | "error" | "info" = "info"
+  ) => {
+    setNotification({ message, type })
+    setTimeout(() => setNotification(null), 3000)
+  }
 
   // データ読み込み完了後にselectedButtonSetを確実に設定
   useEffect(() => {
@@ -345,6 +360,192 @@ const Popup = () => {
     }
   }
 
+  const handleJsonImport = () => {
+    console.log("JSON import button clicked")
+
+    // 隠れたファイル入力要素を作成
+    const input = document.createElement("input")
+    input.type = "file"
+    input.accept = ".json"
+    input.style.display = "none"
+
+    input.onchange = async (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0]
+      if (!file) {
+        console.log("No file selected")
+        return
+      }
+
+      try {
+        const fileContent = await file.text()
+        console.log("File content:", fileContent)
+
+        const importedData = JSON.parse(fileContent)
+        console.log("Parsed JSON:", importedData)
+
+        // バリデーション：単一のボタンセットオブジェクトかチェック
+        if (!importedData.setName || typeof importedData.setName !== "string") {
+          showNotification(
+            "無効なファイル形式です。ボタンセットには setName が必要です。",
+            "error"
+          )
+          return
+        }
+
+        if (!Array.isArray(importedData.buttons)) {
+          showNotification(
+            "無効なファイル形式です。ボタンセットには buttons 配列が必要です。",
+            "error"
+          )
+          return
+        }
+
+        // ボタンのバリデーション
+        const validButtons: Button[] = []
+        let hasErrors = false
+
+        for (const button of importedData.buttons) {
+          if (!button.action || typeof button.action !== "string") {
+            console.log("Invalid button action:", button)
+            hasErrors = true
+            continue
+          }
+
+          if (!Array.isArray(button.labels)) {
+            console.log("Invalid button labels:", button)
+            hasErrors = true
+            continue
+          }
+
+          // ラベルの型チェック
+          const validLabels = button.labels.filter(
+            (label: any) => typeof label === "string"
+          )
+          if (validLabels.length !== button.labels.length) {
+            console.log("Some labels are not strings:", button.labels)
+            hasErrors = true
+          }
+
+          validButtons.push({
+            action: button.action,
+            labels: validLabels
+          })
+        }
+
+        if (hasErrors) {
+          const proceed = confirm(
+            "ファイルに無効なデータが含まれています。有効なデータのみをインポートしますか？"
+          )
+          if (!proceed) {
+            return
+          }
+        }
+
+        const validButtonSet: ButtonSet = {
+          setName: importedData.setName,
+          buttons: validButtons
+        }
+
+        // 既存のボタンセットと重複チェック
+        const existingSetIndex = buttonSets.findIndex(
+          (set) => set.setName === validButtonSet.setName
+        )
+
+        if (existingSetIndex !== -1) {
+          const proceed = confirm(
+            `ボタンセット "${validButtonSet.setName}" は既に存在します。\n上書きしてインポートを続行しますか？`
+          )
+          if (!proceed) {
+            return
+          }
+        }
+
+        // ボタンセットを追加または上書き
+        const updatedButtonSets = [...buttonSets]
+        if (existingSetIndex !== -1) {
+          updatedButtonSets[existingSetIndex] = validButtonSet
+        } else {
+          updatedButtonSets.push(validButtonSet)
+        }
+
+        // データを保存
+        await chrome.storage.local.set({
+          buttonSets: updatedButtonSets
+        })
+
+        setButtonSets(updatedButtonSets)
+
+        // インポートしたボタンセットを選択
+        setSelectedButtonSet(validButtonSet.setName)
+        await chrome.storage.local.set({
+          selectedButtonSet: validButtonSet.setName
+        })
+
+        showNotification(
+          `ボタンセット "${validButtonSet.setName}" を正常にインポートしました。`,
+          "success"
+        )
+        console.log("Import completed successfully:", validButtonSet)
+      } catch (error) {
+        console.error("JSON parse error:", error)
+        showNotification(
+          "JSONファイルの解析に失敗しました。ファイル形式を確認してください。",
+          "error"
+        )
+      }
+
+      // cleanup
+      document.body.removeChild(input)
+    }
+
+    document.body.appendChild(input)
+    input.click()
+  }
+
+  const handleJsonExport = () => {
+    console.log("JSON export button clicked")
+
+    try {
+      // 選択されたボタンセットのみをエクスポート
+      const selectedSet = buttonSets.find(
+        (set) => set.setName === selectedButtonSet
+      )
+      if (!selectedSet) {
+        showNotification(
+          "エクスポートするボタンセットが選択されていません。",
+          "error"
+        )
+        return
+      }
+
+      const dataToExport = selectedSet
+      const jsonString = JSON.stringify(dataToExport, null, 2)
+
+      // Blobを作成してダウンロードリンクを生成
+      const blob = new Blob([jsonString], { type: "application/json" })
+      const url = URL.createObjectURL(blob)
+
+      // 隠れたダウンロードリンクを作成
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `${selectedSet.setName}.json`
+      link.style.display = "none"
+
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      // URLオブジェクトをクリーンアップ
+      URL.revokeObjectURL(url)
+
+      showNotification("ボタンセットをエクスポートしました。", "success")
+      console.log("Export completed successfully")
+    } catch (error) {
+      console.error("Export error:", error)
+      showNotification("エクスポートに失敗しました。", "error")
+    }
+  }
+
   const handleVisibilityToggle = async () => {
     const newVisibility = !showExtension
     setShowExtension(newVisibility)
@@ -426,7 +627,8 @@ const Popup = () => {
         style={{
           display: "flex",
           flexWrap: "wrap",
-          gap: "8px"
+          gap: "8px",
+          marginBottom: "8px"
         }}>
         <button
           style={{
@@ -447,7 +649,7 @@ const Popup = () => {
             (e.currentTarget.style.backgroundColor = "#3b82f6")
           }
           onClick={() => openModal("buttonSet")}>
-          追加
+          セット追加
         </button>
 
         <button
@@ -469,9 +671,60 @@ const Popup = () => {
             (e.currentTarget.style.backgroundColor = "#ef4444")
           }
           onClick={() => handleRemoveItem("buttonSet", selectedButtonSet)}>
-          削除
+          セット削除
         </button>
 
+        <button
+          style={{
+            padding: "6px 12px",
+            fontSize: "12px",
+            fontWeight: "500",
+            backgroundColor: "#8b5cf6",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            transition: "all 0.2s ease"
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "#7c3aed")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "#8b5cf6")
+          }
+          onClick={handleJsonImport}>
+          インポート
+        </button>
+
+        <button
+          style={{
+            padding: "6px 12px",
+            fontSize: "12px",
+            fontWeight: "500",
+            backgroundColor: "#6b7280",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            transition: "all 0.2s ease"
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "#4b5563")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "#6b7280")
+          }
+          onClick={handleJsonExport}>
+          エクスポート
+        </button>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "8px"
+        }}>
         <button
           style={{
             padding: "6px 12px",
@@ -546,8 +799,37 @@ const Popup = () => {
         fontFamily:
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         backgroundColor: "#fafafa",
-        borderRadius: "8px"
+        borderRadius: "8px",
+        position: "relative"
       }}>
+      {/* 通知 */}
+      {notification && (
+        <div
+          style={{
+            position: "fixed",
+            top: "20px",
+            right: "20px",
+            zIndex: 1000,
+            padding: "12px 16px",
+            borderRadius: "8px",
+            fontSize: "14px",
+            fontWeight: "500",
+            color: "white",
+            backgroundColor:
+              notification.type === "success"
+                ? "#10b981"
+                : notification.type === "error"
+                  ? "#ef4444"
+                  : "#3b82f6",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+            transform: "translateX(0)",
+            transition: "transform 0.3s ease, opacity 0.3s ease",
+            opacity: 1
+          }}>
+          {notification.message}
+        </div>
+      )}
+
       <h2
         style={{
           margin: "0 0 24px 0",

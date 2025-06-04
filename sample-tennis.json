@@ -1,0 +1,21 @@
+{
+  "setName": "tennis",
+  "buttons": [
+    {
+      "action": "serve",
+      "labels": ["ace", "fault", "double fault", "first serve", "second serve"]
+    },
+    {
+      "action": "rally",
+      "labels": ["forehand", "backhand", "volley", "smash", "drop shot"]
+    },
+    {
+      "action": "point",
+      "labels": ["winner", "error", "net", "out", "long"]
+    },
+    {
+      "action": "game",
+      "labels": ["break point", "game point", "set point", "match point"]
+    }
+  ]
+}

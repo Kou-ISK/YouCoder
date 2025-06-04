@@ -1,0 +1,25 @@
+{
+  "setName": "soccer",
+  "buttons": [
+    {
+      "action": "pass",
+      "labels": ["short pass", "long pass", "through pass", "cross"]
+    },
+    {
+      "action": "shot",
+      "labels": ["penalty", "free kick", "corner kick", "header"]
+    },
+    {
+      "action": "dribble",
+      "labels": ["successful", "unsuccessful", "skill move", "nutmeg"]
+    },
+    {
+      "action": "tackle",
+      "labels": ["clean", "foul", "yellow card", "red card"]
+    },
+    {
+      "action": "save",
+      "labels": ["diving", "reflex", "parry", "catch"]
+    }
+  ]
+}

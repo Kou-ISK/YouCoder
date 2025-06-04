@@ -1,0 +1,25 @@
+{
+  "setName": "basket ball",
+  "buttons": [
+    {
+      "action": "shoot",
+      "labels": ["3-point", "2-point", "free throw", "dunk", "layup"]
+    },
+    {
+      "action": "pass",
+      "labels": ["assist", "turnover", "steal", "alley-oop"]
+    },
+    {
+      "action": "rebound",
+      "labels": ["offensive", "defensive", "contested", "uncontested"]
+    },
+    {
+      "action": "defense",
+      "labels": ["block", "steal", "deflection", "foul"]
+    },
+    {
+      "action": "timeout",
+      "labels": ["full", "20-second", "technical", "injury"]
+    }
+  ]
+}
