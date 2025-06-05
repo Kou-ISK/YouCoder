@@ -241,9 +241,9 @@ const TimelineTable: React.FC<TimelineTableProps> = ({ actions, onDelete }) => {
                 borderBottom: "1px solid #e5e7eb"
               }}>
               <button
-                onClick={() =>
+                onClick={() => {
                   onDelete(action.team, action.action, action.start)
-                }
+                }}
                 style={{
                   backgroundColor: "#fee2e2",
                   color: "#b91c1c",

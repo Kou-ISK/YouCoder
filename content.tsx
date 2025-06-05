@@ -9,7 +9,9 @@ import {
   addLabel,
   deleteAction,
   getActions,
+  getYoutubeVideoId,
   loadActionsFromStorage,
+  loadTimelineForVideo,
   saveTimelineForVideo,
   startAction,
   stopAction
@@ -102,21 +104,6 @@ console.error = function (...args) {
 
   // その他の重要なエラーのみログ出力
   originalConsoleError.apply(console, args)
-}
-
-// YouTubeの動画IDを取得する関数。URLのクエリパラメータから"v"を抽出します。
-const getYoutubeVideoId = () => {
-  try {
-    const urlParams = new URLSearchParams(window.location.search)
-    const videoId = urlParams.get("v")
-    if (!videoId) {
-      console.warn("[YouCoder] 動画IDが取得できません")
-    }
-    return videoId
-  } catch (error) {
-    console.error("[YouCoder] 動画ID取得エラー:", error)
-    return null
-  }
 }
 
 // 動画の状態をチェックする関数
@@ -754,10 +741,29 @@ const MainContent: React.FC = () => {
           <TimelinePanel
             actions={timelineActions}
             onDelete={(team, action, start) => {
-              // deleteAction関数を呼び出して削除処理を実行
-              deleteAction(team, action, start)
-              // 削除後にタイムラインの状態を即座に更新
-              setTimelineActions(getActions())
+              console.log(
+                `[YouCoder] 削除開始: ${team} - ${action} - ${start}ms`
+              )
+
+              // 1. UI状態を即座に更新（削除対象をフィルタリング）
+              const newActions = timelineActions.filter(
+                (a) =>
+                  !(a.team === team && a.action === action && a.start === start)
+              )
+              setTimelineActions(newActions)
+              console.log(
+                `[YouCoder] UI更新完了 - 削除後のアクション数: ${newActions.length}`
+              )
+
+              // 2. バックグラウンドでストレージとメモリを更新
+              deleteAction(team, action, start).catch((error) => {
+                console.error("[YouCoder] バックグラウンド削除エラー:", error)
+                // エラーの場合はUIを元に戻す
+                setTimelineActions([...timelineActions])
+                console.warn(
+                  "[YouCoder] 削除に失敗したため、UIを元に戻しました"
+                )
+              })
             }}
             onSave={handleSaveTimeline}
           />
