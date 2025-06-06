@@ -14,6 +14,7 @@ export const LabelList: React.FC<LabelListProps> = ({
   <div style={{ marginBottom: "20px" }}>
     <h3>ラベル</h3>
     <button
+      type="button"
       onClick={onAdd}
       style={{
         marginBottom: "10px",
@@ -39,8 +40,9 @@ export const LabelList: React.FC<LabelListProps> = ({
             backgroundColor: "#f8f9fa",
             borderRadius: "4px"
           }}>
-          <span>{label}</span>
+          <span>{labels[label]}</span>
           <button
+            type="button"
             onClick={() => onRemove(label)}
             style={{
               padding: "2px 8px",

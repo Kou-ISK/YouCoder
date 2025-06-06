@@ -5,9 +5,14 @@ import { deleteAction } from "../lib/actionsManager"
 interface TimelineTableProps {
   actions: any[]
   onDelete: (team: string, action: string, start: number) => void
+  onSeek?: (time: number) => void
 }
 
-const TimelineTable: React.FC<TimelineTableProps> = ({ actions, onDelete }) => {
+const TimelineTable: React.FC<TimelineTableProps> = ({
+  actions,
+  onDelete,
+  onSeek
+}) => {
   // テーブルボディのrefを作成して、自動スクロール用に使用します
   const tbodyRef = useRef<HTMLTableSectionElement>(null)
 
@@ -15,7 +20,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({ actions, onDelete }) => {
   useEffect(() => {
     if (tbodyRef.current && actions.length > 0) {
       const lastRow = tbodyRef.current.lastElementChild
-      if (lastRow) {
+      if (lastRow && typeof lastRow.scrollIntoView === "function") {
         lastRow.scrollIntoView({ behavior: "smooth", block: "end" })
       }
     }
@@ -23,6 +28,13 @@ const TimelineTable: React.FC<TimelineTableProps> = ({ actions, onDelete }) => {
 
   // YouTube動画の再生位置を変更する関数
   const seekToTime = (timeInMs: number) => {
+    // onSeek propが提供されている場合はそちらを使用
+    if (onSeek) {
+      onSeek(timeInMs)
+      return
+    }
+
+    // フォールバック: 直接動画要素を操作
     const video = document.querySelector("video") as HTMLVideoElement
     if (video) {
       // ミリ秒を秒に変換

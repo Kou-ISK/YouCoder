@@ -17,12 +17,16 @@ interface TimelinePanelProps {
   actions: Action[]
   onDelete?: (team: string, action: string, start: number) => void
   onSave?: () => void
+  onExportCSV?: () => void
+  onSeek?: (time: number) => void
 }
 
 const TimelinePanel: React.FC<TimelinePanelProps> = ({
   actions,
   onDelete,
-  onSave
+  onSave,
+  onExportCSV,
+  onSeek
 }) => {
   return (
     <Draggable handle=".drag-handle">
@@ -75,7 +79,11 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
           <TimelineActions
             onSave={onSave}
             exportActionsToCSV={() => {
-              exportActionsToCSV(actions)
+              if (onExportCSV) {
+                onExportCSV()
+              } else {
+                exportActionsToCSV(actions)
+              }
             }}
           />
         </div>
@@ -85,7 +93,11 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
             overflowY: "auto",
             maxHeight: "200px"
           }}>
-          <TimelineTable actions={actions} onDelete={onDelete} />
+          <TimelineTable
+            actions={actions}
+            onDelete={onDelete}
+            onSeek={onSeek}
+          />
         </div>
       </div>
     </Draggable>

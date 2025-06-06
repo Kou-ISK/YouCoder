@@ -144,9 +144,9 @@ export const TaggingPanel: React.FC<TaggingPanelProps> = ({
                     <div key={`${team}-${action}`} style={{ flex: 1 }}>
                       <ActionButton
                         team={team}
-                        action={action}
+                        action={actions[action]}
                         isActive={activeActions.has(`${team}_${action}`)}
-                        onClick={onActionToggle}
+                        onClick={() => onActionToggle(team, action)}
                       />
                     </div>
                   ))}

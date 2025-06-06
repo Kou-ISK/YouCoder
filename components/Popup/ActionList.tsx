@@ -14,6 +14,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   <div style={{ marginBottom: "20px" }}>
     <h3>アクション</h3>
     <button
+      type="button"
       onClick={onAdd}
       style={{
         marginBottom: "10px",
@@ -39,8 +40,9 @@ export const ActionList: React.FC<ActionListProps> = ({
             backgroundColor: "#f8f9fa",
             borderRadius: "4px"
           }}>
-          <span>{action}</span>
+          <span>{actions[action]}</span>
           <button
+            type="button"
             onClick={() => onRemove(action)}
             style={{
               padding: "2px 8px",

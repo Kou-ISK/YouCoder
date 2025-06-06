@@ -1,3 +1,5 @@
+/// <reference types="../types/gapi" />
+
 // Load the Google API client library
 export const loadGapi = async (): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -75,8 +77,7 @@ export const appendToSheet = async (
   range: string,
   values: any[][]
 ): Promise<void> => {
-  const sheets = (gapi.client as any).sheets // Temporary workaround for type issue
-  await sheets.spreadsheets.values.append({
+  await gapi.client.sheets.spreadsheets.values.append({
     spreadsheetId,
     range,
     valueInputOption: "RAW",

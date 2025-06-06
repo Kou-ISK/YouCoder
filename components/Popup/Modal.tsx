@@ -3,8 +3,27 @@ import React, { useState } from "react"
 interface ModalProps {
   isOpen: boolean
   inputValue: string
-  modalType:
-    | "action"
+  m          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => onInputChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && inputValue.trim()) {
+                e.preventDefault()
+                onSubmit(isCategorizedLabel ? category : undefined)
+              }
+            }}
+            placeholder={
+              isCategorizedLabel ? "例: forehand, winner, error" : ""
+            }
+            style={{
+              width: "100%",
+              padding: "8px",
+              borderRadius: "4px",
+              border: "1px solid #ced4da"
+            }}
+            data-testid="modal-input"
+            autoFocus={true}ion"
     | "label"
     | "team"
     | "buttonSet"
@@ -123,7 +142,8 @@ export const Modal: React.FC<ModalProps> = ({
               borderRadius: "4px",
               border: "1px solid #ced4da"
             }}
-            autoFocus
+            data-testid="modal-input"
+            autoFocus={true}="autoFocus"
           />
         </div>
         <div
@@ -133,6 +153,7 @@ export const Modal: React.FC<ModalProps> = ({
             gap: "10px"
           }}>
           <button
+            type="button"
             onClick={onClose}
             style={{
               padding: "5px 10px",
@@ -145,6 +166,7 @@ export const Modal: React.FC<ModalProps> = ({
             キャンセル
           </button>
           <button
+            type="button"
             onClick={() => {
               console.log(
                 "Modal submit button clicked, modalType:",

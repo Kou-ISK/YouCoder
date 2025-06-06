@@ -18,6 +18,16 @@ const actions: Action[] = [] // 現在のアクションのリストを保持し
 
 let teams: string[] = [] // 利用可能なチーム名のリストを保持します。
 
+// テスト用: 状態をリセットする関数
+export const resetState = () => {
+  actions.length = 0
+  teams.length = 0
+  // ブラウザキャッシュもクリア
+  if (typeof window !== "undefined" && window.youCoderCache) {
+    window.youCoderCache = {}
+  }
+}
+
 // チームを追加する関数。既存のチーム名と重複しない場合に追加します。
 export const addTeam = (teamName: string) => {
   if (!teams.includes(teamName)) {
@@ -367,10 +377,12 @@ export const saveTimelineForVideo = async (
         error
       )
 
-      // 権限エラーの場合は代替保存を試行
+      // 権限エラーの場合、またはChrome APIが利用不可の場合は代替保存を試行
       if (
         error.message?.includes("Permission denied") ||
         error.message?.includes("requestStorageAccessFor") ||
+        error.message?.includes("Chrome storage API is not available") ||
+        error.message?.includes("Storage API methods are not accessible") ||
         attempt === retryCount
       ) {
         try {
