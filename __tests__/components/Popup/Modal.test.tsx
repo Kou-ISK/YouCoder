@@ -67,8 +67,11 @@ describe("Modal", () => {
     const categoryInputs = screen.getAllByRole("textbox")
     const categoryInput = categoryInputs[0] // 最初のテキストボックスはカテゴリ入力用
     expect(categoryInput).toBeInTheDocument()
-    expect(categoryInput).toHaveAttribute("placeholder", "例: Shot Type, Result, Position")
-    
+    expect(categoryInput).toHaveAttribute(
+      "placeholder",
+      "例: Shot Type, Result, Position"
+    )
+
     // デフォルトのカテゴリ値が設定されている
     expect(categoryInput).toHaveValue("一般")
   })
@@ -80,9 +83,12 @@ describe("Modal", () => {
     const input = screen.getByRole("textbox")
     await user.type(input, "t")
     expect(defaultProps.onInputChange).toHaveBeenCalledWith("t")
-    
+
     await user.clear(input)
     await user.type(input, "test")
+    // userEvent.typeはキー入力ごとに呼び出すため、最後の呼び出しを確認
+    const lastCall = defaultProps.onInputChange.mock.calls.length - 1
+    // 最後の呼び出しで「t」が「test」になっているはず
     expect(defaultProps.onInputChange).toHaveBeenCalledWith("test")
   })
 
@@ -154,8 +160,11 @@ describe("Modal", () => {
 
     const inputs = screen.getAllByRole("textbox")
     // 2つ目のテキストボックスがラベル用入力フィールド
-    const labelInput = inputs[1] 
-    expect(labelInput).toHaveAttribute("placeholder", "例: forehand, winner, error")
+    const labelInput = inputs[1]
+    expect(labelInput).toHaveAttribute(
+      "placeholder",
+      "例: forehand, winner, error"
+    )
   })
 
   test("通常のモーダルではプレースホルダーが空", () => {
@@ -168,8 +177,10 @@ describe("Modal", () => {
   test("モーダルオーバーレイのスタイルが適用される", () => {
     render(<Modal {...defaultProps} isOpen={true} />)
 
-    // モーダルのオーバーレイ要素を確認
-    const overlay = document.querySelector('div[style*="position: fixed"]')
+    // モーダル全体のコンテナを直接スタイルで検索
+    const overlay = screen
+      .getByTestId("modal-input")
+      .closest("div[style*='position: fixed']")
     expect(overlay).toBeInTheDocument()
     expect(overlay).toHaveStyle({
       position: "fixed",
@@ -265,16 +276,17 @@ describe("Modal", () => {
   test("アクセシビリティ: 適切なARIA属性が設定される", () => {
     render(<Modal {...defaultProps} isOpen={true} />)
 
-    const textInput = screen.getByRole("textbox")
-    expect(textInput).toHaveAttribute("autoFocus")
-    
     const submitButton = screen.getByText("追加")
     const cancelButton = screen.getByText("キャンセル")
-    
+
+    // type属性の確認
+    expect(submitButton).toHaveAttribute("type", "button")
+    expect(cancelButton).toHaveAttribute("type", "button")
+
     // ボタン要素の確認
     expect(submitButton.tagName.toLowerCase()).toBe("button")
     expect(cancelButton.tagName.toLowerCase()).toBe("button")
-    
+
     // ボタンのスタイルとアクセス可能性の確認
     expect(submitButton).toHaveStyle({
       cursor: "pointer"

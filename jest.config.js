@@ -35,7 +35,11 @@ module.exports = {
     ]
   },
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json"],
-  testPathIgnorePatterns: ["<rootDir>/node_modules/", "<rootDir>/build/"],
+  testPathIgnorePatterns: [
+    "<rootDir>/node_modules/",
+    "<rootDir>/build/",
+    "<rootDir>/__tests__/helpers/MockFileReader.ts"
+  ],
   extensionsToTreatAsEsm: [],
   transformIgnorePatterns: ["node_modules/(?!(.*\\.mjs$))"]
 }

@@ -61,12 +61,12 @@ describe("TaggingPanel", () => {
     // カテゴリヘッダーの確認
     expect(screen.getByText("Result")).toBeInTheDocument()
     expect(screen.getByText("Distance")).toBeInTheDocument()
-    
+
     // ラベルボタンの確認
     expect(screen.getByText("Good")).toBeInTheDocument()
     expect(screen.getByText("Bad")).toBeInTheDocument()
     expect(screen.getByText("Short")).toBeInTheDocument()
-    
+
     // 一般カテゴリは接頭辞なしで表示
     expect(screen.getByText("Basic")).toBeInTheDocument()
   })
