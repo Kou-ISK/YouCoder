@@ -1,12 +1,6 @@
 import React, { useEffect, useRef } from "react"
 
-import { deleteAction } from "../lib/actionsManager"
-
-interface TimelineTableProps {
-  actions: any[]
-  onDelete: (team: string, action: string, start: number) => void
-  onSeek?: (time: number) => void
-}
+import type { TimelineTableProps } from "./types"
 
 const TimelineTable: React.FC<TimelineTableProps> = ({
   actions,
@@ -275,4 +269,5 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
   )
 }
 
+export { TimelineTable }
 export default TimelineTable

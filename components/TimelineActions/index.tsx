@@ -59,4 +59,4 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
   )
 }
 
-export default TimelineActions
+export { TimelineActions }

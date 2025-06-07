@@ -5,7 +5,7 @@ import {
   setCredentials,
   signIn,
   signOut
-} from "../../lib/sheets"
+} from "./sheets"
 
 // Google API のモック
 const mockGapi = {

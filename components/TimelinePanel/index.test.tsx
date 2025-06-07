@@ -2,10 +2,11 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import React from "react"
 
-import TimelinePanel from "../../components/TimelinePanel"
+import { TimelinePanel } from "."
+import type { Action } from "./types"
 
 // Mockデータ
-const mockActions = [
+const mockActions: Action[] = [
   {
     team: "Team A",
     action: "Pass",

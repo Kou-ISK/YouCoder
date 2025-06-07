@@ -12,7 +12,7 @@ import {
   saveTimelineForVideo,
   startAction,
   stopAction
-} from "../../lib/actionsManager"
+} from "./actionsManager"
 
 // Test setup
 beforeEach(() => {

@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 
-import { ActionButton } from "../ActionButton"
-import { LabelButton } from "../LabelButton"
+import { ActionButton } from "../../../components/ActionButton"
+import { LabelButton } from "../../../components/LabelButton"
 
 type Button = {
   action: string

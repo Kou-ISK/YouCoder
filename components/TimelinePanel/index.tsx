@@ -1,27 +1,12 @@
 import React from "react"
 import Draggable from "react-draggable"
 
-import { exportActionsToCSV } from "../lib/actionsManager"
-import TimelineActions from "./TimelineActions"
-import TimelineTable from "./TimelineTable"
+import { exportActionsToCSV } from "../../lib/actionsManager"
+import { TimelineActions } from "../TimelineActions"
+import TimelineTable from "../TimelineTable"
+import type { TimelinePanelProps } from "./types"
 
-type Action = {
-  team: string
-  action: string
-  start: number
-  end?: number
-  labels: string[]
-}
-
-interface TimelinePanelProps {
-  actions: Action[]
-  onDelete?: (team: string, action: string, start: number) => void
-  onSave?: () => void
-  onExportCSV?: () => void
-  onSeek?: (time: number) => void
-}
-
-const TimelinePanel: React.FC<TimelinePanelProps> = ({
+export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   actions,
   onDelete,
   onSave,
@@ -77,7 +62,7 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
             borderBottom: "1px solid #e5e7eb"
           }}>
           <TimelineActions
-            onSave={onSave}
+            onSave={onSave || (() => {})}
             exportActionsToCSV={() => {
               if (onExportCSV) {
                 onExportCSV()
@@ -103,5 +88,3 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
     </Draggable>
   )
 }
-
-export default TimelinePanel

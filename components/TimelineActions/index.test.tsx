@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import React from "react"
 
-import TimelineActions from "../../components/TimelineActions"
+import { TimelineActions } from "."
 
 describe("TimelineActions", () => {
   const defaultProps = {

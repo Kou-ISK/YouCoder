@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import React from "react"
 
-import { Modal } from "../../../components/Popup/Modal"
+import { Modal } from "."
 
 type ModalType =
   | "team"

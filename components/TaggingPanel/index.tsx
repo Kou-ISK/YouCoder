@@ -1,8 +1,8 @@
 import React from "react"
 import Draggable from "react-draggable"
 
-import { ActionButton } from "./ActionButton"
-import { LabelButton } from "./LabelButton"
+import { ActionButton } from "../ActionButton"
+import { LabelButton } from "../LabelButton"
 
 interface TaggingPanelProps {
   teams: string[]
