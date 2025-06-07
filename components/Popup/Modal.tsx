@@ -106,7 +106,7 @@ export const Modal: React.FC<ModalProps> = ({
           minWidth: "300px"
         }}>
         <h3 id="modal-title">{modalTitle}</h3>
-        <form onSubmit={handleSubmit}>
+        <form role="form" onSubmit={handleSubmit}>
           {isCategorizedLabel && (
             <div style={{ marginBottom: "10px" }}>
               <label

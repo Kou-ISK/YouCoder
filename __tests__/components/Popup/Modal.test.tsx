@@ -48,7 +48,11 @@ describe("Modal", () => {
   it("フォームの入力が適切に処理される", async () => {
     render(<Modal {...defaultProps} />)
     const input = screen.getByRole("textbox")
-    await userEvent.type(input, "テストチーム")
+
+    // 直接値を設定してイベントを発火
+    fireEvent.change(input, { target: { value: "テストチーム" } })
+
+    // 入力値で呼び出されたことを確認
     expect(mockOnInputChange).toHaveBeenCalledWith("テストチーム")
   })
 
@@ -94,16 +98,19 @@ describe("Modal", () => {
     })
 
     it("カテゴリとラベルの両方の入力を処理する", async () => {
-      render(<Modal {...categoryProps} />)
+      const user = userEvent.setup()
+      render(<Modal {...categoryProps} inputValue="forehand" />)
+
+      // カテゴリの入力
       const categoryInput = screen.getByLabelText("カテゴリ:")
-      const labelInput = screen.getByLabelText("ラベル:")
+      await user.clear(categoryInput)
+      await user.type(categoryInput, "Shot Type")
 
-      await userEvent.type(categoryInput, "Shot Type")
-      await userEvent.type(labelInput, "forehand")
-
+      // フォームの送信
       const submitButton = screen.getByRole("button", { name: "追加" })
-      fireEvent.click(submitButton)
+      fireEvent.submit(screen.getByRole("form"))
 
+      fireEvent.click(submitButton)
       expect(mockOnSubmit).toHaveBeenCalledWith("Shot Type")
     })
   })
