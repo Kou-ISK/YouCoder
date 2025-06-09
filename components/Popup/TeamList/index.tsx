@@ -15,7 +15,7 @@ export const TeamList: React.FC<TeamListProps> = ({
     style={{
       marginBottom: "24px",
       padding: "16px",
-      backgroundColor: "white",
+      backgroundColor: "rgb(255, 255, 255)",
       borderRadius: "8px",
       boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)"
     }}>

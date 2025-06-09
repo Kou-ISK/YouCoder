@@ -1,9 +1,8 @@
+import { Modal } from "components/Modal"
 import React, { useEffect, useState } from "react"
 
 import ButtonSetComponent from "./components/Popup/ButtonSetComponent"
-import { Modal } from "./components/Popup/Modal"
 import { TeamList } from "./components/Popup/TeamList"
-import { appendToSheet, getAuthUrl, setCredentials } from "./lib/sheets"
 
 type Button = {
   action: string

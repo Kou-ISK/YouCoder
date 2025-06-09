@@ -1,19 +1,20 @@
 import React from "react"
 
-interface LabelListProps {
-  labels: Record<string, string>
+interface ActionListProps {
+  actions: Record<string, string>
   onAdd: () => void
-  onRemove: (label: string) => void
+  onRemove: (action: string) => void
 }
 
-export const LabelList: React.FC<LabelListProps> = ({
-  labels,
+export const ActionList: React.FC<ActionListProps> = ({
+  actions,
   onAdd,
   onRemove
 }) => (
   <div style={{ marginBottom: "20px" }}>
-    <h3>ラベル</h3>
+    <h3>アクション</h3>
     <button
+      type="button"
       onClick={onAdd}
       style={{
         marginBottom: "10px",
@@ -24,12 +25,12 @@ export const LabelList: React.FC<LabelListProps> = ({
         borderRadius: "4px",
         cursor: "pointer"
       }}>
-      ラベルを追加
+      アクションを追加
     </button>
     <div>
-      {Object.keys(labels).map((label) => (
+      {Object.keys(actions).map((action) => (
         <div
-          key={label}
+          key={action}
           style={{
             display: "flex",
             justifyContent: "space-between",
@@ -39,9 +40,10 @@ export const LabelList: React.FC<LabelListProps> = ({
             backgroundColor: "#f8f9fa",
             borderRadius: "4px"
           }}>
-          <span>{label}</span>
+          <span>{actions[action]}</span>
           <button
-            onClick={() => onRemove(label)}
+            type="button"
+            onClick={() => onRemove(action)}
             style={{
               padding: "2px 8px",
               backgroundColor: "#dc3545",

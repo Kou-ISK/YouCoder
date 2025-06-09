@@ -23,10 +23,10 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
     style={{
       margin: "0",
       padding: "3px 3px",
-      backgroundColor: isActive ? "#ef4444" : "#ffffff",
-      color: isActive ? "white" : "#374151",
+      backgroundColor: isActive ? "rgb(239, 68, 68)" : "rgb(255, 255, 255)",
+      color: isActive ? "rgb(255, 255, 255)" : "rgb(55, 65, 81)",
       border: "1px solid",
-      borderColor: isActive ? "#ef4444" : "#d1d5db",
+      borderColor: isActive ? "rgb(239, 68, 68)" : "rgb(209, 213, 219)",
       borderRadius: "3px",
       cursor: "pointer",
       fontSize: "14px",
@@ -42,16 +42,16 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
       if (isActive) {
         e.currentTarget.style.backgroundColor = "#dc2626"
       } else {
-        e.currentTarget.style.backgroundColor = "#f8fafc"
-        e.currentTarget.style.borderColor = "#94a3b8"
+        e.currentTarget.style.backgroundColor = "rgb(248, 250, 252)"
+        e.currentTarget.style.borderColor = "rgb(148, 163, 184)"
       }
     }}
     onMouseLeave={(e) => {
       if (isActive) {
-        e.currentTarget.style.backgroundColor = "#ef4444"
+        e.currentTarget.style.backgroundColor = "rgb(239, 68, 68)"
       } else {
-        e.currentTarget.style.backgroundColor = "#ffffff"
-        e.currentTarget.style.borderColor = "#d1d5db"
+        e.currentTarget.style.backgroundColor = "rgb(255, 255, 255)"
+        e.currentTarget.style.borderColor = "rgb(209, 213, 219)"
       }
     }}>
     {action}

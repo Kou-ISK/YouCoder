@@ -1,9 +1,8 @@
+import { TaggingPanel } from "components/TaggingPanel"
+import { TimelinePanel } from "components/TimelinePanel"
 import cssText from "data-text:~/styles/style.css"
 import type { PlasmoContentScript } from "plasmo"
 import React, { useEffect, useState } from "react"
-
-import { TaggingPanel } from "~components/TaggingPanel"
-import TimelinePanel from "~components/TimelinePanel"
 
 import {
   addLabel,

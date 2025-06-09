@@ -1,8 +1,8 @@
 import React from "react"
 import Draggable from "react-draggable"
 
-import { ActionButton } from "./ActionButton"
-import { LabelButton } from "./LabelButton"
+import { ActionButton } from "~components/ActionButton"
+import { LabelButton } from "~components/LabelButton"
 
 interface TaggingPanelProps {
   teams: string[]
@@ -144,9 +144,9 @@ export const TaggingPanel: React.FC<TaggingPanelProps> = ({
                     <div key={`${team}-${action}`} style={{ flex: 1 }}>
                       <ActionButton
                         team={team}
-                        action={action}
+                        action={actions[action]}
                         isActive={activeActions.has(`${team}_${action}`)}
-                        onClick={onActionToggle}
+                        onClick={() => onActionToggle(team, action)}
                       />
                     </div>
                   ))}
