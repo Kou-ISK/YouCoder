@@ -50,7 +50,7 @@ describe("LabelButton", () => {
     const button = screen.getByRole("button", { name: "Good" })
     expect(button).toHaveStyle({
       backgroundColor: "rgb(59, 130, 246)",
-      color: "rgb(255, 255, 255)",
+      color: "white",
       borderColor: "rgb(59, 130, 246)"
     })
   })

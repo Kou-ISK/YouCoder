@@ -20,7 +20,7 @@ export const LabelList: React.FC<LabelListProps> = ({
         marginBottom: "10px",
         padding: "5px 10px",
         backgroundColor: "#007bff",
-        color: "white",
+        color: "rgb(255, 255, 255)",
         border: "none",
         borderRadius: "4px",
         cursor: "pointer"
@@ -47,7 +47,7 @@ export const LabelList: React.FC<LabelListProps> = ({
             style={{
               padding: "2px 8px",
               backgroundColor: "#dc3545",
-              color: "white",
+              color: "rgb(255, 255, 255)",
               border: "none",
               borderRadius: "4px",
               cursor: "pointer"

@@ -93,7 +93,7 @@ describe("TeamList", () => {
     deleteButtons.forEach((button) => {
       expect(button).toHaveStyle({
         backgroundColor: "rgb(239, 68, 68)",
-        color: "rgb(255, 255, 255)",
+        color: "white",
         fontSize: "12px"
       })
     })

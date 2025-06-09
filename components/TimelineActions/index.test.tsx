@@ -53,7 +53,7 @@ describe("TimelineActions", () => {
     // CSV出力ボタンのスタイル確認
     expect(csvButton).toHaveStyle({
       backgroundColor: "rgb(99, 102, 241)",
-      color: "rgb(255, 255, 255)",
+      color: "white",
       fontSize: "12px",
       fontWeight: "500"
     })

@@ -37,8 +37,8 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
         onClick={onSave}
         style={{
           padding: "6px 12px",
-          backgroundColor: "#10b981",
-          color: "white",
+          backgroundColor: "rgb(16, 185, 129)",
+          color: "rgb(255, 255, 255)",
           border: "1px solid #10b981",
           borderRadius: "6px",
           cursor: "pointer",
@@ -51,7 +51,7 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
           e.currentTarget.style.backgroundColor = "#059669"
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = "#10b981"
+          e.currentTarget.style.backgroundColor = "rgb(16, 185, 129)"
         }}>
         保存
       </button>

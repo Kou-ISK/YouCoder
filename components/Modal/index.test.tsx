@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react"
+import { act, fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import React from "react"
 
@@ -49,10 +49,10 @@ describe("Modal", () => {
     render(<Modal {...defaultProps} />)
     const input = screen.getByRole("textbox")
 
-    // 直接値を設定してイベントを発火
-    fireEvent.change(input, { target: { value: "テストチーム" } })
+    await act(async () => {
+      fireEvent.change(input, { target: { value: "テストチーム" } })
+    })
 
-    // 入力値で呼び出されたことを確認
     expect(mockOnInputChange).toHaveBeenCalledWith("テストチーム")
   })
 
@@ -101,16 +101,17 @@ describe("Modal", () => {
       const user = userEvent.setup()
       render(<Modal {...categoryProps} inputValue="forehand" />)
 
-      // カテゴリの入力
-      const categoryInput = screen.getByLabelText("カテゴリ:")
-      await user.clear(categoryInput)
-      await user.type(categoryInput, "Shot Type")
+      await act(async () => {
+        const categoryInput = screen.getByLabelText("カテゴリ:")
+        await user.clear(categoryInput)
+        await user.type(categoryInput, "Shot Type")
+      })
 
-      // フォームの送信
-      const submitButton = screen.getByRole("button", { name: "追加" })
-      fireEvent.submit(screen.getByRole("form"))
+      await act(async () => {
+        const submitButton = screen.getByRole("button", { name: "追加" })
+        fireEvent.click(submitButton)
+      })
 
-      fireEvent.click(submitButton)
       expect(mockOnSubmit).toHaveBeenCalledWith("Shot Type")
     })
   })
