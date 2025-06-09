@@ -17,11 +17,8 @@ jobs:
         with:
           node-version: 18.x
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2.4.0
-        with:
-          version: 8.6.12
-          run_install: false
+      - name: Install pnpm globally
+        run: npm install -g pnpm@8.6.12
 
       - name: Get pnpm store directory
         id: pnpm-cache
