@@ -1,35 +1,36 @@
 import React from "react"
 
-interface ActionListProps {
-  actions: Record<string, string>
+interface LabelListProps {
+  labels: Record<string, string>
   onAdd: () => void
-  onRemove: (action: string) => void
+  onRemove: (label: string) => void
 }
 
-export const ActionList: React.FC<ActionListProps> = ({
-  actions,
+export const LabelList: React.FC<LabelListProps> = ({
+  labels,
   onAdd,
   onRemove
 }) => (
   <div style={{ marginBottom: "20px" }}>
-    <h3>アクション</h3>
+    <h3>ラベル</h3>
     <button
+      type="button"
       onClick={onAdd}
       style={{
         marginBottom: "10px",
         padding: "5px 10px",
         backgroundColor: "#007bff",
-        color: "white",
+        color: "rgb(255, 255, 255)",
         border: "none",
         borderRadius: "4px",
         cursor: "pointer"
       }}>
-      アクションを追加
+      ラベルを追加
     </button>
     <div>
-      {Object.keys(actions).map((action) => (
+      {Object.keys(labels).map((label) => (
         <div
-          key={action}
+          key={label}
           style={{
             display: "flex",
             justifyContent: "space-between",
@@ -39,13 +40,14 @@ export const ActionList: React.FC<ActionListProps> = ({
             backgroundColor: "#f8f9fa",
             borderRadius: "4px"
           }}>
-          <span>{action}</span>
+          <span>{labels[label]}</span>
           <button
-            onClick={() => onRemove(action)}
+            type="button"
+            onClick={() => onRemove(label)}
             style={{
               padding: "2px 8px",
               backgroundColor: "#dc3545",
-              color: "white",
+              color: "rgb(255, 255, 255)",
               border: "none",
               borderRadius: "4px",
               cursor: "pointer"

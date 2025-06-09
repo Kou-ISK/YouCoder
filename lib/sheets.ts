@@ -1,12 +1,15 @@
+/// <reference types="../types/gapi" />
+
 // Load the Google API client library
 export const loadGapi = async (): Promise<void> => {
   return new Promise((resolve, reject) => {
     const script = document.createElement("script")
     script.src = "https://apis.google.com/js/api.js"
     script.onload = () => {
-      gapi.load("client:auth2", async () => {
+      // gapi は window.gapi として使用できる
+      window.gapi.load("client:auth2", async () => {
         try {
-          await gapi.client.init({
+          await window.gapi.client.init({
             apiKey: "YOUR_API_KEY", // Replace with your API key
             clientId: "YOUR_CLIENT_ID", // Replace with your client ID
             discoveryDocs: [
@@ -14,7 +17,7 @@ export const loadGapi = async (): Promise<void> => {
             ],
             scope: "https://www.googleapis.com/auth/spreadsheets"
           })
-          await gapi.client.load("sheets", "v4") // Load Sheets API explicitly
+          await window.gapi.client.load("sheets", "v4") // Load Sheets API explicitly
           resolve()
         } catch (error) {
           reject(error)
@@ -30,14 +33,14 @@ export const loadGapi = async (): Promise<void> => {
  * Sign in the user using Google Auth.
  */
 export const signIn = async (): Promise<void> => {
-  await gapi.auth2.getAuthInstance().signIn()
+  await window.gapi.auth2.getAuthInstance().signIn()
 }
 
 /**
  * Sign out the user.
  */
 export const signOut = async (): Promise<void> => {
-  await gapi.auth2.getAuthInstance().signOut()
+  await window.gapi.auth2.getAuthInstance().signOut()
 }
 
 /**
@@ -45,8 +48,8 @@ export const signOut = async (): Promise<void> => {
  * @returns The authentication URL.
  */
 export const getAuthUrl = async (): Promise<string> => {
-  await gapi.auth2.getAuthInstance().signIn()
-  return gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse()
+  await window.gapi.auth2.getAuthInstance().signIn()
+  return window.gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse()
     .id_token
 }
 
@@ -55,8 +58,11 @@ export const getAuthUrl = async (): Promise<string> => {
  * @param code The authorization code.
  */
 export const setCredentials = async (code: string): Promise<void> => {
-  const token = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse()
-  gapi.auth.setToken({
+  const token = window.gapi.auth2
+    .getAuthInstance()
+    .currentUser.get()
+    .getAuthResponse()
+  window.gapi.auth.setToken({
     access_token: token.access_token,
     expires_in: token.expires_in.toString(), // Convert number to string
     error: "", // Default empty string for error
@@ -75,8 +81,12 @@ export const appendToSheet = async (
   range: string,
   values: any[][]
 ): Promise<void> => {
-  const sheets = (gapi.client as any).sheets // Temporary workaround for type issue
-  await sheets.spreadsheets.values.append({
+  // window.gapiがロードされていることを確認
+  if (!window.gapi || !window.gapi.client || !window.gapi.client.sheets) {
+    throw new Error("Google API Client Library has not been loaded properly")
+  }
+
+  await window.gapi.client.sheets.spreadsheets.values.append({
     spreadsheetId,
     range,
     valueInputOption: "RAW",

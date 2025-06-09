@@ -18,6 +18,16 @@ const actions: Action[] = [] // 現在のアクションのリストを保持し
 
 let teams: string[] = [] // 利用可能なチーム名のリストを保持します。
 
+// テスト用: 状態をリセットする関数
+export const resetState = () => {
+  actions.length = 0
+  teams.length = 0
+  // ブラウザキャッシュもクリア
+  if (typeof window !== "undefined" && window.youCoderCache) {
+    window.youCoderCache = {}
+  }
+}
+
 // チームを追加する関数。既存のチーム名と重複しない場合に追加します。
 export const addTeam = (teamName: string) => {
   if (!teams.includes(teamName)) {
@@ -189,7 +199,7 @@ const getYoutubeCurrentTime = (): number => {
   }
 }
 
-const getYoutubeVideoId = (): string | null => {
+export const getYoutubeVideoId = (): string | null => {
   try {
     const urlParams = new URLSearchParams(window.location.search)
     const videoId = urlParams.get("v")
@@ -367,10 +377,12 @@ export const saveTimelineForVideo = async (
         error
       )
 
-      // 権限エラーの場合は代替保存を試行
+      // 権限エラーの場合、またはChrome APIが利用不可の場合は代替保存を試行
       if (
         error.message?.includes("Permission denied") ||
         error.message?.includes("requestStorageAccessFor") ||
+        error.message?.includes("Chrome storage API is not available") ||
+        error.message?.includes("Storage API methods are not accessible") ||
         attempt === retryCount
       ) {
         try {
@@ -476,13 +488,39 @@ export const loadTimelineForVideo = async (videoId: string | null) => {
 }
 
 // アクションを削除する関数。
-export const deleteAction = (team: string, action: string, start: number) => {
-  const index = actions.findIndex(
-    (a) => a.team === team && a.action === action && a.start === start
-  )
-  if (index !== -1) {
-    actions.splice(index, 1) // 指定されたアクションを削除します。
-    saveTimelineForVideo(getYoutubeVideoId())
+export const deleteAction = async (
+  team: string,
+  action: string,
+  start: number
+): Promise<boolean> => {
+  try {
+    const index = actions.findIndex(
+      (a) => a.team === team && a.action === action && a.start === start
+    )
+
+    if (index !== -1) {
+      // メモリ上の配列から削除
+      actions.splice(index, 1)
+      console.log(
+        `[YouCoder] アクション削除完了: ${team} - ${action} (残り${actions.length}件)`
+      )
+
+      // ストレージに保存
+      const videoId = getYoutubeVideoId()
+      if (videoId) {
+        await saveTimelineForVideo(videoId)
+      }
+
+      return true
+    } else {
+      console.warn(
+        `[YouCoder] 削除対象が見つかりません: ${team} - ${action} (${start}ms)`
+      )
+      return false
+    }
+  } catch (error) {
+    console.error(`[YouCoder] 削除エラー:`, error)
+    throw error
   }
 }
 

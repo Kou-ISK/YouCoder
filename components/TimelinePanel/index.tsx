@@ -1,28 +1,18 @@
 import React from "react"
 import Draggable from "react-draggable"
 
-import { exportActionsToCSV } from "../lib/actionsManager"
-import TimelineActions from "./TimelineActions"
-import TimelineTable from "./TimelineTable"
+import { TimelineActions } from "~components/TimelineActions"
+import { TimelineTable } from "~components/TimelineTable"
+import { exportActionsToCSV } from "~lib/actionsManager"
 
-type Action = {
-  team: string
-  action: string
-  start: number
-  end?: number
-  labels: string[]
-}
+import type { TimelinePanelProps } from "./types"
 
-interface TimelinePanelProps {
-  actions: Action[]
-  onDelete?: (team: string, action: string, start: number) => void
-  onSave?: () => void
-}
-
-const TimelinePanel: React.FC<TimelinePanelProps> = ({
+export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   actions,
   onDelete,
-  onSave
+  onSave,
+  onExportCSV,
+  onSeek
 }) => {
   return (
     <Draggable handle=".drag-handle">
@@ -73,9 +63,13 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
             borderBottom: "1px solid #e5e7eb"
           }}>
           <TimelineActions
-            onSave={onSave}
+            onSave={onSave || (() => {})}
             exportActionsToCSV={() => {
-              exportActionsToCSV(actions)
+              if (onExportCSV) {
+                onExportCSV()
+              } else {
+                exportActionsToCSV(actions)
+              }
             }}
           />
         </div>
@@ -85,11 +79,13 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
             overflowY: "auto",
             maxHeight: "200px"
           }}>
-          <TimelineTable actions={actions} onDelete={onDelete} />
+          <TimelineTable
+            actions={actions}
+            onDelete={onDelete}
+            onSeek={onSeek}
+          />
         </div>
       </div>
     </Draggable>
   )
 }
-
-export default TimelinePanel
