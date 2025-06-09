@@ -5,7 +5,7 @@ module.exports = {
   testEnvironmentOptions: {
     url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
   },
-  setupFilesAfterEnv: ["<rootDir>/src/setupTests.ts"],
+  setupFilesAfterEnv: ["<rootDir>/setupTests.ts"],
   moduleNameMapper: {
     "^~(.*)$": "<rootDir>/$1",
     "\\.(css|less|scss)$": "identity-obj-proxy"

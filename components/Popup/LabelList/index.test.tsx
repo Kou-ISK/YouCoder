@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import React from "react"
 
-import { LabelList } from "../../../components/Popup/LabelList"
+import { LabelList } from "."
 
 describe("LabelList", () => {
   const defaultProps = {

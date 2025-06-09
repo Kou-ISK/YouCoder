@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import React from "react"
 
-import { TeamList } from "../../../components/Popup/TeamList"
+import { TeamList } from "."
 
 describe("TeamList", () => {
   const defaultProps = {

@@ -1,9 +1,10 @@
 import React from "react"
 import Draggable from "react-draggable"
 
-import { exportActionsToCSV } from "../../lib/actionsManager"
-import { TimelineActions } from "../TimelineActions"
-import TimelineTable from "../TimelineTable"
+import { TimelineActions } from "~components/TimelineActions"
+import { TimelineTable } from "~components/TimelineTable"
+import { exportActionsToCSV } from "~lib/actionsManager"
+
 import type { TimelinePanelProps } from "./types"
 
 export const TimelinePanel: React.FC<TimelinePanelProps> = ({
