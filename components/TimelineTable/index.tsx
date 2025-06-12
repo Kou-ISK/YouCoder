@@ -1,55 +1,136 @@
-import React, { useEffect, useRef } from "react"
+import React, { useMemo, useRef } from "react"
 
 import type { TimelineTableProps } from "./types"
 
 const TimelineTable: React.FC<TimelineTableProps> = ({
   actions,
   onDelete,
-  onSeek
+  onSeek,
+  onSort,
+  sortConfig,
+  filterConfig
 }) => {
-  // テーブルボディのrefを作成して、自動スクロール用に使用します
   const tbodyRef = useRef<HTMLTableSectionElement>(null)
 
-  // アクションが追加された時に一番下にスクロールします
-  useEffect(() => {
-    if (tbodyRef.current && actions.length > 0) {
-      const lastRow = tbodyRef.current.lastElementChild
-      if (lastRow && typeof lastRow.scrollIntoView === "function") {
-        lastRow.scrollIntoView({ behavior: "smooth", block: "end" })
-      }
-    }
-  }, [actions.length])
-
-  // YouTube動画の再生位置を変更する関数
-  const seekToTime = (timeInMs: number) => {
-    // onSeek propが提供されている場合はそちらを使用
-    if (onSeek) {
-      onSeek(timeInMs)
-      return
-    }
-
-    // フォールバック: 直接動画要素を操作
-    const video = document.querySelector("video") as HTMLVideoElement
-    if (video) {
-      // ミリ秒を秒に変換
-      const timeInSeconds = timeInMs / 1000
-      video.currentTime = timeInSeconds
-      console.log(`[YouCoder] 動画を${timeInSeconds}秒の位置に移動しました`)
-    } else {
-      console.warn("[YouCoder] 動画要素が見つかりませんでした")
-    }
-  }
-
-  const formatTime = (timestamp: number) => {
-    const totalSeconds = Math.floor(timestamp / 1000)
+  // ミリ秒を "MM:SS.mmm" 形式にフォーマット
+  const formatTime = (ms: number): string => {
+    const totalSeconds = Math.floor(ms / 1000)
     const minutes = Math.floor(totalSeconds / 60)
     const seconds = totalSeconds % 60
-    const milliseconds = timestamp % 1000
+    const milliseconds = ms % 1000
 
     return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
       2,
       "0"
     )}.${String(milliseconds).padStart(3, "0")}`
+  }
+
+  // シーク機能
+  const handleSeek = (time: number) => {
+    if (onSeek) {
+      onSeek(time)
+    } else {
+      // フォールバック: 直接動画要素を操作
+      const video = document.querySelector("video") as HTMLVideoElement
+      if (video) {
+        // ミリ秒を秒に変換
+        const timeInSeconds = time / 1000
+        video.currentTime = timeInSeconds
+        console.log(`[YouCoder] 動画を${timeInSeconds}秒の位置に移動しました`)
+      } else {
+        console.warn("[YouCoder] 動画要素が見つかりませんでした")
+      }
+    }
+  }
+
+  // ソートとフィルターを適用した最終的なアクションリスト
+  const processedActions = useMemo(() => {
+    let result = [...actions]
+    if (filterConfig) {
+      result = result.filter((action) => {
+        if (filterConfig.team && action.team !== filterConfig.team) {
+          return false
+        }
+        if (
+          filterConfig.action &&
+          !action.action.includes(filterConfig.action)
+        ) {
+          return false
+        }
+        if (
+          filterConfig.label &&
+          !action.labels?.some((label) =>
+            label.toLowerCase().includes(filterConfig.label!.toLowerCase())
+          )
+        ) {
+          return false
+        }
+        if (filterConfig.timeRange) {
+          const { start, end } = filterConfig.timeRange
+          if (action.start < start || (action.end && action.end > end)) {
+            return false
+          }
+        }
+        return true
+      })
+    }
+    if (sortConfig) {
+      result.sort((a, b) => {
+        if (
+          a[sortConfig.key] === undefined ||
+          b[sortConfig.key] === undefined
+        ) {
+          return 0
+        }
+        const comparison = (() => {
+          if (typeof a[sortConfig.key] === "number") {
+            return a[sortConfig.key] - b[sortConfig.key]
+          }
+          return String(a[sortConfig.key]).localeCompare(
+            String(b[sortConfig.key])
+          )
+        })()
+        return sortConfig.direction === "asc" ? comparison : -comparison
+      })
+    }
+    return result
+  }, [actions, sortConfig, filterConfig])
+
+  // ソートヘッダーをレンダリングする関数
+  const renderSortHeader = (
+    title: string,
+    key: "team" | "action" | "start" | "end",
+    width: string
+  ) => {
+    const isSorted = sortConfig?.key === key
+    const isAsc = isSorted && sortConfig.direction === "asc"
+
+    return (
+      <th
+        onClick={() => onSort && onSort(key)}
+        style={{
+          padding: "10px 12px",
+          textAlign: "left",
+          fontWeight: "600",
+          color: "#1e293b",
+          borderBottom: "none",
+          fontSize: "12px",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          cursor: "pointer",
+          width
+        }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          {title}
+          {isSorted && (
+            <span style={{ color: "#6b7280", fontSize: "10px" }}>
+              {isAsc ? "▲" : "▼"}
+            </span>
+          )}
+        </div>
+      </th>
+    )
   }
 
   return (
@@ -58,10 +139,19 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
         width: "100%",
         borderCollapse: "collapse",
         borderSpacing: 0,
+        tableLayout: "fixed",
         fontSize: "12px",
         fontFamily:
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
       }}>
+      <colgroup>
+        <col style={{ width: "20%" }} />
+        <col style={{ width: "30%" }} />
+        <col style={{ width: "15%" }} />
+        <col style={{ width: "15%" }} />
+        <col style={{ width: "15%" }} />
+        <col style={{ width: "5%" }} />
+      </colgroup>
       <thead
         style={{
           position: "sticky",
@@ -71,6 +161,10 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
           borderBottom: "1px solid #cbd5e1"
         }}>
         <tr>
+          {renderSortHeader("チーム", "team", "20%")}
+          {renderSortHeader("アクション", "action", "30%")}
+          {renderSortHeader("開始時間", "start", "15%")}
+          {renderSortHeader("終了時間", "end", "15%")}
           <th
             style={{
               padding: "10px 12px",
@@ -78,51 +172,11 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               fontWeight: "600",
               color: "#1e293b",
               borderBottom: "none",
-              fontSize: "12px"
-            }}>
-            チーム
-          </th>
-          <th
-            style={{
-              padding: "10px 12px",
-              textAlign: "left",
-              fontWeight: "600",
-              color: "#1e293b",
-              borderBottom: "none",
-              fontSize: "12px"
-            }}>
-            アクション
-          </th>
-          <th
-            style={{
-              padding: "10px 12px",
-              textAlign: "left",
-              fontWeight: "600",
-              color: "#1e293b",
-              borderBottom: "none",
-              fontSize: "12px"
-            }}>
-            開始時間
-          </th>
-          <th
-            style={{
-              padding: "10px 12px",
-              textAlign: "left",
-              fontWeight: "600",
-              color: "#1e293b",
-              borderBottom: "none",
-              fontSize: "12px"
-            }}>
-            終了時間
-          </th>
-          <th
-            style={{
-              padding: "10px 12px",
-              textAlign: "left",
-              fontWeight: "600",
-              color: "#1e293b",
-              borderBottom: "none",
-              fontSize: "12px"
+              fontSize: "12px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              width: "15%"
             }}>
             ラベル
           </th>
@@ -133,19 +187,19 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               fontWeight: "600",
               color: "#1e293b",
               borderBottom: "none",
-              fontSize: "12px"
+              fontSize: "12px",
+              width: "5%"
             }}>
             操作
           </th>
         </tr>
       </thead>
       <tbody ref={tbodyRef}>
-        {actions.map((action, index) => (
+        {processedActions.map((action, index) => (
           <tr
             key={index}
             style={{
-              backgroundColor: index % 2 === 0 ? "#ffffff" : "#f9fafb",
-              borderBottom: "1px solid #e5e7eb"
+              backgroundColor: index % 2 === 0 ? "#ffffff" : "#f9fafb"
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = "#f0f9ff"
@@ -159,7 +213,10 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 padding: "8px 12px",
                 color: "#374151",
                 fontWeight: "400",
-                borderBottom: "1px solid #e5e7eb"
+                borderBottom: "1px solid #e5e7eb",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
               }}>
               {action.team}
             </td>
@@ -168,12 +225,15 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 padding: "8px 12px",
                 color: "#111827",
                 fontWeight: "500",
-                borderBottom: "1px solid #e5e7eb"
+                borderBottom: "1px solid #e5e7eb",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
               }}>
               {action.action}
             </td>
             <td
-              onClick={() => seekToTime(action.start)}
+              onClick={() => handleSeek(action.start)}
               style={{
                 padding: "8px 12px",
                 color: "#3b82f6",
@@ -188,7 +248,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               {formatTime(action.start)}
             </td>
             <td
-              onClick={action.end ? () => seekToTime(action.end) : undefined}
+              onClick={action.end ? () => handleSeek(action.end) : undefined}
               style={{
                 padding: "8px 12px",
                 color: action.end ? "#3b82f6" : "#f59e0b",
@@ -211,11 +271,13 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 padding: "8px 12px",
                 color: "#6b7280",
                 fontSize: "12px",
-                borderBottom: "1px solid #e5e7eb"
+                borderBottom: "1px solid #e5e7eb",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
               }}>
               {action.labels && action.labels.length > 0
-                ? action.labels.map((label: string, index: number) => {
-                    // カテゴリ付きラベルかどうかをチェック
+                ? action.labels.map((label, index) => {
                     const isCategorizeDLabel = label.includes(" - ")
                     return (
                       <span key={index}>
@@ -247,9 +309,9 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 borderBottom: "1px solid #e5e7eb"
               }}>
               <button
-                onClick={() => {
+                onClick={() =>
                   onDelete(action.team, action.action, action.start)
-                }}
+                }
                 style={{
                   backgroundColor: "#fee2e2",
                   color: "#b91c1c",
