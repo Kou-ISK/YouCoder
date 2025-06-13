@@ -11,6 +11,13 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
   filterConfig
 }) => {
   const tbodyRef = useRef<HTMLTableSectionElement>(null)
+  // ホバー状態を管理する配列（team, action, start, end の順）
+  const [hoveredHeaders, setHoveredHeaders] = React.useState<boolean[]>([
+    false,
+    false,
+    false,
+    false
+  ])
 
   // ミリ秒を "MM:SS.mmm" 形式にフォーマット
   const formatTime = (ms: number): string => {
@@ -102,7 +109,8 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
   const renderSortHeader = (
     title: string,
     key: "team" | "action" | "start" | "end",
-    width: string
+    width: string,
+    index: number
   ) => {
     const isSorted = sortConfig?.key === key
     const isAsc = isSorted && sortConfig.direction === "asc"
@@ -110,6 +118,16 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
     return (
       <th
         onClick={() => onSort && onSort(key)}
+        onMouseEnter={() => {
+          const newHoveredHeaders = [...hoveredHeaders]
+          newHoveredHeaders[index] = true
+          setHoveredHeaders(newHoveredHeaders)
+        }}
+        onMouseLeave={() => {
+          const newHoveredHeaders = [...hoveredHeaders]
+          newHoveredHeaders[index] = false
+          setHoveredHeaders(newHoveredHeaders)
+        }}
         style={{
           padding: "10px 12px",
           textAlign: "left",
@@ -121,15 +139,28 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
           cursor: "pointer",
-          width
+          width,
+          transition: "background-color 0.2s ease",
+          backgroundColor: isSorted
+            ? "#f1f5f9"
+            : hoveredHeaders[index]
+              ? "#f8fafc"
+              : "transparent"
         }}>
         <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           {title}
-          {isSorted && (
-            <span style={{ color: "#6b7280", fontSize: "10px" }}>
-              {isAsc ? "▲" : "▼"}
-            </span>
-          )}
+          <span
+            style={{
+              color: isSorted
+                ? "#6b7280"
+                : hoveredHeaders[index]
+                  ? "#94a3b8"
+                  : "#cbd5e1",
+              fontSize: "10px",
+              transition: "color 0.2s ease"
+            }}>
+            {isAsc ? "▲" : "▼"}
+          </span>
         </div>
       </th>
     )
@@ -147,12 +178,12 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
       }}>
       <colgroup>
-        <col style={{ width: "20%" }} />
-        <col style={{ width: "30%" }} />
         <col style={{ width: "15%" }} />
         <col style={{ width: "15%" }} />
         <col style={{ width: "15%" }} />
-        <col style={{ width: "5%" }} />
+        <col style={{ width: "15%" }} />
+        <col style={{ width: "25%" }} />
+        <col style={{ width: "15%" }} />
       </colgroup>
       <thead
         style={{
@@ -163,10 +194,10 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
           borderBottom: "1px solid #cbd5e1"
         }}>
         <tr>
-          {renderSortHeader("チーム", "team", "20%")}
-          {renderSortHeader("アクション", "action", "30%")}
-          {renderSortHeader("開始時間", "start", "15%")}
-          {renderSortHeader("終了時間", "end", "15%")}
+          {renderSortHeader("チーム", "team", "15%", 0)}
+          {renderSortHeader("アクション", "action", "25%", 1)}
+          {renderSortHeader("開始時間", "start", "15%", 2)}
+          {renderSortHeader("終了時間", "end", "15%", 3)}
           <th
             style={{
               padding: "10px 12px",
@@ -178,7 +209,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
-              width: "15%"
+              width: "25%"
             }}>
             ラベル
           </th>
