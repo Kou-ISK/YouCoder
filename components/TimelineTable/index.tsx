@@ -26,20 +26,22 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
   }
 
   // シーク機能
-  const handleSeek = (time: number) => {
+  const seekToTime = (timeInMs: number) => {
+    // onSeek propが提供されている場合はそちらを使用
     if (onSeek) {
-      onSeek(time)
+      onSeek(timeInMs)
+      return
+    }
+
+    // フォールバック: 直接動画要素を操作
+    const video = document.querySelector("video") as HTMLVideoElement
+    if (video) {
+      // ミリ秒を秒に変換
+      const timeInSeconds = timeInMs / 1000
+      video.currentTime = timeInSeconds
+      console.log(`[YouCoder] 動画を${timeInSeconds}秒の位置に移動しました`)
     } else {
-      // フォールバック: 直接動画要素を操作
-      const video = document.querySelector("video") as HTMLVideoElement
-      if (video) {
-        // ミリ秒を秒に変換
-        const timeInSeconds = time / 1000
-        video.currentTime = timeInSeconds
-        console.log(`[YouCoder] 動画を${timeInSeconds}秒の位置に移動しました`)
-      } else {
-        console.warn("[YouCoder] 動画要素が見つかりませんでした")
-      }
+      console.warn("[YouCoder] 動画要素が見つかりませんでした")
     }
   }
 
@@ -233,7 +235,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               {action.action}
             </td>
             <td
-              onClick={() => handleSeek(action.start)}
+              onClick={() => seekToTime(action.start)}
               style={{
                 padding: "8px 12px",
                 color: "#3b82f6",
@@ -248,7 +250,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               {formatTime(action.start)}
             </td>
             <td
-              onClick={action.end ? () => handleSeek(action.end) : undefined}
+              onClick={action.end ? () => seekToTime(action.end) : undefined}
               style={{
                 padding: "8px 12px",
                 color: action.end ? "#3b82f6" : "#f59e0b",
