@@ -60,7 +60,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
           maxWidth: "1200px",
           maxHeight: "300px",
           backgroundColor: "#ffffff",
-          padding: "16px",
+          padding: "8px",
           borderRadius: "8px",
           boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
           border: "1px solid #e5e7eb",
@@ -71,31 +71,13 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
         <div
           className="drag-handle"
           style={{
-            cursor: "move",
-            padding: "4px",
-            marginBottom: "4px",
-            display: "flex",
-            justifyContent: "center",
-            height: "8px"
-          }}>
-          <div
-            style={{
-              width: "20px",
-              height: "4px",
-              backgroundColor: "#d1d5db",
-              borderRadius: "2px"
-            }}
-          />
-        </div>
-
-        <div
-          style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: "12px",
-            paddingBottom: "8px",
-            borderBottom: "1px solid #e5e7eb"
+            borderBottom: "1px solid #e5e7eb",
+            paddingBottom: "4px",
+            marginBottom: "8px",
+            cursor: "move"
           }}>
           <TimelineActions
             onSave={onSave || (() => {})}
@@ -107,24 +89,21 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
               }
             }}
           />
-          {/* フィルターコントロール */}
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            {filterConfig && (
-              <button
-                onClick={clearFilter}
-                style={{
-                  backgroundColor: "#f3f4f6",
-                  color: "#374151",
-                  border: "none",
-                  borderRadius: "4px",
-                  padding: "4px 8px",
-                  fontSize: "12px",
-                  cursor: "pointer"
-                }}>
-                フィルターをクリア
-              </button>
-            )}
-          </div>
+          {filterConfig && (
+            <button
+              onClick={clearFilter}
+              style={{
+                backgroundColor: "#f3f4f6",
+                color: "#374151",
+                border: "none",
+                borderRadius: "4px",
+                padding: "4px 8px",
+                fontSize: "12px",
+                cursor: "pointer"
+              }}>
+              フィルターをクリア
+            </button>
+          )}
         </div>
 
         <div
