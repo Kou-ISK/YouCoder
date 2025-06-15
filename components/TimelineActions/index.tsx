@@ -1,18 +1,18 @@
 import React from "react"
 
 interface TimelineActionsProps {
-  onSave: () => void
-  exportActionsToCSV: () => void
+  onSave?: () => void
+  onExportCSV?: () => void
 }
 
 const TimelineActions: React.FC<TimelineActionsProps> = ({
   onSave,
-  exportActionsToCSV
+  onExportCSV
 }) => {
   return (
     <div style={{ display: "flex", gap: "8px" }}>
       <button
-        onClick={exportActionsToCSV}
+        onClick={onExportCSV}
         style={{
           padding: "6px 12px",
           backgroundColor: "#6366f1",
@@ -51,7 +51,7 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
           e.currentTarget.style.backgroundColor = "#059669"
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = "rgb(16, 185, 129)"
+          e.currentTarget.style.backgroundColor = "#10b981"
         }}>
         保存
       </button>
@@ -60,3 +60,4 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
 }
 
 export { TimelineActions }
+export type { TimelineActionsProps }
