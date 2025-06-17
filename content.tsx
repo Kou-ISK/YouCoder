@@ -704,6 +704,18 @@ const MainContent: React.FC = () => {
     }, 100) // 少し遅延させてアクションの更新を確実に反映
   }
 
+  // 動画ページでのタイムライン同期を定期的に実行
+  useEffect(() => {
+    if (!isVideoPage) return
+
+    const timer = setInterval(() => {
+      const currentActions = getActions()
+      setTimelineActions([...currentActions])
+    }, 1000) // 1秒ごとに同期
+
+    return () => clearInterval(timer)
+  }, [isVideoPage])
+
   return (
     <div style={{ position: "relative", zIndex: 9999 }}>
       {isVideoPage && showExtension && (

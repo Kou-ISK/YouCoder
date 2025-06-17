@@ -3,7 +3,12 @@ import React, { useEffect, useRef, useState } from "react"
 import { DraggableResizable } from "../DraggableResizable"
 import { TimelineActions } from "../TimelineActions"
 import { TimelineTable } from "../TimelineTable"
-import type { FilterConfig, SortConfig, TimelinePanelProps } from "./types"
+import type {
+  Action,
+  FilterConfig,
+  SortConfig,
+  TimelinePanelProps
+} from "./types"
 
 const MIN_WIDTH = 400
 const MIN_HEIGHT = 200
@@ -26,13 +31,33 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
     defaultFilter || {}
   )
   const tableRef = useRef<HTMLDivElement>(null)
+  const prevActionsRef = useRef<Action[]>([])
 
-  // タイムラインの自動スクロール
+  // タイムラインの自動スクロール - 新しいアクションが追加された時のみ
   useEffect(() => {
-    if (actions.length > 0 && tableRef.current) {
-      tableRef.current.scrollTop = tableRef.current.scrollHeight
+    if (!tableRef.current) return
+
+    const isNewActionAdded = actions.length > prevActionsRef.current.length
+    const container = tableRef.current
+    const isNearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight < 50
+
+    if (isNewActionAdded && isNearBottom) {
+      // アニメーションフレームを使用して、DOMの更新後に確実にスクロール
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          if (container) {
+            container.scrollTo({
+              top: container.scrollHeight,
+              behavior: "smooth"
+            })
+          }
+        }, 100) // 少し遅延を入れてDOMの更新を待つ
+      })
     }
-  }, [actions.length])
+
+    prevActionsRef.current = [...actions]
+  }, [actions])
 
   const handleSort = (key: SortConfig["key"]) => {
     setSortConfig((currentSort) => {
