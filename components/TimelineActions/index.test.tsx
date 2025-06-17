@@ -7,7 +7,7 @@ import { TimelineActions } from "."
 describe("TimelineActions", () => {
   const defaultProps = {
     onSave: jest.fn(),
-    exportActionsToCSV: jest.fn()
+    onExportCSV: jest.fn()
   }
 
   beforeEach(() => {
@@ -24,14 +24,14 @@ describe("TimelineActions", () => {
     expect(screen.getByText("保存")).toBeInTheDocument()
   })
 
-  test("CSV出力ボタンをクリックするとexportActionsToCSVが呼ばれる", async () => {
+  test("CSV出力ボタンをクリックするとonExportCSVが呼ばれる", async () => {
     const user = userEvent.setup()
     render(<TimelineActions {...defaultProps} />)
 
     const csvButton = screen.getByText("CSV出力")
     await user.click(csvButton)
 
-    expect(defaultProps.exportActionsToCSV).toHaveBeenCalledTimes(1)
+    expect(defaultProps.onExportCSV).toHaveBeenCalledTimes(1)
   })
 
   test("保存ボタンをクリックするとonSaveが呼ばれる", async () => {
@@ -118,7 +118,7 @@ describe("TimelineActions", () => {
     await user.click(saveButton)
 
     // 各関数が2回ずつ呼ばれることを確認
-    expect(defaultProps.exportActionsToCSV).toHaveBeenCalledTimes(2)
+    expect(defaultProps.onExportCSV).toHaveBeenCalledTimes(2)
     expect(defaultProps.onSave).toHaveBeenCalledTimes(2)
   })
 
@@ -148,7 +148,7 @@ describe("TimelineActions", () => {
     // Enterキーでの操作
     csvButton.focus()
     await user.keyboard("{Enter}")
-    expect(defaultProps.exportActionsToCSV).toHaveBeenCalledTimes(1)
+    expect(defaultProps.onExportCSV).toHaveBeenCalledTimes(1)
 
     // Spaceキーでの操作
     saveButton.focus()
@@ -251,7 +251,7 @@ describe("TimelineActions", () => {
     render(
       <TimelineActions
         onSave={undefined as any}
-        exportActionsToCSV={undefined as any}
+        onExportCSV={undefined as any}
       />
     )
 
@@ -277,7 +277,7 @@ describe("TimelineActions", () => {
     // 同時に素早くクリック
     await Promise.all([user.click(csvButton), user.click(saveButton)])
 
-    expect(defaultProps.exportActionsToCSV).toHaveBeenCalledTimes(1)
+    expect(defaultProps.onExportCSV).toHaveBeenCalledTimes(1)
     expect(defaultProps.onSave).toHaveBeenCalledTimes(1)
   })
 

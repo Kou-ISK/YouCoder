@@ -7,6 +7,7 @@ import React, { useEffect, useState } from "react"
 import {
   addLabel,
   deleteAction,
+  exportActionsToCSV,
   getActions,
   getYoutubeVideoId,
   loadActionsFromStorage,
@@ -777,6 +778,7 @@ const MainContent: React.FC = () => {
               })
             }}
             onSave={handleSaveTimeline}
+            onExportCSV={() => exportActionsToCSV(timelineActions)}
           />
         </>
       )}
