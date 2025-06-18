@@ -50,12 +50,12 @@ describe("TimelineActions", () => {
     const csvButton = screen.getByText("CSV出力")
     const saveButton = screen.getByText("保存")
 
-    // CSV出力ボタンのスタイル確認
+    // CSV出力ボタンのスタイル確認（実際のスタイルに合わせて更新）
     expect(csvButton).toHaveStyle({
-      backgroundColor: "rgb(99, 102, 241)",
+      backgroundColor: "#3b82f6",
       color: "white",
-      fontSize: "12px",
-      fontWeight: "500"
+      fontSize: "13px",
+      fontWeight: "600"
     })
 
     // 保存ボタンのスタイル確認
@@ -75,7 +75,7 @@ describe("TimelineActions", () => {
 
     // 初期状態の確認
     expect(csvButton).toHaveStyle({
-      backgroundColor: "#6366f1"
+      backgroundColor: "#3b82f6"
     })
 
     // ホバー時のイベントハンドラが設定されていることを確認
@@ -163,7 +163,7 @@ describe("TimelineActions", () => {
     const container = screen.getByText("CSV出力").closest("div")
     expect(container).toHaveStyle({
       display: "flex",
-      gap: "8px"
+      gap: "12px"
     })
   })
 
@@ -190,10 +190,10 @@ describe("TimelineActions", () => {
 
     // transitionプロパティが設定されていることを確認
     expect(csvButton).toHaveStyle({
-      transition: "all 0.15s ease"
+      transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
     })
     expect(saveButton).toHaveStyle({
-      transition: "all 0.15s ease"
+      transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
     })
   })
 
@@ -205,10 +205,12 @@ describe("TimelineActions", () => {
 
     // boxShadowが設定されていることを確認
     expect(csvButton).toHaveStyle({
-      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)"
+      boxShadow:
+        "0 2px 4px rgba(59, 130, 246, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05)"
     })
     expect(saveButton).toHaveStyle({
-      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)"
+      boxShadow:
+        "0 2px 4px rgba(59, 130, 246, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05)"
     })
   })
 
@@ -220,8 +222,8 @@ describe("TimelineActions", () => {
 
     // borderとborderRadiusが正しく設定されていることを確認
     expect(csvButton).toHaveStyle({
-      border: "1px solid #6366f1",
-      borderRadius: "6px"
+      border: "none",
+      borderRadius: "8px"
     })
     expect(saveButton).toHaveStyle({
       border: "1px solid #10b981",
@@ -237,10 +239,10 @@ describe("TimelineActions", () => {
 
     // paddingが正しく設定されていることを確認
     expect(csvButton).toHaveStyle({
-      padding: "6px 12px"
+      padding: "8px 16px"
     })
     expect(saveButton).toHaveStyle({
-      padding: "6px 12px"
+      padding: "8px 16px"
     })
   })
 

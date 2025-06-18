@@ -10,10 +10,10 @@ import type {
   TimelinePanelProps
 } from "./types"
 
-const MIN_WIDTH = 400
-const MIN_HEIGHT = 200
+const MIN_WIDTH = 500
+const MIN_HEIGHT = 300
 const INITIAL_POSITION = { x: 200, y: 600 }
-const INITIAL_SIZE = { width: 600, height: 200 }
+const INITIAL_SIZE = { width: 800, height: 400 }
 
 export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   actions,
@@ -77,14 +77,30 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
       initialSize={INITIAL_SIZE}
       minWidth={MIN_WIDTH}
       minHeight={MIN_HEIGHT}
-      className="rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100/40 transition-all duration-300 ease-in-out hover:shadow-2xl"
+      className="rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100/40 transition-all duration-300 ease-in-out hover:shadow-2xl"
       style={{
         zIndex: 10000,
-        borderRadius: "5px",
-        backgroundColor: "white"
+        borderRadius: "8px",
+        backgroundColor: "white",
+        display: "flex",
+        flexDirection: "column"
       }}>
-      <div className="h-full">
-        <div className="timeline-actions p-4 flex items-center justify-between border-b border-gray-100/60 bg-gradient-to-r from-white/80 via-white/60 to-gray-50/40 backdrop-blur-sm cursor-grab rounded-t-3xl">
+      <div
+        style={{
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden"
+        }}>
+        <div
+          className="timeline-actions flex items-center justify-between border-b border-gray-100/60 bg-gradient-to-r from-white/80 via-white/60 to-gray-50/40 backdrop-blur-sm cursor-grab"
+          style={{
+            padding: "12px 16px",
+            borderTopLeftRadius: "8px",
+            borderTopRightRadius: "8px",
+            flexShrink: 0,
+            minHeight: "56px"
+          }}>
           <div className="flex gap-2">
             <TimelineActions onExportCSV={onExportCSV} onSave={onSave} />
           </div>
@@ -92,8 +108,13 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
         </div>
         <div
           ref={tableRef}
-          className="timeline-content px-4 pb-4 overflow-auto bg-white/95 cursor-default"
-          style={{ height: "calc(100% - 64px)" }}>
+          className="timeline-content bg-white/95 cursor-default"
+          style={{
+            flex: 1,
+            overflow: "hidden",
+            padding: "8px",
+            minHeight: 0 // フレックスアイテムが縮小可能にする
+          }}>
           <TimelineTable
             actions={actions}
             onDelete={onDelete}

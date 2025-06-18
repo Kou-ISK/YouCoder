@@ -167,200 +167,209 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
   }
 
   return (
-    <table
+    <div
       style={{
         width: "100%",
-        borderCollapse: "collapse",
-        borderSpacing: 0,
-        tableLayout: "fixed",
-        fontSize: "12px",
-        fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        height: "100%",
+        overflow: "auto",
+        position: "relative"
       }}>
-      <colgroup>
-        <col style={{ width: "15%" }} />
-        <col style={{ width: "15%" }} />
-        <col style={{ width: "15%" }} />
-        <col style={{ width: "15%" }} />
-        <col style={{ width: "25%" }} />
-        <col style={{ width: "15%" }} />
-      </colgroup>
-      <thead
+      <table
         style={{
-          position: "sticky",
-          top: 0,
-          backgroundColor: "#f1f5f9",
-          zIndex: 1,
-          borderBottom: "1px solid #cbd5e1"
+          width: "100%",
+          borderCollapse: "collapse",
+          borderSpacing: 0,
+          tableLayout: "fixed",
+          fontSize: "12px",
+          fontFamily:
+            "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          minWidth: "600px" // 最小幅を設定してスクロールを可能にする
         }}>
-        <tr>
-          {renderSortHeader("チーム", "team", "15%", 0)}
-          {renderSortHeader("アクション", "action", "25%", 1)}
-          {renderSortHeader("開始時間", "start", "15%", 2)}
-          {renderSortHeader("終了時間", "end", "15%", 3)}
-          <th
-            style={{
-              padding: "10px 12px",
-              textAlign: "left",
-              fontWeight: "600",
-              color: "#1e293b",
-              borderBottom: "none",
-              fontSize: "12px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              width: "25%"
-            }}>
-            ラベル
-          </th>
-          <th
-            style={{
-              padding: "10px 12px",
-              textAlign: "center",
-              fontWeight: "600",
-              color: "#1e293b",
-              borderBottom: "none",
-              fontSize: "12px",
-              width: "5%"
-            }}>
-            操作
-          </th>
-        </tr>
-      </thead>
-      <tbody ref={tbodyRef}>
-        {processedActions.map((action, index) => (
-          <tr
-            key={index}
-            style={{
-              backgroundColor: index % 2 === 0 ? "#ffffff" : "#f9fafb"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#f0f9ff"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor =
-                index % 2 === 0 ? "#ffffff" : "#f9fafb"
-            }}>
-            <td
+        <colgroup>
+          <col style={{ width: "15%" }} />
+          <col style={{ width: "20%" }} />
+          <col style={{ width: "15%" }} />
+          <col style={{ width: "15%" }} />
+          <col style={{ width: "25%" }} />
+          <col style={{ width: "10%" }} />
+        </colgroup>
+        <thead
+          style={{
+            position: "sticky",
+            top: 0,
+            backgroundColor: "#f1f5f9",
+            zIndex: 10,
+            borderBottom: "1px solid #cbd5e1"
+          }}>
+          <tr>
+            {renderSortHeader("チーム", "team", "15%", 0)}
+            {renderSortHeader("アクション", "action", "25%", 1)}
+            {renderSortHeader("開始時間", "start", "15%", 2)}
+            {renderSortHeader("終了時間", "end", "15%", 3)}
+            <th
               style={{
-                padding: "8px 12px",
-                color: "#374151",
-                fontWeight: "400",
-                borderBottom: "1px solid #e5e7eb",
+                padding: "10px 12px",
+                textAlign: "left",
+                fontWeight: "600",
+                color: "#1e293b",
+                borderBottom: "none",
+                fontSize: "12px",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
-                whiteSpace: "nowrap"
+                whiteSpace: "nowrap",
+                width: "25%"
               }}>
-              {action.team}
-            </td>
-            <td
+              ラベル
+            </th>
+            <th
               style={{
-                padding: "8px 12px",
-                color: "#111827",
-                fontWeight: "500",
-                borderBottom: "1px solid #e5e7eb",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap"
-              }}>
-              {action.action}
-            </td>
-            <td
-              onClick={() => seekToTime(action.start)}
-              style={{
-                padding: "8px 12px",
-                color: "#3b82f6",
-                fontFamily: "monospace",
-                fontSize: "12px",
-                fontWeight: "500",
-                borderBottom: "1px solid #e5e7eb",
-                cursor: "pointer",
-                textDecoration: "underline dotted"
-              }}
-              title="クリックすると動画の該当位置にジャンプします">
-              {formatTime(action.start)}
-            </td>
-            <td
-              onClick={action.end ? () => seekToTime(action.end) : undefined}
-              style={{
-                padding: "8px 12px",
-                color: action.end ? "#3b82f6" : "#f59e0b",
-                fontFamily: "monospace",
-                fontSize: "12px",
-                fontWeight: "500",
-                borderBottom: "1px solid #e5e7eb",
-                cursor: action.end ? "pointer" : "default",
-                textDecoration: action.end ? "underline dotted" : "none"
-              }}
-              title={
-                action.end
-                  ? "クリックすると動画の該当位置にジャンプします"
-                  : "進行中のアクション"
-              }>
-              {action.end ? formatTime(action.end) : "進行中"}
-            </td>
-            <td
-              style={{
-                padding: "8px 12px",
-                color: "#6b7280",
-                fontSize: "12px",
-                borderBottom: "1px solid #e5e7eb",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap"
-              }}>
-              {action.labels && action.labels.length > 0
-                ? action.labels.map((label, index) => {
-                    const isCategorizeDLabel = label.includes(" - ")
-                    return (
-                      <span key={index}>
-                        {isCategorizeDLabel ? (
-                          <span style={{ fontSize: "11px" }}>
-                            <span
-                              style={{ color: "#9ca3af", fontWeight: "500" }}>
-                              [{label.split(" - ")[0]}]
-                            </span>
-                            <span style={{ color: "#6b7280" }}>
-                              {" " + label.split(" - ").slice(1).join(" - ")}
-                            </span>
-                          </span>
-                        ) : (
-                          <span style={{ color: "#374151" }}>{label}</span>
-                        )}
-                        {index < action.labels.length - 1 && (
-                          <span style={{ color: "#d1d5db" }}>, </span>
-                        )}
-                      </span>
-                    )
-                  })
-                : "-"}
-            </td>
-            <td
-              style={{
-                padding: "8px 12px",
+                padding: "10px 12px",
                 textAlign: "center",
-                borderBottom: "1px solid #e5e7eb"
+                fontWeight: "600",
+                color: "#1e293b",
+                borderBottom: "none",
+                fontSize: "12px",
+                width: "5%"
               }}>
-              <button
-                onClick={() =>
-                  onDelete(action.team, action.action, action.start)
-                }
-                style={{
-                  backgroundColor: "#fee2e2",
-                  color: "#b91c1c",
-                  border: "none",
-                  borderRadius: "4px",
-                  padding: "4px 8px",
-                  fontSize: "11px",
-                  cursor: "pointer"
-                }}>
-                削除
-              </button>
-            </td>
+              操作
+            </th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody ref={tbodyRef}>
+          {processedActions.map((action, index) => (
+            <tr
+              key={index}
+              style={{
+                backgroundColor: index % 2 === 0 ? "#ffffff" : "#f9fafb"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#f0f9ff"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor =
+                  index % 2 === 0 ? "#ffffff" : "#f9fafb"
+              }}>
+              <td
+                style={{
+                  padding: "8px 12px",
+                  color: "#374151",
+                  fontWeight: "400",
+                  borderBottom: "1px solid #e5e7eb",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap"
+                }}>
+                {action.team}
+              </td>
+              <td
+                style={{
+                  padding: "8px 12px",
+                  color: "#111827",
+                  fontWeight: "500",
+                  borderBottom: "1px solid #e5e7eb",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap"
+                }}>
+                {action.action}
+              </td>
+              <td
+                onClick={() => seekToTime(action.start)}
+                style={{
+                  padding: "8px 12px",
+                  color: "#3b82f6",
+                  fontFamily: "monospace",
+                  fontSize: "12px",
+                  fontWeight: "500",
+                  borderBottom: "1px solid #e5e7eb",
+                  cursor: "pointer",
+                  textDecoration: "underline dotted"
+                }}
+                title="クリックすると動画の該当位置にジャンプします">
+                {formatTime(action.start)}
+              </td>
+              <td
+                onClick={action.end ? () => seekToTime(action.end) : undefined}
+                style={{
+                  padding: "8px 12px",
+                  color: action.end ? "#3b82f6" : "#f59e0b",
+                  fontFamily: "monospace",
+                  fontSize: "12px",
+                  fontWeight: "500",
+                  borderBottom: "1px solid #e5e7eb",
+                  cursor: action.end ? "pointer" : "default",
+                  textDecoration: action.end ? "underline dotted" : "none"
+                }}
+                title={
+                  action.end
+                    ? "クリックすると動画の該当位置にジャンプします"
+                    : "進行中のアクション"
+                }>
+                {action.end ? formatTime(action.end) : "進行中"}
+              </td>
+              <td
+                style={{
+                  padding: "8px 12px",
+                  color: "#6b7280",
+                  fontSize: "12px",
+                  borderBottom: "1px solid #e5e7eb",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap"
+                }}>
+                {action.labels && action.labels.length > 0
+                  ? action.labels.map((label, index) => {
+                      const isCategorizeDLabel = label.includes(" - ")
+                      return (
+                        <span key={index}>
+                          {isCategorizeDLabel ? (
+                            <span style={{ fontSize: "11px" }}>
+                              <span
+                                style={{ color: "#9ca3af", fontWeight: "500" }}>
+                                [{label.split(" - ")[0]}]
+                              </span>
+                              <span style={{ color: "#6b7280" }}>
+                                {" " + label.split(" - ").slice(1).join(" - ")}
+                              </span>
+                            </span>
+                          ) : (
+                            <span style={{ color: "#374151" }}>{label}</span>
+                          )}
+                          {index < action.labels.length - 1 && (
+                            <span style={{ color: "#d1d5db" }}>, </span>
+                          )}
+                        </span>
+                      )
+                    })
+                  : "-"}
+              </td>
+              <td
+                style={{
+                  padding: "8px 12px",
+                  textAlign: "center",
+                  borderBottom: "1px solid #e5e7eb"
+                }}>
+                <button
+                  onClick={() =>
+                    onDelete(action.team, action.action, action.start)
+                  }
+                  style={{
+                    backgroundColor: "#fee2e2",
+                    color: "#b91c1c",
+                    border: "none",
+                    borderRadius: "4px",
+                    padding: "4px 8px",
+                    fontSize: "11px",
+                    cursor: "pointer"
+                  }}>
+                  削除
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
