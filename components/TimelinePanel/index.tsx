@@ -95,16 +95,13 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
         <div
           className="timeline-actions flex items-center justify-between border-b border-gray-100/60 bg-gradient-to-r from-white/80 via-white/60 to-gray-50/40 backdrop-blur-sm cursor-grab"
           style={{
-            padding: "12px 16px",
+            padding: "5px 5px",
             borderTopLeftRadius: "8px",
             borderTopRightRadius: "8px",
             flexShrink: 0,
-            minHeight: "56px"
+            minHeight: "30px"
           }}>
-          <div className="flex gap-2">
-            <TimelineActions onExportCSV={onExportCSV} onSave={onSave} />
-          </div>
-          <div className="flex-grow"></div>
+          <TimelineActions onExportCSV={onExportCSV} onSave={onSave} />
         </div>
         <div
           ref={tableRef}
