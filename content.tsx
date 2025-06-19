@@ -1,5 +1,6 @@
 import { TaggingPanel } from "components/TaggingPanel"
 import { TimelinePanel } from "components/TimelinePanel"
+import type { Action } from "components/TimelinePanel/types"
 import cssText from "data-text:~/styles/style.css"
 import type { PlasmoContentScript } from "plasmo"
 import React, { useEffect, useState } from "react"
@@ -160,7 +161,7 @@ const MainContent: React.FC = () => {
   )
 
   // タイムラインに関連付けられたアクション。
-  const [timelineActions, setTimelineActions] = useState(getActions())
+  const [timelineActions, setTimelineActions] = useState<Action[]>([])
 
   // 現在アクティブなラベルのセット。
   const [activeLabels, setActiveLabels] = useState<Set<string>>(new Set())
@@ -585,7 +586,7 @@ const MainContent: React.FC = () => {
     // ラベルをアクションに追加します。
     for (const actionKey of activeActions) {
       const [team, action] = actionKey.split("_")
-      addLabel(team, action, label)
+      await addLabel(team, action, label)
     }
 
     // 自動保存を実行
@@ -594,7 +595,10 @@ const MainContent: React.FC = () => {
       await saveTimelineForVideo(videoId)
     }
 
-    setTimelineActions(getActions())
+    // タイムラインの状態を更新
+    const updatedActions = getActions()
+    setTimelineActions([...updatedActions])
+
     setActiveLabels((prev) => {
       const updated = new Set(prev)
       updated.add(label)
@@ -667,42 +671,48 @@ const MainContent: React.FC = () => {
     console.log("[YouCoder Debug] フィルタリングされたラベル:", filteredLabels)
   }
 
-  const handleActionToggle = (team: string, action: string) => {
+  const handleActionToggle = async (team: string, action: string) => {
     // アクションの開始・停止を切り替えます。
     const actionKey = `${team}_${action}`
 
-    setActiveActions((prev) => {
-      const updated = new Set(prev)
+    try {
+      // 1. 先にアクションの開始/停止を実行し、完了を待つ
+      const updated = new Set(activeActions)
       if (updated.has(actionKey)) {
-        stopAction(team, action)
+        await stopAction(team, action)
         updated.delete(actionKey)
       } else {
-        startAction(team, action)
+        await startAction(team, action)
         updated.add(actionKey)
       }
+
+      // 2. 非同期処理が完了してから状態を更新
+      setActiveActions(updated)
       console.log(
         `[YouCoder] アクティブなアクションを更新しました - 現在のアクション数: ${Array.from(updated).length}`
       )
-      return updated
-    })
 
-    setSelectedActions((prev) => {
-      const updated = new Set(prev)
-      if (updated.has(actionKey)) {
-        updated.delete(actionKey)
+      // 3. 選択状態も同期して更新
+      const updatedSelection = new Set(selectedActions)
+      if (updatedSelection.has(actionKey)) {
+        updatedSelection.delete(actionKey)
       } else {
-        updated.add(actionKey)
+        updatedSelection.add(actionKey)
       }
+      setSelectedActions(updatedSelection)
       console.log(
-        `[YouCoder] 選択中のアクションを更新しました - 選択数: ${Array.from(updated).length}`
+        `[YouCoder] 選択中のアクションを更新しました - 選択数: ${Array.from(updatedSelection).length}`
       )
-      return updated
-    })
 
-    // アクション変更後にタイムラインの状態を更新
-    setTimeout(() => {
-      setTimelineActions(getActions())
-    }, 100) // 少し遅延させてアクションの更新を確実に反映
+      // 4. タイムラインの状態を即時更新（非同期処理完了後に確実に取得）
+      const updatedActions = getActions()
+      setTimelineActions([...updatedActions]) // 新しい配列参照で強制的に再レンダリング
+      console.log(
+        `[YouCoder] タイムライン状態を更新しました - 総アクション数: ${updatedActions.length}`
+      )
+    } catch (error) {
+      console.error("[YouCoder] アクション切り替えエラー:", error)
+    }
   }
 
   // 動画ページでのタイムライン同期を定期的に実行
