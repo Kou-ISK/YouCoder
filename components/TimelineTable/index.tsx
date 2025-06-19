@@ -54,6 +54,9 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
 
   // ソートとフィルターを適用した最終的なアクションリスト
   const processedActions = useMemo(() => {
+    console.log(
+      `[TimelineTable] processedActions計算開始 - 入力アクション数: ${actions.length}`
+    )
     let result = [...actions]
     if (filterConfig) {
       result = result.filter((action) => {
@@ -102,6 +105,9 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
         return sortConfig.direction === "asc" ? comparison : -comparison
       })
     }
+    console.log(
+      `[TimelineTable] processedActions計算完了 - 出力アクション数: ${result.length}`
+    )
     return result
   }, [actions, sortConfig, filterConfig])
 

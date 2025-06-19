@@ -485,6 +485,15 @@ const MainContent: React.FC = () => {
         // 動画のタイムラインデータを読み込み、進行中のアクションの状態を同期
         if (videoId && result.timelines) {
           const videoTimeline = result.timelines[videoId] || []
+
+          // actionsManagerのメモリ状態も同期
+          if (videoTimeline.length > 0) {
+            await loadTimelineForVideo(videoId)
+            console.log(
+              `[YouCoder] 初期読み込み: actionsManagerにタイムラインデータを同期しました - アクション数: ${videoTimeline.length}`
+            )
+          }
+
           setTimelineActions(videoTimeline)
 
           // 進行中のアクション（end プロパティがない）をUI状態に同期
@@ -502,8 +511,14 @@ const MainContent: React.FC = () => {
           setSelectedActions(new Set(inProgressActions))
 
           console.log(
-            `[YouCoder] UI状態をタイムラインデータと同期しました - 進行中アクション数: ${inProgressActions.size}`
+            `[YouCoder] UI状態をタイムラインデータと同期しました - 進行中アクション数: ${inProgressActions.size}, 総アクション数: ${videoTimeline.length}`
           )
+        } else if (videoId) {
+          // 動画IDはあるがタイムラインデータがない場合
+          console.log(
+            `[YouCoder] 初期読み込み: 動画ID ${videoId} のタイムラインデータが見つかりません`
+          )
+          setTimelineActions([])
         }
 
         if (result.teams) setTeams(result.teams)
@@ -719,12 +734,30 @@ const MainContent: React.FC = () => {
   useEffect(() => {
     if (!isVideoPage) return
 
+    // 初回実行（即座に同期）
+    const syncInitial = () => {
+      const currentActions = getActions()
+      if (currentActions.length > 0) {
+        setTimelineActions([...currentActions])
+        console.log(
+          `[YouCoder] 初回同期完了 - アクション数: ${currentActions.length}`
+        )
+      }
+    }
+
+    // 100ms後に初回同期（コンポーネントの初期化完了を待つ）
+    const initialTimer = setTimeout(syncInitial, 100)
+
+    // 定期同期（1秒ごと）
     const timer = setInterval(() => {
       const currentActions = getActions()
       setTimelineActions([...currentActions])
-    }, 1000) // 1秒ごとに同期
+    }, 1000)
 
-    return () => clearInterval(timer)
+    return () => {
+      clearTimeout(initialTimer)
+      clearInterval(timer)
+    }
   }, [isVideoPage])
 
   return (

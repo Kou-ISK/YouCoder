@@ -24,6 +24,10 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   defaultSort,
   defaultFilter
 }) => {
+  console.log(
+    `[TimelinePanel] レンダリング開始 - 受信アクション数: ${actions.length}`
+  )
+
   const [sortConfig, setSortConfig] = useState<SortConfig | undefined>(
     defaultSort
   )
