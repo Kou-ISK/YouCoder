@@ -1,5 +1,5 @@
 ---
-applyTo: "src/**/*.test.tsx,src/**/*.spec.tsx,src/**/*.test.ts,src/**/*.spec.ts"
+applyTo: "**/*.test.tsx,**/*.spec.tsx,**/*.test.ts,**/*.spec.ts"
 ---
 
 - テストは `@testing-library/react` を使って記述してください。
