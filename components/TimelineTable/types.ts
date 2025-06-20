@@ -18,4 +18,10 @@ export interface TimelineTableProps {
       end: number
     }
   }
+  // スクロール可能コンテナへの参照
+  scrollContainerRef?: React.RefObject<HTMLDivElement>
+}
+
+export interface TimelineTableRef {
+  scrollToBottom: () => void
 }

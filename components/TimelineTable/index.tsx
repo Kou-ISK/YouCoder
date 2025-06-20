@@ -8,7 +8,8 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
   onSeek,
   onSort,
   sortConfig,
-  filterConfig
+  filterConfig,
+  scrollContainerRef
 }) => {
   const tbodyRef = useRef<HTMLTableSectionElement>(null)
   // ホバー状態を管理する配列（team, action, start, end の順）
@@ -174,6 +175,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
 
   return (
     <div
+      ref={scrollContainerRef}
       style={{
         width: "100%",
         height: "100%",

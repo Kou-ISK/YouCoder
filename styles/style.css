@@ -52,3 +52,39 @@
 .section {
   margin-bottom: 20px;
 }
+
+/* アニメーション */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Timeline panel specific styles */
+.timeline-scroll-button {
+  animation: fadeIn 0.3s ease;
+}
+
+.new-action-indicator {
+  animation: pulse 1s infinite;
+}
