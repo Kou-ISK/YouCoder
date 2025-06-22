@@ -88,3 +88,55 @@
 .new-action-indicator {
   animation: pulse 1s infinite;
 }
+
+/* Timeline Table delete button animation */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Timeline Table Row Hover Effects */
+.timeline-row {
+  transition: all 0.2s ease;
+}
+
+.timeline-row:hover {
+  background-color: #f0f9ff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-delete-button {
+  transition: all 0.2s ease;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.timeline-row:hover .timeline-delete-button {
+  opacity: 0.8;
+  transform: scale(1);
+}
+
+.timeline-delete-button:hover {
+  opacity: 1 !important;
+  transform: scale(1.05) !important;
+  background-color: #fecaca !important;
+}
+
+.timeline-menu-dots {
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+
+.timeline-row:hover .timeline-menu-dots {
+  opacity: 0.7;
+}

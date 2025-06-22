@@ -19,6 +19,15 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
     false,
     false
   ])
+  // 行のホバー状態を管理
+  const [hoveredRowIndex, setHoveredRowIndex] = React.useState<number | null>(
+    null
+  )
+  // 削除確認状態を管理
+  const [pendingDeleteIndex, setPendingDeleteIndex] = React.useState<
+    number | null
+  >(null)
+  const deleteTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // ミリ秒を "MM:SS.mmm" 形式にフォーマット
   const formatTime = (ms: number): string => {
@@ -52,6 +61,63 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
       console.warn("[YouCoder] 動画要素が見つかりませんでした")
     }
   }
+
+  // 二段階削除確認機能
+  const handleDeleteClick = (
+    team: string,
+    action: string,
+    start: number,
+    index: number
+  ) => {
+    if (pendingDeleteIndex === index) {
+      // 二回目のクリック - 実際に削除を実行
+      onDelete(team, action, start)
+      setPendingDeleteIndex(null)
+      if (deleteTimeoutRef.current) {
+        clearTimeout(deleteTimeoutRef.current)
+        deleteTimeoutRef.current = null
+      }
+    } else {
+      // 最初のクリック - 確認状態に入る
+      setPendingDeleteIndex(index)
+
+      // 3秒後に確認状態をリセット
+      if (deleteTimeoutRef.current) {
+        clearTimeout(deleteTimeoutRef.current)
+      }
+      deleteTimeoutRef.current = setTimeout(() => {
+        setPendingDeleteIndex(null)
+        deleteTimeoutRef.current = null
+      }, 3000)
+    }
+  }
+
+  // ESCキーで削除確認をキャンセル
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && pendingDeleteIndex !== null) {
+        setPendingDeleteIndex(null)
+        if (deleteTimeoutRef.current) {
+          clearTimeout(deleteTimeoutRef.current)
+          deleteTimeoutRef.current = null
+        }
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown)
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [pendingDeleteIndex])
+
+  // コンポーネントのクリーンアップ
+  React.useEffect(() => {
+    return () => {
+      if (deleteTimeoutRef.current) {
+        clearTimeout(deleteTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // ソートとフィルターを適用した最終的なアクションリスト
   const processedActions = useMemo(() => {
@@ -194,11 +260,11 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
           minWidth: "600px" // 最小幅を設定してスクロールを可能にする
         }}>
         <colgroup>
-          <col style={{ width: "15%" }} />
-          <col style={{ width: "20%" }} />
-          <col style={{ width: "15%" }} />
-          <col style={{ width: "15%" }} />
-          <col style={{ width: "25%" }} />
+          <col style={{ width: "10%" }} />
+          <col style={{ width: "10%" }} />
+          <col style={{ width: "10%" }} />
+          <col style={{ width: "10%" }} />
+          <col style={{ width: "50%" }} />
           <col style={{ width: "10%" }} />
         </colgroup>
         <thead
@@ -211,9 +277,9 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
           }}>
           <tr>
             {renderSortHeader("チーム", "team", "15%", 0)}
-            {renderSortHeader("アクション", "action", "25%", 1)}
-            {renderSortHeader("開始時間", "start", "15%", 2)}
-            {renderSortHeader("終了時間", "end", "15%", 3)}
+            {renderSortHeader("アクション", "action", "20%", 1)}
+            {renderSortHeader("開始時間", "start", "12%", 2)}
+            {renderSortHeader("終了時間", "end", "12%", 3)}
             <th
               style={{
                 padding: "10px 12px",
@@ -225,7 +291,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-                width: "25%"
+                width: "36%"
               }}>
               ラベル
             </th>
@@ -248,14 +314,32 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
             <tr
               key={index}
               style={{
-                backgroundColor: index % 2 === 0 ? "#ffffff" : "#f9fafb"
+                backgroundColor:
+                  pendingDeleteIndex === index
+                    ? "#fef2f2"
+                    : index % 2 === 0
+                      ? "#ffffff"
+                      : "#f9fafb",
+                borderLeft:
+                  pendingDeleteIndex === index
+                    ? "3px solid #ef4444"
+                    : "3px solid transparent",
+                transition: "all 0.3s ease"
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#f0f9ff"
+                if (pendingDeleteIndex !== index) {
+                  e.currentTarget.style.backgroundColor = "#f0f9ff"
+                }
+                setHoveredRowIndex(index)
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  index % 2 === 0 ? "#ffffff" : "#f9fafb"
+                if (pendingDeleteIndex === index) {
+                  e.currentTarget.style.backgroundColor = "#fef2f2"
+                } else {
+                  e.currentTarget.style.backgroundColor =
+                    index % 2 === 0 ? "#ffffff" : "#f9fafb"
+                }
+                setHoveredRowIndex(null)
               }}>
               <td
                 style={{
@@ -355,23 +439,107 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 style={{
                   padding: "8px 12px",
                   textAlign: "center",
-                  borderBottom: "1px solid #e5e7eb"
+                  borderBottom: "1px solid #e5e7eb",
+                  position: "relative"
                 }}>
-                <button
-                  onClick={() =>
-                    onDelete(action.team, action.action, action.start)
-                  }
-                  style={{
-                    backgroundColor: "#fee2e2",
-                    color: "#b91c1c",
-                    border: "none",
-                    borderRadius: "4px",
-                    padding: "4px 8px",
-                    fontSize: "11px",
-                    cursor: "pointer"
-                  }}>
-                  削除
-                </button>
+                {hoveredRowIndex === index ? (
+                  pendingDeleteIndex === index ? (
+                    // 削除確認状態のボタン
+                    <button
+                      onClick={() =>
+                        handleDeleteClick(
+                          action.team,
+                          action.action,
+                          action.start,
+                          index
+                        )
+                      }
+                      style={{
+                        backgroundColor: "#dc2626",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "4px",
+                        padding: "4px 8px",
+                        fontSize: "10px",
+                        cursor: "pointer",
+                        fontWeight: "600",
+                        animation: "pulse 1s infinite"
+                      }}
+                      title="もう一度クリックすると削除されます">
+                      削除確認
+                    </button>
+                  ) : (
+                    // 通常の削除ボタン
+                    <button
+                      onClick={() =>
+                        handleDeleteClick(
+                          action.team,
+                          action.action,
+                          action.start,
+                          index
+                        )
+                      }
+                      style={{
+                        backgroundColor: "transparent",
+                        color: "#6b7280",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "4px",
+                        padding: "2px 6px",
+                        fontSize: "10px",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#fee2e2"
+                        e.currentTarget.style.color = "#b91c1c"
+                        e.currentTarget.style.borderColor = "#fecaca"
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent"
+                        e.currentTarget.style.color = "#6b7280"
+                        e.currentTarget.style.borderColor = "#d1d5db"
+                      }}
+                      title="クリックして削除を開始">
+                      🗑️
+                    </button>
+                  )
+                ) : pendingDeleteIndex === index ? (
+                  // ホバーしていないが削除確認状態のアイテム
+                  <button
+                    onClick={() =>
+                      handleDeleteClick(
+                        action.team,
+                        action.action,
+                        action.start,
+                        index
+                      )
+                    }
+                    style={{
+                      backgroundColor: "#dc2626",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "4px",
+                      padding: "4px 8px",
+                      fontSize: "10px",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                      animation: "pulse 1s infinite"
+                    }}
+                    title="もう一度クリックすると削除されます">
+                    削除確認
+                  </button>
+                ) : (
+                  // 何も表示しない（削除ボタンを隠す）
+                  <span
+                    style={{
+                      color: "#e5e7eb",
+                      fontSize: "10px",
+                      fontWeight: "400",
+                      userSelect: "none"
+                    }}>
+                    ⋯
+                  </span>
+                )}
               </td>
             </tr>
           ))}
