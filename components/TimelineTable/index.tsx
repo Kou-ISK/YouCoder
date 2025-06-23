@@ -130,17 +130,12 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
         if (filterConfig.team && action.team !== filterConfig.team) {
           return false
         }
-        if (
-          filterConfig.action &&
-          !action.action.includes(filterConfig.action)
-        ) {
+        if (filterConfig.action && action.action !== filterConfig.action) {
           return false
         }
         if (
           filterConfig.label &&
-          !action.labels?.some((label) =>
-            label.toLowerCase().includes(filterConfig.label!.toLowerCase())
-          )
+          !action.labels?.some((label) => label === filterConfig.label)
         ) {
           return false
         }

@@ -107,10 +107,16 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
             setTimeout(() => {
               if (scrollContainer) {
                 const beforeScrollTop = scrollContainer.scrollTop
-                scrollContainer.scrollTo({
-                  top: scrollContainer.scrollHeight,
-                  behavior: "smooth"
-                })
+                // JSdom環境での互換性を考慮
+                if (typeof scrollContainer.scrollTo === "function") {
+                  scrollContainer.scrollTo({
+                    top: scrollContainer.scrollHeight,
+                    behavior: "smooth"
+                  })
+                } else {
+                  // フォールバック: scrollTopを直接設定
+                  scrollContainer.scrollTop = scrollContainer.scrollHeight
+                }
                 console.log(
                   `[TimelinePanel] scrollContainerでスクロール実行 - beforeTop: ${beforeScrollTop}, targetTop: ${scrollContainer.scrollHeight}`
                 )
@@ -148,10 +154,16 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
               setTimeout(() => {
                 if (scrollableDiv) {
                   const beforeScrollTop = scrollableDiv.scrollTop
-                  scrollableDiv.scrollTo({
-                    top: scrollableDiv.scrollHeight,
-                    behavior: "smooth"
-                  })
+                  // JSdom環境での互換性を考慮
+                  if (typeof scrollableDiv.scrollTo === "function") {
+                    scrollableDiv.scrollTo({
+                      top: scrollableDiv.scrollHeight,
+                      behavior: "smooth"
+                    })
+                  } else {
+                    // フォールバック: scrollTopを直接設定
+                    scrollableDiv.scrollTop = scrollableDiv.scrollHeight
+                  }
                   console.log(
                     `[TimelinePanel] tableRef内スクロール実行 - beforeTop: ${beforeScrollTop}, targetTop: ${scrollableDiv.scrollHeight}`
                   )
@@ -184,10 +196,16 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                 setTimeout(() => {
                   if (tableRef.current) {
                     const beforeScrollTop = tableRef.current.scrollTop
-                    tableRef.current.scrollTo({
-                      top: tableRef.current.scrollHeight,
-                      behavior: "smooth"
-                    })
+                    // JSdom環境での互換性を考慮
+                    if (typeof tableRef.current.scrollTo === "function") {
+                      tableRef.current.scrollTo({
+                        top: tableRef.current.scrollHeight,
+                        behavior: "smooth"
+                      })
+                    } else {
+                      // フォールバック: scrollTopを直接設定
+                      tableRef.current.scrollTop = tableRef.current.scrollHeight
+                    }
                     console.log(
                       `[TimelinePanel] tableRefでスクロール実行 - beforeTop: ${beforeScrollTop}, targetTop: ${tableRef.current.scrollHeight}`
                     )
@@ -237,14 +255,51 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
     })
   }
 
+  // プルダウンフィルターの処理
+  const handleFilterChange = (key: keyof FilterConfig, value: string) => {
+    setFilterConfig((prev) => ({
+      ...prev,
+      [key]: value || undefined
+    }))
+  }
+
+  // フィルターリセット
+  const handleFilterReset = () => {
+    setFilterConfig({})
+  }
+
+  // 動的な選択肢の生成
+  const getUniqueTeams = () => {
+    const teams = [...new Set(actions.map((action) => action.team))]
+    return teams.sort()
+  }
+
+  const getUniqueActions = () => {
+    const actionTypes = [...new Set(actions.map((action) => action.action))]
+    return actionTypes.sort()
+  }
+
+  const getUniqueLabels = () => {
+    const labels = [
+      ...new Set(actions.flatMap((action) => action.labels || []))
+    ]
+    return labels.sort()
+  }
+
   // 手動で下部にスクロールする関数
   const scrollToBottom = () => {
     const scrollContainer = scrollContainerRef.current
     if (scrollContainer) {
-      scrollContainer.scrollTo({
-        top: scrollContainer.scrollHeight,
-        behavior: "smooth"
-      })
+      // JSdom環境での互換性を考慮
+      if (typeof scrollContainer.scrollTo === "function") {
+        scrollContainer.scrollTo({
+          top: scrollContainer.scrollHeight,
+          behavior: "smooth"
+        })
+      } else {
+        // フォールバック: scrollTopを直接設定
+        scrollContainer.scrollTop = scrollContainer.scrollHeight
+      }
       setShowScrollToBottom(false)
       userScrolledRef.current = false
     }
@@ -281,7 +336,16 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
             minHeight: "30px",
             position: "relative"
           }}>
-          <TimelineActions onExportCSV={onExportCSV} onSave={onSave} />
+          <TimelineActions
+            onExportCSV={onExportCSV}
+            onSave={onSave}
+            filterConfig={filterConfig}
+            onFilterChange={handleFilterChange}
+            onFilterReset={handleFilterReset}
+            getUniqueTeams={getUniqueTeams}
+            getUniqueActions={getUniqueActions}
+            getUniqueLabels={getUniqueLabels}
+          />
 
           {/* 新しいアクションのインジケーター */}
           {newActionIndicator && (
