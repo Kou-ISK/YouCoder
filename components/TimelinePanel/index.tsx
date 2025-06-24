@@ -10,10 +10,19 @@ import type {
   TimelinePanelProps
 } from "./types"
 
-const MIN_WIDTH = 500
-const MIN_HEIGHT = 300
-const INITIAL_POSITION = { x: 200, y: 600 }
-const INITIAL_SIZE = { width: 800, height: 400 }
+const MIN_WIDTH = 300
+const MIN_HEIGHT = 180
+
+// 動的に画面サイズを取得する関数 - 画面下部に完全密着
+const getInitialPosition = () => ({
+  x: 0,
+  y: (typeof window !== "undefined" ? window.innerHeight : 800) - 180
+})
+
+const getInitialSize = () => ({
+  width: typeof window !== "undefined" ? window.innerWidth : 1200,
+  height: 180
+})
 
 export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   actions,
@@ -34,6 +43,8 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   const [filterConfig, setFilterConfig] = useState<FilterConfig>(
     defaultFilter || {}
   )
+  const [panelPosition, setPanelPosition] = useState(() => getInitialPosition())
+  const [panelSize, setPanelSize] = useState(() => getInitialSize())
   const tableRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const prevActionsRef = useRef<Action[]>([])
@@ -41,6 +52,19 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   const lastScrollTimeRef = useRef<number>(0)
   const [newActionIndicator, setNewActionIndicator] = useState<boolean>(false)
   const [showScrollToBottom, setShowScrollToBottom] = useState<boolean>(false)
+
+  // ウィンドウリサイズ時にパネル位置とサイズを調整
+  useEffect(() => {
+    const handleWindowResize = () => {
+      const newSize = getInitialSize()
+      const newPosition = getInitialPosition()
+      setPanelSize(newSize)
+      setPanelPosition(newPosition)
+    }
+
+    window.addEventListener("resize", handleWindowResize)
+    return () => window.removeEventListener("resize", handleWindowResize)
+  }, [])
 
   // ユーザーのスクロール操作を検知
   useEffect(() => {
@@ -307,8 +331,8 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
 
   return (
     <DraggableResizable
-      initialPosition={INITIAL_POSITION}
-      initialSize={INITIAL_SIZE}
+      initialPosition={panelPosition}
+      initialSize={panelSize}
       minWidth={MIN_WIDTH}
       minHeight={MIN_HEIGHT}
       className="rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100/40 transition-all duration-300 ease-in-out hover:shadow-2xl"
