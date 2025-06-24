@@ -197,12 +197,12 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
           setHoveredHeaders(newHoveredHeaders)
         }}
         style={{
-          padding: "10px 12px",
+          padding: "6px 8px",
           textAlign: "left",
           fontWeight: "600",
           color: "#1e293b",
           borderBottom: "none",
-          fontSize: "12px",
+          fontSize: "11px",
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
@@ -277,12 +277,12 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
             {renderSortHeader("終了時間", "end", "12%", 3)}
             <th
               style={{
-                padding: "10px 12px",
+                padding: "6px 8px",
                 textAlign: "left",
                 fontWeight: "600",
                 color: "#1e293b",
                 borderBottom: "none",
-                fontSize: "12px",
+                fontSize: "11px",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -292,12 +292,12 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
             </th>
             <th
               style={{
-                padding: "10px 12px",
+                padding: "6px 8px",
                 textAlign: "center",
                 fontWeight: "600",
                 color: "#1e293b",
                 borderBottom: "none",
-                fontSize: "12px",
+                fontSize: "11px",
                 width: "5%"
               }}>
               操作
@@ -338,7 +338,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               }}>
               <td
                 style={{
-                  padding: "8px 12px",
+                  padding: "6px 8px",
                   color: "#374151",
                   fontWeight: "400",
                   borderBottom: "1px solid #e5e7eb",
@@ -350,7 +350,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               </td>
               <td
                 style={{
-                  padding: "8px 12px",
+                  padding: "6px 8px",
                   color: "#111827",
                   fontWeight: "500",
                   borderBottom: "1px solid #e5e7eb",
@@ -363,10 +363,10 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               <td
                 onClick={() => seekToTime(action.start)}
                 style={{
-                  padding: "8px 12px",
+                  padding: "6px 8px",
                   color: "#3b82f6",
                   fontFamily: "monospace",
-                  fontSize: "12px",
+                  fontSize: "11px",
                   fontWeight: "500",
                   borderBottom: "1px solid #e5e7eb",
                   cursor: "pointer",
@@ -378,10 +378,10 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               <td
                 onClick={action.end ? () => seekToTime(action.end) : undefined}
                 style={{
-                  padding: "8px 12px",
+                  padding: "6px 8px",
                   color: action.end ? "#3b82f6" : "#f59e0b",
                   fontFamily: "monospace",
-                  fontSize: "12px",
+                  fontSize: "11px",
                   fontWeight: "500",
                   borderBottom: "1px solid #e5e7eb",
                   cursor: action.end ? "pointer" : "default",
@@ -396,9 +396,9 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               </td>
               <td
                 style={{
-                  padding: "8px 12px",
+                  padding: "6px 8px",
                   color: "#6b7280",
-                  fontSize: "12px",
+                  fontSize: "11px",
                   borderBottom: "1px solid #e5e7eb",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -432,7 +432,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               </td>
               <td
                 style={{
-                  padding: "8px 12px",
+                  padding: "6px 8px",
                   textAlign: "center",
                   borderBottom: "1px solid #e5e7eb",
                   position: "relative"

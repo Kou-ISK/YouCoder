@@ -43,26 +43,26 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
     <div
       style={{
         display: "flex",
-        gap: "16px",
+        gap: "12px",
         alignItems: "center",
         width: "100%",
         justifyContent: "space-between"
       }}>
       {/* ボタングループ */}
-      <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
         <button
           onClick={onExportCSV}
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "8px",
-            padding: "8px 16px",
+            gap: "6px",
+            padding: "6px 12px",
             backgroundColor: "#3b82f6",
             color: "white",
             border: "none",
-            borderRadius: "8px",
+            borderRadius: "6px",
             cursor: "pointer",
-            fontSize: "13px",
+            fontSize: "12px",
             fontWeight: "600",
             fontFamily:
               "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
@@ -147,14 +147,14 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "8px",
-            padding: "8px 16px",
+            gap: "6px",
+            padding: "6px 12px",
             backgroundColor: "#10b981",
             color: "white",
             border: "none",
-            borderRadius: "8px",
+            borderRadius: "6px",
             cursor: "pointer",
-            fontSize: "13px",
+            fontSize: "12px",
             fontWeight: "600",
             fontFamily:
               "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
@@ -232,7 +232,7 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
           <div
             style={{
               display: "flex",
-              gap: "8px",
+              gap: "6px",
               alignItems: "center",
               userSelect: "auto",
               pointerEvents: "auto"
@@ -246,11 +246,11 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
               onChange={(e) => onFilterChange("team", e.target.value)}
               onClick={(e) => e.stopPropagation()}
               style={{
-                padding: "6px 12px",
+                padding: "4px 8px",
                 border: "1px solid #e2e8f0",
-                borderRadius: "6px",
-                fontSize: "12px",
-                minWidth: "90px",
+                borderRadius: "4px",
+                fontSize: "11px",
+                minWidth: "80px",
                 outline: "none",
                 cursor: "pointer",
                 backgroundColor: "white",
@@ -294,11 +294,11 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
               onChange={(e) => onFilterChange("action", e.target.value)}
               onClick={(e) => e.stopPropagation()}
               style={{
-                padding: "6px 12px",
+                padding: "4px 8px",
                 border: "1px solid #e2e8f0",
-                borderRadius: "6px",
-                fontSize: "12px",
-                minWidth: "100px",
+                borderRadius: "4px",
+                fontSize: "11px",
+                minWidth: "90px",
                 outline: "none",
                 cursor: "pointer",
                 backgroundColor: "white",
@@ -342,11 +342,11 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
               onChange={(e) => onFilterChange("label", e.target.value)}
               onClick={(e) => e.stopPropagation()}
               style={{
-                padding: "6px 12px",
+                padding: "4px 8px",
                 border: "1px solid #e2e8f0",
-                borderRadius: "6px",
-                fontSize: "12px",
-                minWidth: "90px",
+                borderRadius: "4px",
+                fontSize: "11px",
+                minWidth: "80px",
                 outline: "none",
                 cursor: "pointer",
                 backgroundColor: "white",
@@ -392,10 +392,10 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
                   onFilterReset()
                 }}
                 style={{
-                  padding: "6px 12px",
+                  padding: "4px 8px",
                   border: "1px solid #f87171",
-                  borderRadius: "6px",
-                  fontSize: "11px",
+                  borderRadius: "4px",
+                  fontSize: "10px",
                   backgroundColor: "white",
                   color: "#dc2626",
                   cursor: "pointer",
