@@ -4,16 +4,6 @@ import React from "react"
 
 import { Modal } from "."
 
-type ModalType =
-  | "team"
-  | "addCategorizedLabel"
-  | "action"
-  | "label"
-  | "buttonSet"
-  | "buttonInSet"
-  | "addAction"
-  | "addLabel"
-
 describe("Modal", () => {
   const mockOnClose = jest.fn()
   const mockOnInputChange = jest.fn()
@@ -22,7 +12,7 @@ describe("Modal", () => {
   const defaultProps = {
     isOpen: true,
     inputValue: "",
-    modalType: "team" as ModalType,
+    modalType: "team" as const,
     onInputChange: mockOnInputChange,
     onClose: mockOnClose,
     onSubmit: mockOnSubmit
