@@ -76,7 +76,7 @@ describe("Modal", () => {
   describe("カテゴリ付きラベルモーダル", () => {
     const categoryProps = {
       ...defaultProps,
-      modalType: "addCategorizedLabel" as ModalType
+      modalType: "addCategorizedLabel" as const
     }
 
     it("カテゴリとラベルの入力フィールドが表示される", () => {
