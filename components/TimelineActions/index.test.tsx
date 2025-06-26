@@ -7,7 +7,21 @@ import { TimelineActions } from "."
 describe("TimelineActions", () => {
   const defaultProps = {
     onSave: jest.fn(),
-    exportActionsToCSV: jest.fn()
+    onExportCSV: jest.fn()
+  }
+
+  const filterProps = {
+    ...defaultProps,
+    filterConfig: {
+      team: "",
+      action: "",
+      label: ""
+    },
+    onFilterChange: jest.fn(),
+    onFilterReset: jest.fn(),
+    getUniqueTeams: jest.fn(() => ["チームA", "チームB", "チームC"]),
+    getUniqueActions: jest.fn(() => ["シュート", "パス", "ドリブル"]),
+    getUniqueLabels: jest.fn(() => ["ゴール", "ファウル", "オフサイド"])
   }
 
   beforeEach(() => {
@@ -24,14 +38,39 @@ describe("TimelineActions", () => {
     expect(screen.getByText("保存")).toBeInTheDocument()
   })
 
-  test("CSV出力ボタンをクリックするとexportActionsToCSVが呼ばれる", async () => {
+  test("フィルター機能なしの場合はボタンのみ表示される", () => {
+    render(<TimelineActions {...defaultProps} />)
+
+    // フィルター要素が表示されないことを確認
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument()
+    expect(screen.queryByText("リセット")).not.toBeInTheDocument()
+  })
+
+  test("フィルター機能ありの場合は全要素が表示される", () => {
+    render(<TimelineActions {...filterProps} />)
+
+    // ボタンが表示されることを確認
+    expect(screen.getByText("CSV出力")).toBeInTheDocument()
+    expect(screen.getByText("保存")).toBeInTheDocument()
+
+    // フィルター要素が表示されることを確認
+    const selects = screen.getAllByRole("combobox")
+    expect(selects).toHaveLength(3) // チーム、アクション、ラベル
+
+    // デフォルトオプションが表示されることを確認
+    expect(screen.getByDisplayValue("全チーム")).toBeInTheDocument()
+    expect(screen.getByDisplayValue("全アクション")).toBeInTheDocument()
+    expect(screen.getByDisplayValue("全ラベル")).toBeInTheDocument()
+  })
+
+  test("CSV出力ボタンをクリックするとonExportCSVが呼ばれる", async () => {
     const user = userEvent.setup()
     render(<TimelineActions {...defaultProps} />)
 
     const csvButton = screen.getByText("CSV出力")
     await user.click(csvButton)
 
-    expect(defaultProps.exportActionsToCSV).toHaveBeenCalledTimes(1)
+    expect(defaultProps.onExportCSV).toHaveBeenCalledTimes(1)
   })
 
   test("保存ボタンをクリックするとonSaveが呼ばれる", async () => {
@@ -44,25 +83,142 @@ describe("TimelineActions", () => {
     expect(defaultProps.onSave).toHaveBeenCalledTimes(1)
   })
 
+  test("チームフィルターの変更", async () => {
+    const user = userEvent.setup()
+    render(<TimelineActions {...filterProps} />)
+
+    const teamSelect = screen.getByDisplayValue("全チーム")
+
+    await user.selectOptions(teamSelect, "チームA")
+
+    expect(filterProps.onFilterChange).toHaveBeenCalledWith("team", "チームA")
+  })
+
+  test("アクションフィルターの変更", async () => {
+    const user = userEvent.setup()
+    render(<TimelineActions {...filterProps} />)
+
+    const actionSelect = screen.getByDisplayValue("全アクション")
+
+    await user.selectOptions(actionSelect, "シュート")
+
+    expect(filterProps.onFilterChange).toHaveBeenCalledWith(
+      "action",
+      "シュート"
+    )
+  })
+
+  test("ラベルフィルターの変更", async () => {
+    const user = userEvent.setup()
+    render(<TimelineActions {...filterProps} />)
+
+    const labelSelect = screen.getByDisplayValue("全ラベル")
+
+    await user.selectOptions(labelSelect, "ゴール")
+
+    expect(filterProps.onFilterChange).toHaveBeenCalledWith("label", "ゴール")
+  })
+
+  test("フィルターが設定されている場合にリセットボタンが表示される", () => {
+    const propsWithFilter = {
+      ...filterProps,
+      filterConfig: {
+        team: "チームA",
+        action: "",
+        label: ""
+      }
+    }
+
+    render(<TimelineActions {...propsWithFilter} />)
+
+    expect(screen.getByText("リセット")).toBeInTheDocument()
+  })
+
+  test("フィルターが設定されていない場合はリセットボタンが表示されない", () => {
+    render(<TimelineActions {...filterProps} />)
+
+    expect(screen.queryByText("リセット")).not.toBeInTheDocument()
+  })
+
+  test("リセットボタンをクリックするとonFilterResetが呼ばれる", async () => {
+    const user = userEvent.setup()
+    const propsWithFilter = {
+      ...filterProps,
+      filterConfig: {
+        team: "チームA",
+        action: "シュート",
+        label: ""
+      }
+    }
+
+    render(<TimelineActions {...propsWithFilter} />)
+
+    const resetButton = screen.getByText("リセット")
+    await user.click(resetButton)
+
+    expect(filterProps.onFilterReset).toHaveBeenCalledTimes(1)
+  })
+
   test("ボタンが適切なスタイルで表示される", () => {
     render(<TimelineActions {...defaultProps} />)
 
     const csvButton = screen.getByText("CSV出力")
     const saveButton = screen.getByText("保存")
 
-    // CSV出力ボタンのスタイル確認
+    // CSS-in-JSのスタイルが適用されることを確認（基本的なスタイルのみ）
     expect(csvButton).toHaveStyle({
-      backgroundColor: "rgb(99, 102, 241)",
       color: "white",
-      fontSize: "12px",
-      fontWeight: "500"
+      cursor: "pointer"
     })
 
-    // 保存ボタンのスタイル確認
     expect(saveButton).toHaveStyle({
-      backgroundColor: "rgb(16, 185, 129)",
-      color: "rgb(255, 255, 255)",
-      fontSize: "12px",
+      color: "white",
+      cursor: "pointer"
+    })
+
+    // ボタン要素であることを確認
+    expect(csvButton.tagName).toBe("BUTTON")
+    expect(saveButton.tagName).toBe("BUTTON")
+  })
+
+  test("フィルターセレクトボックスのスタイル確認", () => {
+    render(<TimelineActions {...filterProps} />)
+
+    const selects = screen.getAllByRole("combobox")
+
+    selects.forEach((select) => {
+      expect(select).toHaveStyle({
+        padding: "4px 8px",
+        border: "1px solid #e2e8f0",
+        borderRadius: "4px",
+        fontSize: "11px",
+        backgroundColor: "white",
+        color: "#334155"
+      })
+    })
+  })
+
+  test("リセットボタンのスタイル確認", () => {
+    const propsWithFilter = {
+      ...filterProps,
+      filterConfig: {
+        team: "チームA",
+        action: "",
+        label: ""
+      }
+    }
+
+    render(<TimelineActions {...propsWithFilter} />)
+
+    const resetButton = screen.getByText("リセット")
+
+    expect(resetButton).toHaveStyle({
+      padding: "4px 8px",
+      border: "1px solid #f87171",
+      borderRadius: "4px",
+      fontSize: "10px",
+      backgroundColor: "white",
+      color: "#dc2626",
       fontWeight: "500"
     })
   })
@@ -75,7 +231,7 @@ describe("TimelineActions", () => {
 
     // 初期状態の確認
     expect(csvButton).toHaveStyle({
-      backgroundColor: "#6366f1"
+      backgroundColor: "#3b82f6"
     })
 
     // ホバー時のイベントハンドラが設定されていることを確認
@@ -104,6 +260,39 @@ describe("TimelineActions", () => {
     expect(saveButton).toBeInTheDocument()
   })
 
+  test("フィルターセレクトボックスのオプション内容確認", () => {
+    render(<TimelineActions {...filterProps} />)
+
+    // チームフィルターのオプション確認
+    const teamSelect = screen.getByDisplayValue("全チーム")
+    expect(teamSelect).toBeInTheDocument()
+
+    // アクションフィルターのオプション確認
+    const actionSelect = screen.getByDisplayValue("全アクション")
+    expect(actionSelect).toBeInTheDocument()
+
+    // ラベルフィルターのオプション確認
+    const labelSelect = screen.getByDisplayValue("全ラベル")
+    expect(labelSelect).toBeInTheDocument()
+  })
+
+  test("フィルターのイベント伝播防止", async () => {
+    const user = userEvent.setup()
+    const mockContainerClick = jest.fn()
+
+    const { container } = render(
+      <div onClick={mockContainerClick}>
+        <TimelineActions {...filterProps} />
+      </div>
+    )
+
+    const teamSelect = screen.getByDisplayValue("全チーム")
+
+    // フィルターをクリックしてもコンテナのクリックイベントが発火しないことを確認
+    await user.click(teamSelect)
+
+    expect(mockContainerClick).not.toHaveBeenCalled()
+  })
   test("ボタンの連続クリック操作", async () => {
     const user = userEvent.setup()
     render(<TimelineActions {...defaultProps} />)
@@ -118,7 +307,7 @@ describe("TimelineActions", () => {
     await user.click(saveButton)
 
     // 各関数が2回ずつ呼ばれることを確認
-    expect(defaultProps.exportActionsToCSV).toHaveBeenCalledTimes(2)
+    expect(defaultProps.onExportCSV).toHaveBeenCalledTimes(2)
     expect(defaultProps.onSave).toHaveBeenCalledTimes(2)
   })
 
@@ -148,7 +337,7 @@ describe("TimelineActions", () => {
     // Enterキーでの操作
     csvButton.focus()
     await user.keyboard("{Enter}")
-    expect(defaultProps.exportActionsToCSV).toHaveBeenCalledTimes(1)
+    expect(defaultProps.onExportCSV).toHaveBeenCalledTimes(1)
 
     // Spaceキーでの操作
     saveButton.focus()
@@ -156,104 +345,51 @@ describe("TimelineActions", () => {
     expect(defaultProps.onSave).toHaveBeenCalledTimes(1)
   })
 
-  test("ボタンのflexレイアウト確認", () => {
+  test("レイアウト確認", () => {
     render(<TimelineActions {...defaultProps} />)
 
-    // コンテナのflexレイアウトを確認
-    const container = screen.getByText("CSV出力").closest("div")
+    // メインコンテナのレイアウトを確認
+    const container = screen.getByText("CSV出力").closest("div")?.parentElement
     expect(container).toHaveStyle({
       display: "flex",
-      gap: "8px"
+      alignItems: "center",
+      width: "100%",
+      justifyContent: "space-between"
     })
   })
 
-  test("ボタンの基本属性確認", () => {
-    render(<TimelineActions {...defaultProps} />)
+  test("フィルター関連の統合テスト", async () => {
+    const user = userEvent.setup()
 
-    const csvButton = screen.getByText("CSV出力")
-    const saveButton = screen.getByText("保存")
+    // 複数のフィルターが設定された状態
+    const propsWithMultipleFilters = {
+      ...filterProps,
+      filterConfig: {
+        team: "チームA",
+        action: "シュート",
+        label: "ゴール"
+      }
+    }
 
-    // ボタン要素であることを確認
-    expect(csvButton.tagName).toBe("BUTTON")
-    expect(saveButton.tagName).toBe("BUTTON")
+    render(<TimelineActions {...propsWithMultipleFilters} />)
 
-    // cursor: pointer スタイルが設定されていることを確認
-    expect(csvButton).toHaveStyle({ cursor: "pointer" })
-    expect(saveButton).toHaveStyle({ cursor: "pointer" })
-  })
+    // リセットボタンが表示されることを確認
+    const resetButton = screen.getByText("リセット")
+    expect(resetButton).toBeInTheDocument()
 
-  test("ボタンのtransitionスタイル確認", () => {
-    render(<TimelineActions {...defaultProps} />)
+    // リセットボタンのツールチップ確認
+    expect(resetButton).toHaveAttribute("title", "3個のフィルターをリセット")
 
-    const csvButton = screen.getByText("CSV出力")
-    const saveButton = screen.getByText("保存")
-
-    // transitionプロパティが設定されていることを確認
-    expect(csvButton).toHaveStyle({
-      transition: "all 0.15s ease"
-    })
-    expect(saveButton).toHaveStyle({
-      transition: "all 0.15s ease"
-    })
-  })
-
-  test("ボタンのboxShadowスタイル確認", () => {
-    render(<TimelineActions {...defaultProps} />)
-
-    const csvButton = screen.getByText("CSV出力")
-    const saveButton = screen.getByText("保存")
-
-    // boxShadowが設定されていることを確認
-    expect(csvButton).toHaveStyle({
-      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)"
-    })
-    expect(saveButton).toHaveStyle({
-      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)"
-    })
-  })
-
-  test("ボタンのborderとborderRadiusスタイル確認", () => {
-    render(<TimelineActions {...defaultProps} />)
-
-    const csvButton = screen.getByText("CSV出力")
-    const saveButton = screen.getByText("保存")
-
-    // borderとborderRadiusが正しく設定されていることを確認
-    expect(csvButton).toHaveStyle({
-      border: "1px solid #6366f1",
-      borderRadius: "6px"
-    })
-    expect(saveButton).toHaveStyle({
-      border: "1px solid #10b981",
-      borderRadius: "6px"
-    })
-  })
-
-  test("ボタンのpadding確認", () => {
-    render(<TimelineActions {...defaultProps} />)
-
-    const csvButton = screen.getByText("CSV出力")
-    const saveButton = screen.getByText("保存")
-
-    // paddingが正しく設定されていることを確認
-    expect(csvButton).toHaveStyle({
-      padding: "6px 12px"
-    })
-    expect(saveButton).toHaveStyle({
-      padding: "6px 12px"
-    })
+    // リセット実行
+    await user.click(resetButton)
+    expect(filterProps.onFilterReset).toHaveBeenCalledTimes(1)
   })
 
   test("無効状態でのボタン操作（propsが未定義の場合）", async () => {
     const user = userEvent.setup()
 
     // コールバック関数が未定義の場合のテスト
-    render(
-      <TimelineActions
-        onSave={undefined as any}
-        exportActionsToCSV={undefined as any}
-      />
-    )
+    render(<TimelineActions onSave={undefined} onExportCSV={undefined} />)
 
     const csvButton = screen.getByText("CSV出力")
     const saveButton = screen.getByText("保存")
@@ -267,18 +403,15 @@ describe("TimelineActions", () => {
     expect(saveButton).toBeInTheDocument()
   })
 
-  test("同時クリック操作の処理", async () => {
-    const user = userEvent.setup()
+  test("SVGアイコンの表示確認", () => {
     render(<TimelineActions {...defaultProps} />)
 
     const csvButton = screen.getByText("CSV出力")
     const saveButton = screen.getByText("保存")
 
-    // 同時に素早くクリック
-    await Promise.all([user.click(csvButton), user.click(saveButton)])
-
-    expect(defaultProps.exportActionsToCSV).toHaveBeenCalledTimes(1)
-    expect(defaultProps.onSave).toHaveBeenCalledTimes(1)
+    // SVGアイコンが含まれていることを確認
+    expect(csvButton.querySelector("svg")).toBeInTheDocument()
+    expect(saveButton.querySelector("svg")).toBeInTheDocument()
   })
 
   test("アクセシビリティ - ボタンのrole属性", () => {

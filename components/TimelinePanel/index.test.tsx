@@ -52,11 +52,11 @@ describe("TimelinePanel", () => {
     expect(screen.getByText("終了時間")).toBeInTheDocument()
     expect(screen.getByText("ラベル")).toBeInTheDocument()
 
-    // データ行の確認 - Team Aが複数あるため、最初のものをチェック
-    expect(screen.getAllByText("Team A")).toHaveLength(2)
-    expect(screen.getByText("Pass")).toBeInTheDocument()
-    expect(screen.getByText("Team B")).toBeInTheDocument()
-    expect(screen.getByText("Shoot")).toBeInTheDocument()
+    // データ行の確認 - フィルターのoptionとテーブルのセル両方で表示されるため数が増加
+    expect(screen.getAllByText("Team A").length).toBeGreaterThanOrEqual(2)
+    expect(screen.getAllByText("Pass").length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText("Team B").length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText("Shoot").length).toBeGreaterThanOrEqual(1)
   })
 
   test("カテゴリ化されたラベルがブラケット記法で表示される", () => {
@@ -77,9 +77,9 @@ describe("TimelinePanel", () => {
 
     expect(screen.getByText("excellent")).toBeInTheDocument()
 
-    // シンプル形式のラベル表示も確認
-    expect(screen.getByText("Good")).toBeInTheDocument()
-    expect(screen.getByText("Accurate")).toBeInTheDocument()
+    // シンプル形式のラベル表示も確認 - フィルターとテーブル両方に表示される
+    expect(screen.getAllByText("Good").length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText("Accurate").length).toBeGreaterThanOrEqual(1)
   })
 
   test("進行中のアクションは「進行中」と表示される", () => {
@@ -135,9 +135,24 @@ describe("TimelinePanel", () => {
     const user = userEvent.setup()
     render(<TimelinePanel {...defaultProps} />)
 
-    // 削除ボタンを取得（最初のアクション用）
-    const deleteButtons = screen.getAllByText("削除")
-    await user.click(deleteButtons[0])
+    // テーブル行にホバーして削除ボタンを表示させる
+    const tableRows = screen.getAllByRole("row")
+    const firstDataRow = tableRows[1] // ヘッダー行の次の行
+    await user.hover(firstDataRow)
+
+    // 削除ボタンを取得（ゴミ箱アイコンまたは削除確認ボタン）
+    const deleteButton = screen.getByRole("button", {
+      name: /クリックして削除を開始|削除確認|🗑️/i
+    })
+
+    // 最初のクリックで削除確認状態になる
+    await user.click(deleteButton)
+
+    // 二回目のクリックで実際に削除される
+    const confirmButton = screen.getByRole("button", {
+      name: /削除確認|もう一度クリックすると削除されます/i
+    })
+    await user.click(confirmButton)
 
     expect(defaultProps.onDelete).toHaveBeenCalledWith("Team A", "Pass", 1000)
   })
@@ -182,8 +197,8 @@ describe("TimelinePanel", () => {
 
     render(<TimelinePanel {...defaultProps} actions={multiLabelAction} />)
 
-    // すべてのラベルが表示されることを確認
-    expect(screen.getByText("Label1")).toBeInTheDocument()
+    // すべてのラベルが表示されることを確認 - フィルターとテーブル両方に表示される
+    expect(screen.getAllByText("Label1").length).toBeGreaterThanOrEqual(1)
 
     // 複数のCategoryラベルが存在する場合を考慮してgetAllByTextを使用
     const categoryElements = screen.getAllByText((content, element) => {
@@ -193,6 +208,6 @@ describe("TimelinePanel", () => {
 
     expect(screen.getByText("Value1")).toBeInTheDocument()
     expect(screen.getByText("Value2")).toBeInTheDocument()
-    expect(screen.getByText("Label3")).toBeInTheDocument()
+    expect(screen.getAllByText("Label3").length).toBeGreaterThanOrEqual(1)
   })
 })

@@ -1,5 +1,6 @@
 import { TaggingPanel } from "components/TaggingPanel"
 import { TimelinePanel } from "components/TimelinePanel"
+import type { Action } from "components/TimelinePanel/types"
 import cssText from "data-text:~/styles/style.css"
 import type { PlasmoContentScript } from "plasmo"
 import React, { useEffect, useState } from "react"
@@ -7,6 +8,7 @@ import React, { useEffect, useState } from "react"
 import {
   addLabel,
   deleteAction,
+  exportActionsToCSV,
   getActions,
   getYoutubeVideoId,
   loadActionsFromStorage,
@@ -159,7 +161,7 @@ const MainContent: React.FC = () => {
   )
 
   // タイムラインに関連付けられたアクション。
-  const [timelineActions, setTimelineActions] = useState(getActions())
+  const [timelineActions, setTimelineActions] = useState<Action[]>([])
 
   // 現在アクティブなラベルのセット。
   const [activeLabels, setActiveLabels] = useState<Set<string>>(new Set())
@@ -483,6 +485,15 @@ const MainContent: React.FC = () => {
         // 動画のタイムラインデータを読み込み、進行中のアクションの状態を同期
         if (videoId && result.timelines) {
           const videoTimeline = result.timelines[videoId] || []
+
+          // actionsManagerのメモリ状態も同期
+          if (videoTimeline.length > 0) {
+            await loadTimelineForVideo(videoId)
+            console.log(
+              `[YouCoder] 初期読み込み: actionsManagerにタイムラインデータを同期しました - アクション数: ${videoTimeline.length}`
+            )
+          }
+
           setTimelineActions(videoTimeline)
 
           // 進行中のアクション（end プロパティがない）をUI状態に同期
@@ -500,8 +511,14 @@ const MainContent: React.FC = () => {
           setSelectedActions(new Set(inProgressActions))
 
           console.log(
-            `[YouCoder] UI状態をタイムラインデータと同期しました - 進行中アクション数: ${inProgressActions.size}`
+            `[YouCoder] UI状態をタイムラインデータと同期しました - 進行中アクション数: ${inProgressActions.size}, 総アクション数: ${videoTimeline.length}`
           )
+        } else if (videoId) {
+          // 動画IDはあるがタイムラインデータがない場合
+          console.log(
+            `[YouCoder] 初期読み込み: 動画ID ${videoId} のタイムラインデータが見つかりません`
+          )
+          setTimelineActions([])
         }
 
         if (result.teams) setTeams(result.teams)
@@ -584,7 +601,7 @@ const MainContent: React.FC = () => {
     // ラベルをアクションに追加します。
     for (const actionKey of activeActions) {
       const [team, action] = actionKey.split("_")
-      addLabel(team, action, label)
+      await addLabel(team, action, label)
     }
 
     // 自動保存を実行
@@ -593,7 +610,10 @@ const MainContent: React.FC = () => {
       await saveTimelineForVideo(videoId)
     }
 
-    setTimelineActions(getActions())
+    // タイムラインの状態を更新
+    const updatedActions = getActions()
+    setTimelineActions([...updatedActions])
+
     setActiveLabels((prev) => {
       const updated = new Set(prev)
       updated.add(label)
@@ -666,43 +686,79 @@ const MainContent: React.FC = () => {
     console.log("[YouCoder Debug] フィルタリングされたラベル:", filteredLabels)
   }
 
-  const handleActionToggle = (team: string, action: string) => {
+  const handleActionToggle = async (team: string, action: string) => {
     // アクションの開始・停止を切り替えます。
     const actionKey = `${team}_${action}`
 
-    setActiveActions((prev) => {
-      const updated = new Set(prev)
+    try {
+      // 1. 先にアクションの開始/停止を実行し、完了を待つ
+      const updated = new Set(activeActions)
       if (updated.has(actionKey)) {
-        stopAction(team, action)
+        await stopAction(team, action)
         updated.delete(actionKey)
       } else {
-        startAction(team, action)
+        await startAction(team, action)
         updated.add(actionKey)
       }
+
+      // 2. 非同期処理が完了してから状態を更新
+      setActiveActions(updated)
       console.log(
         `[YouCoder] アクティブなアクションを更新しました - 現在のアクション数: ${Array.from(updated).length}`
       )
-      return updated
-    })
 
-    setSelectedActions((prev) => {
-      const updated = new Set(prev)
-      if (updated.has(actionKey)) {
-        updated.delete(actionKey)
+      // 3. 選択状態も同期して更新
+      const updatedSelection = new Set(selectedActions)
+      if (updatedSelection.has(actionKey)) {
+        updatedSelection.delete(actionKey)
       } else {
-        updated.add(actionKey)
+        updatedSelection.add(actionKey)
       }
+      setSelectedActions(updatedSelection)
       console.log(
-        `[YouCoder] 選択中のアクションを更新しました - 選択数: ${Array.from(updated).length}`
+        `[YouCoder] 選択中のアクションを更新しました - 選択数: ${Array.from(updatedSelection).length}`
       )
-      return updated
-    })
 
-    // アクション変更後にタイムラインの状態を更新
-    setTimeout(() => {
-      setTimelineActions(getActions())
-    }, 100) // 少し遅延させてアクションの更新を確実に反映
+      // 4. タイムラインの状態を即時更新（非同期処理完了後に確実に取得）
+      const updatedActions = getActions()
+      setTimelineActions([...updatedActions]) // 新しい配列参照で強制的に再レンダリング
+      console.log(
+        `[YouCoder] タイムライン状態を更新しました - 総アクション数: ${updatedActions.length}`
+      )
+    } catch (error) {
+      console.error("[YouCoder] アクション切り替えエラー:", error)
+    }
   }
+
+  // 動画ページでのタイムライン同期を定期的に実行
+  useEffect(() => {
+    if (!isVideoPage) return
+
+    // 初回実行（即座に同期）
+    const syncInitial = () => {
+      const currentActions = getActions()
+      if (currentActions.length > 0) {
+        setTimelineActions([...currentActions])
+        console.log(
+          `[YouCoder] 初回同期完了 - アクション数: ${currentActions.length}`
+        )
+      }
+    }
+
+    // 100ms後に初回同期（コンポーネントの初期化完了を待つ）
+    const initialTimer = setTimeout(syncInitial, 100)
+
+    // 定期同期（1秒ごと）
+    const timer = setInterval(() => {
+      const currentActions = getActions()
+      setTimelineActions([...currentActions])
+    }, 1000)
+
+    return () => {
+      clearTimeout(initialTimer)
+      clearInterval(timer)
+    }
+  }, [isVideoPage])
 
   return (
     <div style={{ position: "relative", zIndex: 9999 }}>
@@ -765,6 +821,7 @@ const MainContent: React.FC = () => {
               })
             }}
             onSave={handleSaveTimeline}
+            onExportCSV={() => exportActionsToCSV(timelineActions)}
           />
         </>
       )}
