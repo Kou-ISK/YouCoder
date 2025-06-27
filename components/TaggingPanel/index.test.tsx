@@ -4,13 +4,32 @@ import React from "react"
 
 import { TaggingPanel } from "."
 
-// Draggableコンポーネントのモック
-jest.mock("react-draggable", () => {
+// DraggableResizableコンポーネントのモック
+jest.mock("~components/DraggableResizable", () => {
   return {
-    __esModule: true,
-    default: ({ children }: { children: React.ReactNode }) => (
-      <div>{children}</div>
+    DraggableResizable: ({
+      children,
+      style
+    }: {
+      children: React.ReactNode
+      style?: React.CSSProperties
+    }) => (
+      <div data-testid="draggable-resizable" style={style}>
+        {children}
+      </div>
     )
+  }
+})
+
+// usePanelPositionフックのモック
+jest.mock("./hooks/usePanelPosition", () => {
+  return {
+    usePanelPosition: () => ({
+      position: { x: 100, y: 100 },
+      size: { width: 320, height: 400 },
+      handlePositionChange: jest.fn(),
+      handleSizeChange: jest.fn()
+    })
   }
 })
 
@@ -27,6 +46,13 @@ describe("TaggingPanel", () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+  })
+
+  test("DraggableResizableでラップされている", () => {
+    render(<TaggingPanel {...defaultProps} />)
+
+    const draggableElement = screen.getByTestId("draggable-resizable")
+    expect(draggableElement).toBeInTheDocument()
   })
 
   test("チームとアクションが表示される", () => {
@@ -145,15 +171,6 @@ describe("TaggingPanel", () => {
 
     // ラベルボタンが表示されないことを確認
     expect(screen.queryByText("Good")).not.toBeInTheDocument()
-  })
-
-  test("ドラッグハンドルが表示される", () => {
-    // Container要素にレンダリング
-    const { container } = render(<TaggingPanel {...defaultProps} />)
-
-    // ドラッグハンドルの要素が存在することを確認
-    const dragHandle = container.querySelector(".drag-handle")
-    expect(dragHandle).toBeInTheDocument()
   })
 
   test("不正なラベル形式でも安全に処理される", () => {
