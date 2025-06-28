@@ -32,7 +32,7 @@ export const usePanelPosition = ({
     }
 
     return {
-      x: Math.max(0, window.innerWidth - 340), // 右端から340px（パネル幅+マージン）
+      x: Math.max(0, window.innerWidth - 300), // 右端から300px（パネル幅+マージン）
       y: 16 // 上から16px
     }
   }
@@ -42,12 +42,12 @@ export const usePanelPosition = ({
 
     // window オブジェクトが存在しない場合のデフォルト値
     if (typeof window === "undefined") {
-      return { width: 320, height: 400 }
+      return { width: 280, height: 250 }
     }
 
     return {
-      width: 320,
-      height: Math.min(600, window.innerHeight - 100) // 画面高さに応じて調整
+      width: 280,
+      height: Math.min(300, window.innerHeight - 100) // より小さな初期高さに調整
     }
   }
 
@@ -96,7 +96,7 @@ export const usePanelPosition = ({
         const parsedPosition = JSON.parse(savedPosition)
         // 画面外に出ていないかチェック
         const isValidPosition =
-          parsedPosition.x >= -280 && // パネル幅の80%は画面内に
+          parsedPosition.x >= -240 && // パネル幅の80%は画面内に
           parsedPosition.x <= window.innerWidth - 40 && // 右端40px以内
           parsedPosition.y >= -20 && // 上部20px以内
           parsedPosition.y <= window.innerHeight - 40 // 下部40px以内
@@ -110,8 +110,8 @@ export const usePanelPosition = ({
         const parsedSize = JSON.parse(savedSize)
         // 最小サイズチェック
         const isValidSize =
-          parsedSize.width >= 280 &&
-          parsedSize.height >= 200 &&
+          parsedSize.width >= 250 &&
+          parsedSize.height >= 180 &&
           parsedSize.width <= window.innerWidth &&
           parsedSize.height <= window.innerHeight
 

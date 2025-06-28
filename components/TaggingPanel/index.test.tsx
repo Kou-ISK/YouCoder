@@ -26,7 +26,7 @@ jest.mock("./hooks/usePanelPosition", () => {
   return {
     usePanelPosition: () => ({
       position: { x: 100, y: 100 },
-      size: { width: 320, height: 400 },
+      size: { width: 280, height: 350 },
       handlePositionChange: jest.fn(),
       handleSizeChange: jest.fn()
     })

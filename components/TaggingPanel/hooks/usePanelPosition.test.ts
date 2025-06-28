@@ -53,12 +53,12 @@ describe("usePanelPosition", () => {
     const { result } = renderHook(() => usePanelPosition())
 
     expect(result.current.position).toEqual({
-      x: Math.max(0, window.innerWidth - 340),
+      x: Math.max(0, window.innerWidth - 300),
       y: 16
     })
     expect(result.current.size).toEqual({
-      width: 320,
-      height: Math.min(600, window.innerHeight - 100)
+      width: 280,
+      height: Math.min(300, window.innerHeight - 100)
     })
   })
 
@@ -163,7 +163,7 @@ describe("usePanelPosition", () => {
 
     // デフォルト位置が使用される
     expect(result.current.position).toEqual({
-      x: Math.max(0, window.innerWidth - 340),
+      x: Math.max(0, window.innerWidth - 300),
       y: 16
     })
   })
@@ -181,8 +181,8 @@ describe("usePanelPosition", () => {
 
     // デフォルトサイズが使用される
     expect(result.current.size).toEqual({
-      width: 320,
-      height: Math.min(600, window.innerHeight - 100)
+      width: 280,
+      height: Math.min(300, window.innerHeight - 100)
     })
   })
 
@@ -194,7 +194,7 @@ describe("usePanelPosition", () => {
 
     // デフォルト値が使用される
     expect(result.current.position).toEqual({
-      x: Math.max(0, window.innerWidth - 340),
+      x: Math.max(0, window.innerWidth - 300),
       y: 16
     })
 
