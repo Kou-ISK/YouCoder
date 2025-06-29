@@ -15,6 +15,10 @@ interface TaggingPanelProps {
   onLabelClick: (label: string) => void
 }
 
+/**
+ * タグ付けパネルメインコンポーネント
+ * ドラッグ可能でリサイズ可能なパネルとしてタグ付けUIを提供する
+ */
 export const TaggingPanel: React.FC<TaggingPanelProps> = ({
   teams,
   actions,
@@ -38,25 +42,8 @@ export const TaggingPanel: React.FC<TaggingPanelProps> = ({
       minHeight={180}
       onPositionChange={handlePositionChange}
       onSizeChange={handleSizeChange}
-      style={{
-        backgroundColor: "#ffffff",
-        borderRadius: "8px",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-        border: "1px solid #e2e8f0",
-        fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        zIndex: 1000
-      }}>
-      <div
-        style={{
-          padding: "8px",
-          width: "100%",
-          height: "100%",
-          overflow: "hidden auto",
-          display: "flex",
-          flexDirection: "column",
-          boxSizing: "border-box"
-        }}>
+      className="bg-white rounded-lg shadow-lg border border-gray-200 font-sans z-[1000]">
+      <div className="p-2 w-full h-full overflow-hidden overflow-y-auto flex flex-col box-border">
         <TaggingPanelContent
           teams={teams}
           actions={actions}
