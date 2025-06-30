@@ -31,13 +31,20 @@ export const LabelsSection: React.FC<LabelsSectionProps> = ({
 
   return (
     <section
-      className="border-t border-gray-200 pt-3"
+      className="mb-6 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 rounded-xl p-4 border-2 border-green-200 shadow-lg"
+      role="region"
       aria-labelledby="labels-section-title">
-      <h3 id="labels-section-title" className="sr-only">
-        ラベル選択
-      </h3>
+      <div className="mb-4">
+        <h3
+          id="labels-section-title"
+          className="text-sm font-bold text-green-800 mb-2 flex items-center">
+          <span className="mr-2 text-lg">🏷️</span>
+          ラベル選択
+        </h3>
+        <div className="h-px bg-gradient-to-r from-green-300 via-emerald-300 to-teal-300"></div>
+      </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {Object.entries(normalizedLabels).map(([category, labelList]) => {
           const safeLabelList = Array.isArray(labelList) ? labelList : []
 
@@ -80,7 +87,7 @@ const CategoryGroup: React.FC<CategoryGroupProps> = ({
   const isGeneralCategory = category === "一般"
 
   return (
-    <div className="mb-2 last:mb-0">
+    <div className="bg-white rounded-xl p-3 shadow-md border-2 border-gray-200 hover:border-green-300 transition-all duration-200">
       {!isGeneralCategory && <CategoryHeader category={category} />}
 
       <LabelButtonGrid
@@ -88,7 +95,7 @@ const CategoryGroup: React.FC<CategoryGroupProps> = ({
         labels={labels}
         activeLabels={activeLabels}
         onLabelClick={onLabelClick}
-        isIndented={!isGeneralCategory}
+        isIndented={false}
       />
     </div>
   )
@@ -102,7 +109,10 @@ interface CategoryHeaderProps {
  * カテゴリヘッダーコンポーネント
  */
 const CategoryHeader: React.FC<CategoryHeaderProps> = ({ category }) => (
-  <h4 className="text-xs font-semibold text-gray-500 mb-1 pl-1">{category}</h4>
+  <h4 className="text-sm font-semibold text-gray-700 mb-2 pb-1 border-b border-gray-200 flex items-center">
+    <span className="mr-1">📂</span>
+    {category}
+  </h4>
 )
 
 interface LabelButtonGridProps {
@@ -127,7 +137,7 @@ const LabelButtonGrid: React.FC<LabelButtonGridProps> = ({
 
   return (
     <div
-      className={`flex flex-wrap gap-1 ${isIndented ? "ml-2" : ""}`}
+      className="flex flex-wrap gap-2"
       role="group"
       aria-label={
         isGeneralCategory ? "一般ラベル" : `${category}カテゴリのラベル`

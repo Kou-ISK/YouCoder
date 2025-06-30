@@ -38,21 +38,23 @@ export const TaggingPanel: React.FC<TaggingPanelProps> = ({
     <DraggableResizable
       initialPosition={position}
       initialSize={size}
-      minWidth={250}
-      minHeight={180}
+      minWidth={380}
+      minHeight={300}
       onPositionChange={handlePositionChange}
       onSizeChange={handleSizeChange}
-      className="bg-white rounded-lg shadow-lg border border-gray-200 font-sans z-[1000]">
-      <div className="p-2 w-full h-full overflow-hidden overflow-y-auto flex flex-col box-border">
-        <TaggingPanelContent
-          teams={teams}
-          actions={actions}
-          labels={labels}
-          activeActions={activeActions}
-          activeLabels={activeLabels}
-          onActionToggle={onActionToggle}
-          onLabelClick={onLabelClick}
-        />
+      className="bg-gradient-to-br from-white via-gray-50 to-blue-50 rounded-2xl shadow-2xl border-2 border-gray-200 hover:border-blue-300 font-sans z-[1000] backdrop-blur-md transition-all duration-300">
+      <div className="p-4 w-full h-full overflow-hidden flex flex-col box-border">
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
+          <TaggingPanelContent
+            teams={teams}
+            actions={actions}
+            labels={labels}
+            activeActions={activeActions}
+            activeLabels={activeLabels}
+            onActionToggle={onActionToggle}
+            onLabelClick={onLabelClick}
+          />
+        </div>
       </div>
     </DraggableResizable>
   )
