@@ -24,7 +24,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   // チームカラーに基づくTailwindクラスを生成
   const getButtonClasses = () => {
     const baseClasses =
-      "w-full px-2 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 border-2 shadow-sm hover:shadow-md transform hover:scale-105 truncate cursor-pointer"
+      "w-full px-2 py-1.5 text-xs font-medium rounded transition-all duration-150 border cursor-pointer min-w-16"
 
     if (!colorClass) {
       return `${baseClasses} ${
@@ -99,8 +99,9 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
     <button
       onClick={() => onClick(team, action)}
       className={getButtonClasses()}
-      title={`${team}: ${action}`}>
-      {action}
+      title={`${team}: ${action} (${isActive ? "アクティブ" : "非アクティブ"})`}
+      aria-label={`${team}チームの${action}アクション (${isActive ? "アクティブ" : "非アクティブ"})`}>
+      <span className="text-xs font-medium">{action}</span>
     </button>
   )
 }
