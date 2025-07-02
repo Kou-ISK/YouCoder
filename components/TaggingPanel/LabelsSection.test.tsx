@@ -149,7 +149,7 @@ describe("LabelsSection", () => {
     }).not.toThrow()
   })
 
-  test("適切なアクセシビリティ属性が設定されている", () => {
+  test("カテゴリヘッダーとラベルが適切に表示される", () => {
     const labels = {
       Result: ["Good", "Bad"]
     }
@@ -163,6 +163,14 @@ describe("LabelsSection", () => {
       />
     )
 
+    // カテゴリヘッダーが表示されることを確認
+    expect(screen.getByText("Result")).toBeInTheDocument()
+
+    // ラベルボタンが表示されることを確認
+    expect(screen.getByText("Good")).toBeInTheDocument()
+    expect(screen.getByText("Bad")).toBeInTheDocument()
+
+    // アクセシビリティ属性の確認
     expect(
       screen.getByRole("group", { name: "Resultカテゴリのラベル" })
     ).toBeInTheDocument()

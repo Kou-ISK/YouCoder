@@ -3,69 +3,89 @@ import React from "react"
 import { LabelButton } from "~components/LabelButton"
 
 interface LabelsSectionProps {
-  labels: Record<string, string[]> | string[]
+  labels: Record<string, string[]> // カテゴリ名をキー、ラベル配列を値とする形式のみサポート
   activeLabels: Set<string>
   onLabelClick: (label: string) => void
 }
 
 /**
- * ラベルセクションコンポーネント - シンプルな表示
+ * ラベルセクションコンポーネント - カテゴリベースの表示のみサポート
  */
 export const LabelsSection: React.FC<LabelsSectionProps> = ({
   labels,
   activeLabels,
   onLabelClick
 }) => {
-  // ラベルを安全にカテゴリ付きに正規化
-  const normalizedLabels = React.useMemo(() => {
-    if (Array.isArray(labels)) {
-      return labels.length === 0 ? {} : { 一般: labels }
-    }
-    return typeof labels === "object" && labels !== null ? labels : { 一般: [] }
-  }, [labels])
+  // デバッグ用：受信したラベルデータを表示
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname === "localhost"
+  ) {
+    console.log("[LabelsSection Debug] 受信したラベルデータ:", labels)
+    console.log("[LabelsSection Debug] ラベルのタイプ:", typeof labels)
+    console.log("[LabelsSection Debug] ラベルが配列か:", Array.isArray(labels))
+    console.log(
+      "[LabelsSection Debug] ラベルのキー:",
+      Object.keys(labels || {})
+    )
+  }
 
-  if (Object.keys(normalizedLabels).length === 0) {
+  // Record<string, string[]>形式のラベルのみをサポート
+  if (
+    !labels ||
+    typeof labels !== "object" ||
+    Array.isArray(labels) ||
+    Object.keys(labels).length === 0
+  ) {
+    console.log("[LabelsSection Debug] ラベルデータが無効または空:", {
+      isNull: !labels,
+      isNotObject: typeof labels !== "object",
+      isArray: Array.isArray(labels),
+      isEmpty: labels ? Object.keys(labels).length === 0 : true
+    })
     return null
   }
 
   return (
     <div className="mt-4">
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
-        <div className="space-y-4">
-          {Object.entries(normalizedLabels).map(([category, labelList]) => {
-            const safeLabelList = Array.isArray(labelList) ? labelList : []
+      <div className="space-y-3">
+        {Object.entries(labels).map(([category, labelList]) => {
+          // 配列でない場合はスキップ
+          if (!Array.isArray(labelList) || labelList.length === 0) {
+            return null
+          }
 
-            if (safeLabelList.length === 0) {
-              return null
-            }
+          return (
+            <div
+              key={category}
+              className="bg-white rounded-lg border-2 border-gray-200 shadow-sm p-3 hover:border-gray-300 transition-colors duration-200">
+              {/* カテゴリヘッダー */}
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-200 bg-gray-50 -mx-3 -mt-3 px-3 pt-3 rounded-t-lg">
+                {category}
+              </h4>
+              {/* ラベルボタンのグリッド */}
+              <div
+                className="flex flex-wrap gap-2"
+                role="group"
+                aria-label={`${category}カテゴリのラベル`}>
+                {labelList.map((label) => {
+                  // カテゴリ付きの完全なラベル名（内部処理用）
+                  const fullLabelName = `${category} - ${label}`
 
-            return (
-              <div key={category}>
-                {category !== "一般" && (
-                  <h4 className="text-sm font-medium text-gray-700 mb-2 pb-1 border-b border-gray-200">
-                    {category}
-                  </h4>
-                )}
-                <div className="flex flex-wrap gap-2">
-                  {safeLabelList.map((label) => {
-                    const displayLabel =
-                      category === "一般" ? label : `${category} - ${label}`
-
-                    return (
-                      <LabelButton
-                        key={displayLabel}
-                        label={label}
-                        isActive={activeLabels.has(displayLabel)}
-                        isDisabled={false}
-                        onClick={() => onLabelClick(displayLabel)}
-                      />
-                    )
-                  })}
-                </div>
+                  return (
+                    <LabelButton
+                      key={fullLabelName}
+                      label={label} // ボタンには短いラベル名を表示
+                      isActive={activeLabels.has(fullLabelName)}
+                      isDisabled={false}
+                      onClick={() => onLabelClick(fullLabelName)} // 完全なラベル名で処理
+                    />
+                  )
+                })}
               </div>
-            )
-          })}
-        </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

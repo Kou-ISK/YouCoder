@@ -1,7 +1,7 @@
 export interface TaggingPanelProps {
   teams: string[]
   actions: Record<string, string>
-  labels: Record<string, string[]> | string[] // 新旧両方の形式をサポート + filteredLabelsの配列形式
+  labels: Record<string, string[]> // カテゴリ形式のみをサポート
   activeActions: Set<string>
   activeLabels: Set<string>
   onActionToggle: (team: string, action: string) => void
@@ -11,7 +11,7 @@ export interface TaggingPanelProps {
 export interface TaggingPanelContentProps {
   teams: string[]
   actions: Record<string, string>
-  labels: Record<string, string[]> | string[]
+  labels: Record<string, string[]>
   activeActions: Set<string>
   activeLabels: Set<string>
   onActionToggle: (team: string, action: string) => void

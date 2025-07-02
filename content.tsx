@@ -663,7 +663,47 @@ const MainContent: React.FC = () => {
     )
   }
 
-  const filteredLabels =
+  // フラットなラベル配列をカテゴリ形式に変換する関数
+  const convertLabelsToCategories = (
+    flatLabels: string[]
+  ): Record<string, string[]> => {
+    const categorized: Record<string, string[]> = {}
+
+    flatLabels.forEach((label) => {
+      if (label.includes(" - ")) {
+        // カテゴリ付きラベルの場合
+        const [category, ...labelParts] = label.split(" - ")
+        const labelName = labelParts.join(" - ")
+        if (!categorized[category]) {
+          categorized[category] = []
+        }
+        if (!categorized[category].includes(labelName)) {
+          categorized[category].push(labelName)
+        }
+      } else {
+        // カテゴリなしラベルの場合、「一般」カテゴリに分類
+        if (!categorized["一般"]) {
+          categorized["一般"] = []
+        }
+        if (!categorized["一般"].includes(label)) {
+          categorized["一般"].push(label)
+        }
+      }
+    })
+
+    return categorized
+  }
+
+  // 選択されたボタンセットから利用可能なすべてのラベルを取得
+  const allAvailableLabelsFlat =
+    buttonSets
+      .find((set) => set.setName === selectedButtonSet)
+      ?.buttons.flatMap((btn) => {
+        const flatLabels = normalizeLabelsToFlat(btn.labels)
+        return flatLabels
+      }) || []
+
+  const filteredLabelsFlat =
     buttonSets
       .find((set) => set.setName === selectedButtonSet)
       ?.buttons.filter((btn) => {
@@ -678,12 +718,37 @@ const MainContent: React.FC = () => {
         return flatLabels
       }) || []
 
+  // アクションが選択されていない場合は、すべての利用可能なラベルを表示
+  const labelsToShow =
+    filteredLabelsFlat.length > 0 ? filteredLabelsFlat : allAvailableLabelsFlat
+
+  // フラットなラベルをカテゴリ形式に変換
+  const filteredLabels = convertLabelsToCategories(labelsToShow)
+
   // デバッグ用：フィルタリングされたラベルの確認（開発時のみ）
   if (
     typeof window !== "undefined" &&
     window.location.hostname === "localhost"
   ) {
-    console.log("[YouCoder Debug] フィルタリングされたラベル:", filteredLabels)
+    console.log("[YouCoder Debug] 選択されたボタンセット:", selectedButtonSet)
+    console.log(
+      "[YouCoder Debug] アクティブなアクション:",
+      Array.from(activeActions)
+    )
+    console.log(
+      "[YouCoder Debug] 利用可能なすべてのラベル（フラット）:",
+      allAvailableLabelsFlat
+    )
+    console.log(
+      "[YouCoder Debug] フィルタリングされたラベル（フラット）:",
+      filteredLabelsFlat
+    )
+    console.log("[YouCoder Debug] 使用するラベル（フラット）:", labelsToShow)
+    console.log("[YouCoder Debug] 最終的なカテゴリ形式ラベル:", filteredLabels)
+    console.log(
+      "[YouCoder Debug] TaggingPanelに渡すラベルのキー:",
+      Object.keys(filteredLabels)
+    )
   }
 
   const handleActionToggle = async (team: string, action: string) => {
