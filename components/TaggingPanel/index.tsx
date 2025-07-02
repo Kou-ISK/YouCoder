@@ -38,7 +38,7 @@ export const TaggingPanel: React.FC<TaggingPanelProps> = ({
     <DraggableResizable
       initialPosition={position}
       initialSize={size}
-      minWidth={380}
+      minWidth={320}
       minHeight={300}
       onPositionChange={handlePositionChange}
       onSizeChange={handleSizeChange}

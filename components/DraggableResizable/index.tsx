@@ -16,128 +16,86 @@ export const DraggableResizable: React.FC<DraggableResizableProps> = ({
   const [size, setSize] = useState<Size>(initialSize)
   const [position, setPosition] = useState<Position>(initialPosition)
   const elementRef = useRef<HTMLDivElement>(null)
-  const isDraggingRef = useRef(false)
-  const dragStartRef = useRef<Position>({ x: 0, y: 0 })
+  const isDragging = useRef(false)
+  const dragOffset = useRef<Position>({ x: 0, y: 0 })
 
-  // グローバルマウスイベントの設定
+  // マウスイベントハンドラ
   useEffect(() => {
-    const handleGlobalMouseMove = (e: MouseEvent) => {
-      if (isDraggingRef.current) {
-        const newX = e.clientX - dragStartRef.current.x
-        const newY = e.clientY - dragStartRef.current.y
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current) return
 
-        // スクロール可能な領域を考慮した制限
-        const maxX =
-          Math.max(document.documentElement.scrollWidth, window.innerWidth) -
-          (size.width || minWidth)
-        const maxY =
-          Math.max(document.documentElement.scrollHeight, window.innerHeight) -
-          (size.height || minHeight)
+      e.preventDefault()
 
-        // 要素が完全に画面外に出ないよう、少なくとも20pxは画面内に残す
-        const safeArea = 20
-        const newPosition = {
-          x: Math.max(-size.width + safeArea, Math.min(newX, maxX)),
-          y: Math.max(-size.height + safeArea, Math.min(newY, maxY))
-        }
-
-        setPosition(newPosition)
-        onPositionChange?.(newPosition)
+      // 直接位置を更新（requestAnimationFrameを使わない）
+      const newPosition = {
+        x: e.clientX - dragOffset.current.x,
+        y: e.clientY - dragOffset.current.y
       }
-    }
 
-    const handleGlobalMouseUp = () => {
-      if (isDraggingRef.current) {
-        isDraggingRef.current = false
-      }
-    }
-
-    // スクロール処理
-    const handleScroll = () => {
-      if (isDraggingRef.current) {
-        const rect = elementRef.current?.getBoundingClientRect()
-        if (rect) {
-          const newPosition = {
-            x: position.x - (window.scrollX - (window as any).lastScrollX || 0),
-            y: position.y - (window.scrollY - (window as any).lastScrollY || 0)
+      // 画面境界チェック
+      const currentSize = elementRef.current
+        ? {
+            width: elementRef.current.clientWidth,
+            height: elementRef.current.clientHeight
           }
-          setPosition(newPosition)
-          onPositionChange?.(newPosition)
-        }
-      }
-      ;(window as any).lastScrollX = window.scrollX
-      ;(window as any).lastScrollY = window.scrollY
+        : size
+
+      const maxX = window.innerWidth - currentSize.width
+      const maxY = window.innerHeight - currentSize.height
+
+      newPosition.x = Math.max(0, Math.min(newPosition.x, maxX))
+      newPosition.y = Math.max(0, Math.min(newPosition.y, maxY))
+
+      setPosition(newPosition)
+      onPositionChange?.(newPosition)
     }
 
-    window.addEventListener("mousemove", handleGlobalMouseMove)
-    window.addEventListener("mouseup", handleGlobalMouseUp)
-    window.addEventListener("scroll", handleScroll)
+    const handleMouseUp = (e: MouseEvent) => {
+      if (isDragging.current) {
+        isDragging.current = false
+        document.body.style.cursor = ""
+        document.body.style.userSelect = ""
+        e.preventDefault()
+      }
+    }
+
+    // イベントリスナーを常に登録（isDraggingの状態に関係なく）
+    document.addEventListener("mousemove", handleMouseMove, {
+      passive: false
+    })
+    document.addEventListener("mouseup", handleMouseUp, {
+      passive: false
+    })
 
     return () => {
-      window.removeEventListener("mousemove", handleGlobalMouseMove)
-      window.removeEventListener("mouseup", handleGlobalMouseUp)
-      window.removeEventListener("scroll", handleScroll)
+      document.removeEventListener("mousemove", handleMouseMove)
+      document.removeEventListener("mouseup", handleMouseUp)
+      document.body.style.cursor = ""
+      document.body.style.userSelect = ""
     }
-  }, [size, minWidth, minHeight, onPositionChange])
-
-  // 画面外に出た時の自動スクロール
-  useEffect(() => {
-    if (!isDraggingRef.current) return
-
-    const checkAndScroll = () => {
-      const rect = elementRef.current?.getBoundingClientRect()
-      if (!rect) return
-
-      const scrollSpeed = 10
-      const scrollThreshold = 50
-      const isPartiallyOutOfView =
-        rect.bottom > window.innerHeight ||
-        rect.top < 0 ||
-        rect.right > window.innerWidth ||
-        rect.left < 0
-
-      if (isPartiallyOutOfView) {
-        if (
-          rect.bottom > window.innerHeight - scrollThreshold &&
-          rect.bottom > window.innerHeight
-        ) {
-          window.scrollBy(0, scrollSpeed)
-        } else if (rect.top < scrollThreshold && rect.top < 0) {
-          window.scrollBy(0, -scrollSpeed)
-        }
-
-        if (
-          rect.right > window.innerWidth - scrollThreshold &&
-          rect.right > window.innerWidth
-        ) {
-          window.scrollBy(scrollSpeed, 0)
-        } else if (rect.left < scrollThreshold && rect.left < 0) {
-          window.scrollBy(-scrollSpeed, 0)
-        }
-      }
-    }
-
-    const scrollInterval = setInterval(checkAndScroll, 50)
-    return () => clearInterval(scrollInterval)
-  }, [isDraggingRef.current])
+  }, [onPositionChange, size])
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    // リサイズハンドルをクリックした場合はドラッグを開始しない
-    const isResizeHandle = (e: React.MouseEvent) => {
-      const rect = elementRef.current?.getBoundingClientRect()
-      if (!rect) return false
-      const rightEdge = rect.right - e.clientX
-      const bottomEdge = rect.bottom - e.clientY
-      return rightEdge <= 20 && bottomEdge <= 20
-    }
+    // リサイズハンドルかチェック
+    const rect = elementRef.current?.getBoundingClientRect()
+    if (!rect) return
 
-    if (!isResizeHandle(e)) {
-      isDraggingRef.current = true
-      dragStartRef.current = {
+    const isResizeArea =
+      e.clientX > rect.right - 20 && e.clientY > rect.bottom - 20
+
+    if (!isResizeArea) {
+      isDragging.current = true
+      dragOffset.current = {
         x: e.clientX - position.x,
         y: e.clientY - position.y
       }
+
+      // ドラッグ開始時にカーソルとユーザー選択を設定
+      document.body.style.cursor = "grabbing"
+      document.body.style.userSelect = "none"
+
       e.preventDefault()
+      e.stopPropagation()
     }
   }
 
@@ -166,8 +124,9 @@ export const DraggableResizable: React.FC<DraggableResizableProps> = ({
         top: `${position.y}px`,
         resize: "both",
         overflow: "hidden",
-        cursor: isDraggingRef.current ? "grabbing" : "grab",
+        cursor: isDragging.current ? "grabbing" : "grab",
         userSelect: "none",
+        zIndex: isDragging.current ? 9999 : "auto",
         ...style
       }}
       onMouseDown={handleMouseDown}

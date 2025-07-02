@@ -42,11 +42,11 @@ export const usePanelPosition = ({
 
     // window オブジェクトが存在しない場合のデフォルト値
     if (typeof window === "undefined") {
-      return { width: 280, height: 250 }
+      return { width: 240, height: 250 }
     }
 
     return {
-      width: 280,
+      width: 240,
       height: Math.min(300, window.innerHeight - 100) // より小さな初期高さに調整
     }
   }
