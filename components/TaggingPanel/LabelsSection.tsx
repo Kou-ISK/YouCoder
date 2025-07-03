@@ -72,7 +72,7 @@ export const LabelsSection: React.FC<LabelsSectionProps> = ({
               key={category}
               className="bg-white rounded-lg border-2 border-gray-200 shadow-sm p-3 hover:border-gray-300 transition-colors duration-200">
               {/* カテゴリヘッダー */}
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-200 bg-gray-50 -mx-3 -mt-3 px-3 pt-3 rounded-t-lg">
+              <h4 className="text-base font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-200 bg-gray-50 -mx-3 -mt-3 px-3 pt-3 rounded-t-lg">
                 {category}
               </h4>
               {/* ラベルボタンのグリッド */}

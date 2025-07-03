@@ -49,7 +49,7 @@ export const ActionsSection: React.FC<ActionsSectionProps> = ({
         {teams.map((team, index) => (
           <div
             key={team}
-            className={`py-2 px-3 text-center text-sm font-medium text-white rounded-lg shadow-sm ${getTeamColorClass(index)}`}>
+            className={`py-2 px-3 text-center text-base font-medium text-white rounded-lg shadow-sm ${getTeamColorClass(index)}`}>
             {team}
           </div>
         ))}
