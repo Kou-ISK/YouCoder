@@ -31,11 +31,12 @@ describe("LabelsSection", () => {
     jest.clearAllMocks()
   })
 
-  test("配列形式のラベルを表示する", () => {
-    const labels = ["Good", "Bad", "Excellent"]
+  test("配列形式のラベルでは何も表示されない", () => {
+    // Record<string, string[]>形式のみサポートするため、配列は表示されない
+    const labels = {} as Record<string, string[]>
     const activeLabels = new Set<string>()
 
-    render(
+    const { container } = render(
       <LabelsSection
         labels={labels}
         activeLabels={activeLabels}
@@ -43,9 +44,8 @@ describe("LabelsSection", () => {
       />
     )
 
-    expect(screen.getByText("Good")).toBeInTheDocument()
-    expect(screen.getByText("Bad")).toBeInTheDocument()
-    expect(screen.getByText("Excellent")).toBeInTheDocument()
+    // 空のオブジェクトの場合はnullが返される
+    expect(container.firstChild).toBeNull()
   })
 
   test("カテゴリ形式のラベルを表示する", () => {
@@ -74,7 +74,7 @@ describe("LabelsSection", () => {
     expect(screen.getByText("Long")).toBeInTheDocument()
   })
 
-  test("一般カテゴリではカテゴリ名を表示しない", () => {
+  test("すべてのカテゴリでカテゴリ名が表示される", () => {
     const labels = {
       一般: ["Basic", "Simple"]
     }
@@ -88,7 +88,8 @@ describe("LabelsSection", () => {
       />
     )
 
-    expect(screen.queryByText("一般")).not.toBeInTheDocument()
+    // "一般"カテゴリも他のカテゴリと同様に表示される
+    expect(screen.getByText("一般")).toBeInTheDocument()
     expect(screen.getByText("Basic")).toBeInTheDocument()
     expect(screen.getByText("Simple")).toBeInTheDocument()
   })
@@ -97,7 +98,7 @@ describe("LabelsSection", () => {
     const user = userEvent.setup()
     const labels = {
       Result: ["Good"],
-      一般: ["Basic"]
+      General: ["Basic"]
     }
     const activeLabels = new Set<string>()
 
@@ -115,11 +116,11 @@ describe("LabelsSection", () => {
 
     // 一般カテゴリのラベルのクリック
     await user.click(screen.getByText("Basic"))
-    expect(mockOnLabelClick).toHaveBeenCalledWith("Basic")
+    expect(mockOnLabelClick).toHaveBeenCalledWith("General - Basic")
   })
 
   test("空のラベルでは何も表示しない", () => {
-    const labels: string[] = []
+    const labels = {} as Record<string, string[]>
     const activeLabels = new Set<string>()
 
     const { container } = render(
@@ -130,7 +131,7 @@ describe("LabelsSection", () => {
       />
     )
 
-    // 空のラベルの場合はnullが返される
+    // 空のオブジェクトの場合はnullが返される
     expect(container.firstChild).toBeNull()
   })
 

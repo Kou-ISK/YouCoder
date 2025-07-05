@@ -58,7 +58,10 @@ describe("TaggingPanel", () => {
   const defaultProps = {
     teams: ["Team A", "Team B"],
     actions: { pass: "Pass", shoot: "Shoot" },
-    labels: ["Good", "Bad", "Excellent"],
+    labels: {
+      Result: ["Good", "Bad"],
+      Distance: ["Short", "Long"]
+    },
     activeActions: new Set<string>(),
     activeLabels: new Set<string>(),
     onActionToggle: jest.fn(),
@@ -74,7 +77,14 @@ describe("TaggingPanel", () => {
 
     const draggableElement = screen.getByTestId("draggable-resizable")
     expect(draggableElement).toBeInTheDocument()
-    expect(draggableElement).toHaveClass("bg-white", "rounded-lg", "shadow-lg")
+    expect(draggableElement).toHaveClass(
+      "bg-gradient-to-br",
+      "from-white",
+      "via-gray-50",
+      "to-blue-50",
+      "rounded-2xl",
+      "shadow-2xl"
+    )
   })
 
   test("TaggingPanelContentが表示される", () => {
@@ -100,7 +110,8 @@ describe("TaggingPanel", () => {
 
     expect(screen.getByText("Good")).toBeInTheDocument()
     expect(screen.getByText("Bad")).toBeInTheDocument()
-    expect(screen.getByText("Excellent")).toBeInTheDocument()
+    expect(screen.getByText("Short")).toBeInTheDocument()
+    expect(screen.getByText("Long")).toBeInTheDocument()
   })
 
   test("カテゴリ化されたラベルが正しく表示される", () => {
@@ -133,8 +144,8 @@ describe("TaggingPanel", () => {
     expect(screen.queryByText("Pass")).not.toBeInTheDocument()
   })
 
-  test("空のラベル配列でもエラーにならない", () => {
-    render(<TaggingPanel {...defaultProps} labels={[]} />)
+  test("空のラベル辞書でもエラーにならない", () => {
+    render(<TaggingPanel {...defaultProps} labels={{}} />)
 
     // ラベルボタンが表示されないことを確認
     expect(screen.queryByText("Good")).not.toBeInTheDocument()

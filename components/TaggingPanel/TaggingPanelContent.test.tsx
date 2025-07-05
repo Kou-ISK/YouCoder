@@ -43,7 +43,10 @@ describe("TaggingPanelContent", () => {
   const defaultProps = {
     teams: ["Team A", "Team B"],
     actions: { pass: "Pass", shoot: "Shoot" },
-    labels: ["Good", "Bad", "Excellent"],
+    labels: {
+      Result: ["Good", "Bad"],
+      Distance: ["Short", "Long"]
+    },
     activeActions: new Set<string>(),
     activeLabels: new Set<string>(),
     onActionToggle: jest.fn(),

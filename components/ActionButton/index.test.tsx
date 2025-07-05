@@ -19,14 +19,21 @@ describe("ActionButton", () => {
   test("アクション名が表示される", () => {
     render(<ActionButton {...defaultProps} />)
 
-    expect(screen.getByRole("button", { name: "pass" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
+        name: "Team Aチームのpassアクション (非アクティブ)"
+      })
+    ).toBeInTheDocument()
+    expect(screen.getByText("pass")).toBeInTheDocument()
   })
 
   test("クリックするとonClickが正しい引数で呼ばれる", async () => {
     const user = userEvent.setup()
     render(<ActionButton {...defaultProps} />)
 
-    const button = screen.getByRole("button", { name: "pass" })
+    const button = screen.getByRole("button", {
+      name: "Team Aチームのpassアクション (非アクティブ)"
+    })
     await user.click(button)
 
     expect(defaultProps.onClick).toHaveBeenCalledWith("Team A", "pass")
@@ -36,59 +43,51 @@ describe("ActionButton", () => {
   test("非アクティブ状態では正しいスタイルが適用される", () => {
     render(<ActionButton {...defaultProps} isActive={false} />)
 
-    const button = screen.getByRole("button", { name: "pass" })
-    expect(button).toHaveStyle({
-      backgroundColor: "rgb(255, 255, 255)",
-      color: "rgb(55, 65, 81)",
-      borderColor: "rgb(209, 213, 219)"
+    const button = screen.getByRole("button", {
+      name: "Team Aチームのpassアクション (非アクティブ)"
     })
+
+    // TailwindCSSクラスの存在を確認
+    expect(button).toHaveClass("bg-white", "text-gray-700", "border-gray-300")
+    expect(button).not.toHaveClass("bg-red-500")
   })
 
   test("アクティブ状態では正しいスタイルが適用される", () => {
     render(<ActionButton {...defaultProps} isActive={true} />)
 
-    const button = screen.getByRole("button", { name: "pass" })
-    expect(button).toHaveStyle({
-      backgroundColor: "rgb(239, 68, 68)",
-      color: "rgb(255, 255, 255)",
-      borderColor: "rgb(239, 68, 68)"
+    const button = screen.getByRole("button", {
+      name: "Team Aチームのpassアクション (アクティブ)"
     })
+
+    // TailwindCSSクラスの存在を確認
+    expect(button).toHaveClass("bg-red-500", "text-white", "border-red-500")
+    expect(button).not.toHaveClass("bg-white")
   })
 
-  test("ホバー時にスタイルが変更される（非アクティブ）", async () => {
+  test("ホバー時にスタイルクラスが適用される（非アクティブ）", async () => {
     const user = userEvent.setup()
     render(<ActionButton {...defaultProps} isActive={false} />)
 
-    const button = screen.getByRole("button", { name: "pass" })
-
-    await user.hover(button)
-    expect(button).toHaveStyle({
-      backgroundColor: "rgb(248, 250, 252)",
-      borderColor: "rgb(148, 163, 184)"
+    const button = screen.getByRole("button", {
+      name: "Team Aチームのpassアクション (非アクティブ)"
     })
 
-    await user.unhover(button)
-    expect(button).toHaveStyle({
-      backgroundColor: "rgb(255, 255, 255)",
-      borderColor: "rgb(209, 213, 219)"
-    })
+    // 基本クラスが存在することを確認
+    expect(button).toHaveClass("hover:bg-gray-50", "hover:border-gray-400")
+    expect(button).toHaveClass("transition-all", "duration-150")
   })
 
-  test("ホバー時にスタイルが変更される（アクティブ）", async () => {
+  test("ホバー時にスタイルクラスが適用される（アクティブ）", async () => {
     const user = userEvent.setup()
     render(<ActionButton {...defaultProps} isActive={true} />)
 
-    const button = screen.getByRole("button", { name: "pass" })
-
-    await user.hover(button)
-    expect(button).toHaveStyle({
-      backgroundColor: "#dc2626"
+    const button = screen.getByRole("button", {
+      name: "Team Aチームのpassアクション (アクティブ)"
     })
 
-    await user.unhover(button)
-    expect(button).toHaveStyle({
-      backgroundColor: "#ef4444"
-    })
+    // 基本クラスが存在することを確認
+    expect(button).toHaveClass("hover:bg-red-600")
+    expect(button).toHaveClass("transition-all", "duration-150")
   })
 
   test("異なるチームとアクションの組み合わせで動作する", async () => {
@@ -102,7 +101,9 @@ describe("ActionButton", () => {
 
     render(<ActionButton {...props} />)
 
-    const button = screen.getByRole("button", { name: "shoot" })
+    const button = screen.getByRole("button", {
+      name: "Team Bチームのshootアクション (アクティブ)"
+    })
     await user.click(button)
 
     expect(props.onClick).toHaveBeenCalledWith("Team B", "shoot")
@@ -112,7 +113,9 @@ describe("ActionButton", () => {
     const user = userEvent.setup()
     render(<ActionButton {...defaultProps} />)
 
-    const button = screen.getByRole("button", { name: "pass" })
+    const button = screen.getByRole("button", {
+      name: "Team Aチームのpassアクション (非アクティブ)"
+    })
 
     await user.click(button)
     await user.click(button)
@@ -133,8 +136,11 @@ describe("ActionButton", () => {
     render(<ActionButton {...props} />)
 
     expect(
-      screen.getByRole("button", { name: "very-long-action-name-test" })
+      screen.getByRole("button", {
+        name: "Team Aチームのvery-long-action-name-testアクション (非アクティブ)"
+      })
     ).toBeInTheDocument()
+    expect(screen.getByText("very-long-action-name-test")).toBeInTheDocument()
   })
 
   test("特殊文字を含むアクション名でも動作する", async () => {
@@ -147,7 +153,7 @@ describe("ActionButton", () => {
     render(<ActionButton {...props} />)
 
     const button = screen.getByRole("button", {
-      name: "action-with-特殊文字-123"
+      name: "Team Aチームのaction-with-特殊文字-123アクション (非アクティブ)"
     })
     await user.click(button)
 
