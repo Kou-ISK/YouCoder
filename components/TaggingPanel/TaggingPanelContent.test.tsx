@@ -58,7 +58,13 @@ describe("TaggingPanelContent", () => {
   })
 
   test("ActionsSection と LabelsSection が表示される", () => {
-    render(<TaggingPanelContent {...defaultProps} />)
+    // activeActionsを設定してLabelsセクションが表示されるようにする
+    const propsWithActiveActions = {
+      ...defaultProps,
+      activeActions: new Set<string>(["Team A_pass"])
+    }
+
+    render(<TaggingPanelContent {...propsWithActiveActions} />)
 
     expect(screen.getByTestId("actions-section")).toBeInTheDocument()
     expect(screen.getByTestId("labels-section")).toBeInTheDocument()
@@ -79,10 +85,17 @@ describe("TaggingPanelContent", () => {
   })
 
   test("ラベルボタンが正しく表示される", () => {
-    render(<TaggingPanelContent {...defaultProps} />)
+    // activeActionsを設定してLabelsセクションが表示されるようにする
+    const propsWithActiveActions = {
+      ...defaultProps,
+      activeActions: new Set<string>(["Team A_pass"])
+    }
+
+    render(<TaggingPanelContent {...propsWithActiveActions} />)
 
     expect(screen.getByText("Good")).toBeInTheDocument()
     expect(screen.getByText("Bad")).toBeInTheDocument()
-    expect(screen.getByText("Excellent")).toBeInTheDocument()
+    expect(screen.getByText("Short")).toBeInTheDocument()
+    expect(screen.getByText("Long")).toBeInTheDocument()
   })
 })
