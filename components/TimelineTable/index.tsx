@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from "react"
+import React, { useCallback, useMemo, useRef } from "react"
 
 import type { TimelineTableProps } from "./types"
 
@@ -62,44 +62,67 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
     }
   }
 
-  // 二段階削除確認機能
-  const handleDeleteClick = (
-    team: string,
-    action: string,
-    start: number,
-    index: number
-  ) => {
-    if (pendingDeleteIndex === index) {
-      // 二回目のクリック - 実際に削除を実行
-      onDelete(team, action, start)
-      setPendingDeleteIndex(null)
-      if (deleteTimeoutRef.current) {
-        clearTimeout(deleteTimeoutRef.current)
-        deleteTimeoutRef.current = null
+  // マウスイベントハンドラー
+  const handleRowMouseEnter = useCallback(
+    (e: React.MouseEvent<HTMLTableRowElement>, index: number) => {
+      if (pendingDeleteIndex !== index) {
+        e.currentTarget.style.backgroundColor = "#f0f9ff"
       }
-    } else {
-      // 最初のクリック - 確認状態に入る
-      setPendingDeleteIndex(index)
+      setHoveredRowIndex(index)
+    },
+    [pendingDeleteIndex]
+  )
 
-      // 3秒後に確認状態をリセット
-      if (deleteTimeoutRef.current) {
-        clearTimeout(deleteTimeoutRef.current)
+  const handleRowMouseLeave = useCallback(
+    (e: React.MouseEvent<HTMLTableRowElement>, index: number) => {
+      if (pendingDeleteIndex === index) {
+        e.currentTarget.style.backgroundColor = "#fef2f2"
+      } else {
+        e.currentTarget.style.backgroundColor =
+          index % 2 === 0 ? "#ffffff" : "#f9fafb"
       }
-      deleteTimeoutRef.current = setTimeout(() => {
-        setPendingDeleteIndex(null)
-        deleteTimeoutRef.current = null
-      }, 3000)
-    }
-  }
+      setHoveredRowIndex(null)
+    },
+    [pendingDeleteIndex]
+  )
+
+  // 削除確認のタイムアウトコールバック
+  const resetDeleteConfirmation = useCallback(() => {
+    setPendingDeleteIndex(null)
+    deleteTimeoutRef.current = null
+  }, [])
+
+  // 二段階削除確認機能
+  const handleDeleteClick = useCallback(
+    (team: string, action: string, start: number, index: number) => {
+      if (pendingDeleteIndex === index) {
+        // 二回目のクリック - 実際に削除を実行
+        onDelete(team, action, start)
+        resetDeleteConfirmation()
+        if (deleteTimeoutRef.current) {
+          clearTimeout(deleteTimeoutRef.current)
+        }
+      } else {
+        // 最初のクリック - 確認状態に入る
+        setPendingDeleteIndex(index)
+
+        // 3秒後に確認状態をリセット
+        if (deleteTimeoutRef.current) {
+          clearTimeout(deleteTimeoutRef.current)
+        }
+        deleteTimeoutRef.current = setTimeout(resetDeleteConfirmation, 3000)
+      }
+    },
+    [pendingDeleteIndex, onDelete, resetDeleteConfirmation]
+  )
 
   // ESCキーで削除確認をキャンセル
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && pendingDeleteIndex !== null) {
-        setPendingDeleteIndex(null)
+        resetDeleteConfirmation()
         if (deleteTimeoutRef.current) {
           clearTimeout(deleteTimeoutRef.current)
-          deleteTimeoutRef.current = null
         }
       }
     }
@@ -108,7 +131,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
     return () => {
       document.removeEventListener("keydown", handleKeyDown)
     }
-  }, [pendingDeleteIndex])
+  }, [pendingDeleteIndex, resetDeleteConfirmation])
 
   // コンポーネントのクリーンアップ
   React.useEffect(() => {
@@ -321,21 +344,8 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                     : "3px solid transparent",
                 transition: "all 0.3s ease"
               }}
-              onMouseEnter={(e) => {
-                if (pendingDeleteIndex !== index) {
-                  e.currentTarget.style.backgroundColor = "#f0f9ff"
-                }
-                setHoveredRowIndex(index)
-              }}
-              onMouseLeave={(e) => {
-                if (pendingDeleteIndex === index) {
-                  e.currentTarget.style.backgroundColor = "#fef2f2"
-                } else {
-                  e.currentTarget.style.backgroundColor =
-                    index % 2 === 0 ? "#ffffff" : "#f9fafb"
-                }
-                setHoveredRowIndex(null)
-              }}>
+              onMouseEnter={(e) => handleRowMouseEnter(e, index)}
+              onMouseLeave={(e) => handleRowMouseLeave(e, index)}>
               <td
                 style={{
                   padding: "6px 8px",

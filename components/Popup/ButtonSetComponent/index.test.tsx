@@ -159,8 +159,9 @@ describe("ButtonSetComponent", () => {
     // シュートアクションのラベルボタンを確認
     const goalButton = screen.getByText("ゴール")
 
-    // 無効状態のスタイルを確認
-    expect(goalButton).toHaveStyle({ opacity: "0.5" })
+    // 無効状態のCSSクラスを確認
+    expect(goalButton).toHaveClass("opacity-50")
+    expect(goalButton).toBeDisabled()
   })
 
   test("ラベルボタンをクリックするとonUpdateButtonSetが呼ばれる", async () => {
@@ -325,17 +326,14 @@ describe("ButtonSetComponent", () => {
     const user = userEvent.setup()
     render(<ButtonSetComponent {...defaultProps} />)
 
-    const passButton = screen.getByText("パス")
+    // "パス"テキストを含むボタン要素を取得
+    const passButton = screen.getByRole("button", { name: /パス/ })
 
-    // ホバー前の状態
-    expect(passButton).toHaveStyle({
-      backgroundColor: "#ffffff"
-    })
+    // 非アクティブ状態ではwhiteのbackgroundクラスが適用されることを確認
+    expect(passButton).toHaveClass("bg-white")
 
+    // ホバーイベントが発生することを確認
     await user.hover(passButton)
-
-    // ホバー時の状態は実際のActionButtonコンポーネントの実装に依存
-    // ここではホバーイベントが発生することを確認
     expect(passButton).toBeInTheDocument()
   })
 
