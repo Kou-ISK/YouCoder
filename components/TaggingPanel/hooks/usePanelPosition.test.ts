@@ -57,7 +57,7 @@ describe("usePanelPosition", () => {
       y: 16
     })
     expect(result.current.size).toEqual({
-      width: 280,
+      width: 240,
       height: Math.min(300, window.innerHeight - 100)
     })
   })
@@ -181,7 +181,7 @@ describe("usePanelPosition", () => {
 
     // デフォルトサイズが使用される
     expect(result.current.size).toEqual({
-      width: 280,
+      width: 240,
       height: Math.min(300, window.innerHeight - 100)
     })
   })

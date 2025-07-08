@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react"
+import { act, fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import React from "react"
 
@@ -138,7 +138,10 @@ describe("TimelinePanel", () => {
     // テーブル行にホバーして削除ボタンを表示させる
     const tableRows = screen.getAllByRole("row")
     const firstDataRow = tableRows[1] // ヘッダー行の次の行
-    await user.hover(firstDataRow)
+
+    await act(async () => {
+      await user.hover(firstDataRow)
+    })
 
     // 削除ボタンを取得（ゴミ箱アイコンまたは削除確認ボタン）
     const deleteButton = screen.getByRole("button", {
@@ -146,13 +149,17 @@ describe("TimelinePanel", () => {
     })
 
     // 最初のクリックで削除確認状態になる
-    await user.click(deleteButton)
+    await act(async () => {
+      await user.click(deleteButton)
+    })
 
     // 二回目のクリックで実際に削除される
     const confirmButton = screen.getByRole("button", {
       name: /削除確認|もう一度クリックすると削除されます/i
     })
-    await user.click(confirmButton)
+    await act(async () => {
+      await user.click(confirmButton)
+    })
 
     expect(defaultProps.onDelete).toHaveBeenCalledWith("Team A", "Pass", 1000)
   })
