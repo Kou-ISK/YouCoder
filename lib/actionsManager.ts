@@ -535,7 +535,8 @@ export const exportActionsToCSV = (actionsList: Action[] = actions) => {
         const category = label.split(" - ")[0]
         allCategories.add(category)
       } else {
-        allCategories.add("一般")
+        // カテゴリがないラベルは無視
+        console.warn(`カテゴリがないラベルは無視されました: ${label}`)
       }
     })
   })
@@ -567,10 +568,8 @@ export const exportActionsToCSV = (actionsList: Action[] = actions) => {
           }
           categorizedLabels[category].push(value)
         } else {
-          if (!categorizedLabels["一般"]) {
-            categorizedLabels["一般"] = []
-          }
-          categorizedLabels["一般"].push(label)
+          // カテゴリがないラベルは無視
+          console.warn(`カテゴリがないラベルは無視されました: ${label}`)
         }
       })
 

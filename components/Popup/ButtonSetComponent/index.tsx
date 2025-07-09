@@ -35,7 +35,10 @@ const ButtonSetComponent: React.FC<ButtonSetComponentProps> = ({
     labels: Record<string, string[]> | string[]
   ): Record<string, string[]> => {
     if (Array.isArray(labels)) {
-      return { 一般: labels }
+      console.warn(
+        "配列形式のラベルはサポートされていません。カテゴリ形式を使用してください。"
+      )
+      return {} // 空のオブジェクトを返して処理を停止
     }
     return labels
   }
@@ -65,17 +68,16 @@ const ButtonSetComponent: React.FC<ButtonSetComponentProps> = ({
       if (btn.action === action) {
         const flatLabels = normalizeLabelsToFlat(btn.labels)
         if (!flatLabels.includes(label)) {
-          // 新しいラベルを追加する場合、既存の形式を保持
+          // 新しいラベルを追加する場合、カテゴリ形式が必要
           if (Array.isArray(btn.labels)) {
-            return { ...btn, labels: [...btn.labels, label] }
+            console.warn(
+              "配列形式のラベルはサポートされていません。カテゴリ形式を使用してください。"
+            )
+            return btn // 変更なし
           } else {
-            // カテゴリ付きの場合、"一般"カテゴリに追加
-            const categorized = { ...btn.labels }
-            if (!categorized["一般"]) {
-              categorized["一般"] = []
-            }
-            categorized["一般"] = [...categorized["一般"], label]
-            return { ...btn, labels: categorized }
+            // カテゴリ付きラベルの場合、カテゴリが必要
+            console.warn("ラベルを追加するにはカテゴリの指定が必要です。")
+            return btn // 変更なし
           }
         }
       }
@@ -129,29 +131,26 @@ const ButtonSetComponent: React.FC<ButtonSetComponentProps> = ({
             <div style={{ marginTop: "8px" }}>
               {Object.entries(categorizedLabels).map(([category, labels]) => (
                 <div key={category} style={{ marginBottom: "4px" }}>
-                  {/* カテゴリが "一般" 以外の場合のみカテゴリ名を表示 */}
-                  {category !== "一般" && (
-                    <div
-                      style={{
-                        fontSize: "10px",
-                        fontWeight: "600",
-                        color: "#6b7280",
-                        marginBottom: "2px",
-                        paddingLeft: "4px"
-                      }}>
-                      {category}
-                    </div>
-                  )}
+                  {/* カテゴリ名を常に表示 */}
+                  <div
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: "600",
+                      color: "#6b7280",
+                      marginBottom: "2px",
+                      paddingLeft: "4px"
+                    }}>
+                    {category}
+                  </div>
                   <div
                     style={{
                       display: "flex",
                       flexWrap: "wrap",
                       gap: "4px",
-                      marginLeft: category !== "一般" ? "8px" : "0px"
+                      marginLeft: "8px"
                     }}>
                     {labels.map((lbl, i) => {
-                      const displayLabel =
-                        category === "一般" ? lbl : `${category} - ${lbl}`
+                      const displayLabel = `${category} - ${lbl}`
                       return (
                         <LabelButton
                           key={i}

@@ -6,7 +6,7 @@ import { TeamList } from "./components/Popup/TeamList"
 
 type Button = {
   action: string
-  labels: Record<string, string[]> | string[] // 新形式または旧形式
+  labels: Record<string, string[]> | string[] // 互換性のために一時的に配列もサポート
 }
 
 type ButtonSet = {
@@ -14,13 +14,17 @@ type ButtonSet = {
   buttons: Button[]
 }
 
-// ラベル形式の変換とユーティリティ関数
+// カテゴリ付きラベルのユーティリティ関数（flat array形式は廃止）
+
+// 互換性のためのユーティリティ関数
 const normalizeLabelsToCategorized = (
   labels: Record<string, string[]> | string[]
 ): Record<string, string[]> => {
   if (Array.isArray(labels)) {
-    // 旧形式の場合、"一般" カテゴリに変換
-    return { 一般: labels }
+    console.warn(
+      "配列形式のラベルはサポートされていません。カテゴリ形式を使用してください。"
+    )
+    return {} // 空のオブジェクトを返して処理を停止
   }
   return labels
 }
@@ -31,8 +35,10 @@ const normalizeLabelsToFlat = (
   if (Array.isArray(labels)) {
     return labels
   }
-  // 新形式の場合、フラット配列に変換
-  return Object.values(labels).flat()
+  // カテゴリ付きラベルの場合、カテゴリ情報を含めて平坦化
+  return Object.entries(labels).flatMap(([category, labelList]) =>
+    labelList.map((label) => `${category} - ${label}`)
+  )
 }
 
 // カテゴリ付きラベルの配列を生成（表示用）
@@ -61,15 +67,15 @@ const getCategorizedLabelList = (
 // ラベル文字列からカテゴリとラベルを分解
 const parseCategorizedLabel = (
   displayLabel: string
-): { category: string; label: string } => {
+): { category: string; label: string } | null => {
   const parts = displayLabel.split(" - ")
   if (parts.length >= 2) {
     const category = parts[0]
     const label = parts.slice(1).join(" - ") // "xxx - yyy - zzz"のような場合に対応
     return { category, label }
   }
-  // フォールバック: "一般"カテゴリとして扱う
-  return { category: "一般", label: displayLabel }
+  // カテゴリがない場合はnullを返す（フォールバック処理を削除）
+  return null
 }
 
 const defaultButtonSets: ButtonSet[] = [
@@ -78,7 +84,7 @@ const defaultButtonSets: ButtonSet[] = [
     buttons: [
       {
         action: "fuga",
-        labels: ["hogehoge", "fugafuga"]
+        labels: { 一般: ["hogehoge", "fugafuga"] }
       }
     ]
   },
@@ -87,7 +93,7 @@ const defaultButtonSets: ButtonSet[] = [
     buttons: [
       {
         action: "bar",
-        labels: ["barラベル1", "barラベル2"]
+        labels: { 一般: ["barラベル1", "barラベル2"] }
       }
     ]
   }
@@ -308,7 +314,7 @@ const Popup = () => {
           const updatedButtonSets = [...buttonSets]
           updatedButtonSets[targetSetIndex].buttons.push({
             action: modalInput,
-            labels: []
+            labels: {} // 空のRecord<string, string[]>
           })
 
           // ボタンセット全体と選択状態を同時に保存
@@ -375,25 +381,9 @@ const Popup = () => {
               return
             }
           } else {
-            // 通常のラベル追加（互換性維持）
-            const flatLabels = normalizeLabelsToFlat(targetButton.labels)
-            if (!flatLabels.includes(modalInput)) {
-              if (Array.isArray(targetButton.labels)) {
-                targetButton.labels.push(modalInput)
-              } else {
-                // カテゴリ付きの場合、"一般"カテゴリに追加
-                const categorized = { ...targetButton.labels }
-                if (!categorized["一般"]) {
-                  categorized["一般"] = []
-                }
-                categorized["一般"].push(modalInput)
-                targetButton.labels = categorized
-              }
-              console.log("通常ラベル追加:", modalInput)
-            } else {
-              alert(`ラベル "${modalInput}" は既に存在します`)
-              return
-            }
+            // 通常のラベル追加はサポートしない（カテゴリが必要）
+            alert("ラベルを追加するにはカテゴリの指定が必要です。")
+            return
           }
 
           // ボタンセット全体と選択状態を同時に保存

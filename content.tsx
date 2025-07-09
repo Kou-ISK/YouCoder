@@ -22,11 +22,14 @@ export const config: PlasmoContentScript = {
   matches: ["*://*.youtube.com/*"]
 }
 
-export const getStyle = () => {
+// スタイル要素を作成する関数
+const createStyle = (cssText: string): HTMLStyleElement => {
   const style = document.createElement("style")
   style.textContent = cssText
   return style
 }
+
+export const getStyle = () => createStyle(cssText)
 
 // ネットワークエラー監視のための設定
 let networkErrorCount = 0
@@ -657,9 +660,7 @@ const MainContent: React.FC = () => {
     }
     // カテゴリ付きラベルの場合、カテゴリ情報を含めて平坦化
     return Object.entries(labels).flatMap(([category, labelList]) =>
-      labelList.map((label) =>
-        category === "一般" ? label : `${category} - ${label}`
-      )
+      labelList.map((label) => `${category} - ${label}`)
     )
   }
 
@@ -670,14 +671,19 @@ const MainContent: React.FC = () => {
     const categorized: Record<string, string[]> = {}
 
     flatLabels.forEach((label) => {
-      // カテゴリ付きラベルの場合
-      const [category, ...labelParts] = label.split(" - ")
-      const labelName = labelParts.join(" - ")
-      if (!categorized[category]) {
-        categorized[category] = []
-      }
-      if (!categorized[category].includes(labelName)) {
-        categorized[category].push(labelName)
+      // カテゴリ付きラベルの場合のみ処理
+      if (label.includes(" - ")) {
+        const [category, ...labelParts] = label.split(" - ")
+        const labelName = labelParts.join(" - ")
+        if (!categorized[category]) {
+          categorized[category] = []
+        }
+        if (!categorized[category].includes(labelName)) {
+          categorized[category].push(labelName)
+        }
+      } else {
+        // カテゴリがないラベルは無視（または警告）
+        console.warn(`カテゴリがないラベルは無視されました: ${label}`)
       }
     })
 
