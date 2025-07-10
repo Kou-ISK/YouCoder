@@ -304,7 +304,7 @@ describe("ButtonSetManager", () => {
           buttons: buttonSet.buttons.map((btn) => ({
             ...btn,
             labels: Array.isArray(btn.labels)
-              ? { 一般: btn.labels }
+              ? { Legacy: btn.labels }
               : btn.labels
           }))
         }
@@ -316,7 +316,7 @@ describe("ButtonSetManager", () => {
         string[]
       >
 
-      expect(modernLabels["一般"]).toEqual(["label1", "label2", "label3"])
+      expect(modernLabels["Legacy"]).toEqual(["label1", "label2", "label3"])
     })
 
     test("モダン形式からフラット形式への変換", () => {
@@ -341,9 +341,7 @@ describe("ButtonSetManager", () => {
             labels: Array.isArray(btn.labels)
               ? btn.labels
               : Object.entries(btn.labels).flatMap(([category, labels]) =>
-                  labels.map((label) =>
-                    category === "一般" ? label : `${category} - ${label}`
-                  )
+                  labels.map((label) => `${category} - ${label}`)
                 )
           }))
         }

@@ -7,7 +7,7 @@ import ButtonSetComponent from "."
 // MockButtonSet型の定義
 type MockButton = {
   action: string
-  labels: Record<string, string[]> | string[]
+  labels: Record<string, string[]> // カテゴリ付きラベルのみサポート
 }
 
 type MockButtonSet = {
@@ -24,7 +24,7 @@ const mockButtonSetWithCategorizedLabels: MockButtonSet = {
       labels: {
         方向: ["前", "後", "左", "右"],
         精度: ["正確", "不正確"],
-        一般: ["良い", "普通"]
+        Result: ["良い", "普通"]
       }
     },
     {
@@ -42,11 +42,17 @@ const mockButtonSetWithFlatLabels: MockButtonSet = {
   buttons: [
     {
       action: "ドリブル",
-      labels: ["速い", "遅い", "テクニカル"]
+      labels: {
+        スピード: ["速い", "遅い"],
+        スタイル: ["テクニカル"]
+      }
     },
     {
       action: "シュート",
-      labels: ["成功", "失敗", "ブロック"]
+      labels: {
+        結果: ["成功", "失敗"],
+        状況: ["ブロック"]
+      }
     }
   ]
 }
@@ -87,22 +93,21 @@ describe("ButtonSetComponent", () => {
   test("カテゴリ化されたラベルが正しく表示される", () => {
     render(<ButtonSetComponent {...defaultProps} />)
 
-    // カテゴリ名が表示されることを確認（"一般"以外）
+    // カテゴリ名が表示されることを確認
     expect(screen.getByText("方向")).toBeInTheDocument()
     expect(screen.getByText("精度")).toBeInTheDocument()
+    expect(screen.getByText("Result")).toBeInTheDocument()
     expect(screen.getByText("結果")).toBeInTheDocument()
     expect(screen.getByText("位置")).toBeInTheDocument()
-
-    // "一般"カテゴリは表示されない
-    expect(screen.queryByText("一般")).not.toBeInTheDocument()
 
     // ラベルが表示されることを確認
     expect(screen.getByText("前")).toBeInTheDocument()
     expect(screen.getByText("正確")).toBeInTheDocument()
     expect(screen.getByText("良い")).toBeInTheDocument()
+    expect(screen.getByText("良い")).toBeInTheDocument()
   })
 
-  test("フラット形式のラベルが正しく表示される", () => {
+  test("カテゴリ付きラベルが正しく表示される（旧フラット形式のデータ構造更新）", () => {
     render(
       <ButtonSetComponent
         {...defaultProps}
@@ -110,11 +115,13 @@ describe("ButtonSetComponent", () => {
       />
     )
 
-    // フラット形式のラベルが表示されることを確認
+    // カテゴリ付きに変更されたラベルが表示されることを確認
     expect(screen.getByText("速い")).toBeInTheDocument()
     expect(screen.getByText("遅い")).toBeInTheDocument()
     expect(screen.getByText("テクニカル")).toBeInTheDocument()
     expect(screen.getByText("成功")).toBeInTheDocument()
+    expect(screen.getByText("失敗")).toBeInTheDocument()
+    expect(screen.getByText("ブロック")).toBeInTheDocument()
   })
 
   test("アクションボタンをクリックすると選択状態が変わる", async () => {
@@ -164,22 +171,18 @@ describe("ButtonSetComponent", () => {
     expect(goalButton).toBeDisabled()
   })
 
-  test("ラベルボタンをクリックするとonUpdateButtonSetが呼ばれる", async () => {
+  test("ラベルボタンは読み取り専用で、クリックしてもonUpdateButtonSetが呼ばれない", async () => {
     const user = userEvent.setup()
     render(<ButtonSetComponent {...defaultProps} selectedAction="パス" />)
 
     const labelButton = screen.getByText("前")
     await user.click(labelButton)
 
-    expect(defaultProps.onUpdateButtonSet).toHaveBeenCalled()
-
-    // 呼び出された引数を確認
-    const call = defaultProps.onUpdateButtonSet.mock.calls[0][0]
-    expect(call.setName).toBe("サッカー基本セット")
-    expect(call.buttons).toBeDefined()
+    // onUpdateButtonSetは呼ばれない（読み取り専用モード）
+    expect(defaultProps.onUpdateButtonSet).not.toHaveBeenCalled()
   })
 
-  test("カテゴリ付きラベルのクリック時に正しい表示名が使用される", async () => {
+  test("カテゴリ付きラベルは読み取り専用で、クリックしてもonUpdateButtonSetが呼ばれない", async () => {
     const user = userEvent.setup()
     const mockOnUpdateButtonSet = jest.fn()
 
@@ -194,8 +197,8 @@ describe("ButtonSetComponent", () => {
     const labelButton = screen.getByText("前")
     await user.click(labelButton)
 
-    // onUpdateButtonSetが呼ばれることを確認
-    expect(mockOnUpdateButtonSet).toHaveBeenCalled()
+    // onUpdateButtonSetは呼ばれない（読み取り専用モード）
+    expect(mockOnUpdateButtonSet).not.toHaveBeenCalled()
   })
 
   test("空のボタンセットが正しく処理される", () => {
@@ -213,7 +216,7 @@ describe("ButtonSetComponent", () => {
       buttons: [
         {
           action: "アクション1",
-          labels: []
+          labels: {}
         },
         {
           action: "アクション2",
@@ -269,7 +272,7 @@ describe("ButtonSetComponent", () => {
           action: "特殊アクション",
           labels: {
             記号: ["@#$%", "あいうえお", "123"],
-            一般: ["normal-label", "under_score"]
+            General: ["normal-label", "under_score"]
           }
         }
       ]
@@ -291,13 +294,13 @@ describe("ButtonSetComponent", () => {
   })
 
   test("ラベル形式の正規化が正しく動作する", () => {
-    // フラット形式とカテゴリ形式が混在した場合のテスト
+    // カテゴリ付きラベルのみをサポート
     const mixedButtonSet: MockButtonSet = {
       setName: "混在セット",
       buttons: [
         {
-          action: "フラット",
-          labels: ["ラベル1", "ラベル2"]
+          action: "カテゴリなし",
+          labels: {} // 空のカテゴリ
         },
         {
           action: "カテゴリ",
@@ -311,11 +314,11 @@ describe("ButtonSetComponent", () => {
 
     render(<ButtonSetComponent {...defaultProps} buttonSet={mixedButtonSet} />)
 
-    // フラット形式のラベル（"一般"カテゴリとして表示）
-    expect(screen.getByText("ラベル1")).toBeInTheDocument()
-    expect(screen.getByText("ラベル2")).toBeInTheDocument()
+    // フラット形式のラベルは表示されない（カテゴリなしラベルのサポート削除）
+    expect(screen.queryByText("ラベル1")).not.toBeInTheDocument()
+    expect(screen.queryByText("ラベル2")).not.toBeInTheDocument()
 
-    // カテゴリ形式のラベル
+    // カテゴリ形式のラベルは表示される
     expect(screen.getByText("カテゴリA")).toBeInTheDocument()
     expect(screen.getByText("ラベルA1")).toBeInTheDocument()
     expect(screen.getByText("カテゴリB")).toBeInTheDocument()
@@ -359,7 +362,7 @@ describe("ButtonSetComponent", () => {
     consoleSpy.mockRestore()
   })
 
-  test("ラベル削除機能が正しく動作する", async () => {
+  test("ラベルは読み取り専用で削除機能はない", async () => {
     const user = userEvent.setup()
     const mockOnUpdateButtonSet = jest.fn()
 
@@ -371,10 +374,10 @@ describe("ButtonSetComponent", () => {
       />
     )
 
-    // ラベルボタンをクリックしてラベルを追加
+    // ラベルボタンをクリックしても何も起こらない（読み取り専用）
     const labelButton = screen.getByText("前")
     await user.click(labelButton)
 
-    expect(mockOnUpdateButtonSet).toHaveBeenCalled()
+    expect(mockOnUpdateButtonSet).not.toHaveBeenCalled()
   })
 })

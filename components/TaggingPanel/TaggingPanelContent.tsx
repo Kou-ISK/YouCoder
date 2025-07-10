@@ -30,21 +30,6 @@ export const TaggingPanelContent: React.FC<TaggingPanelContentProps> = ({
       (labelArray) => Array.isArray(labelArray) && labelArray.length > 0
     )
 
-  // デバッグ用（開発時のみ）
-  if (
-    typeof window !== "undefined" &&
-    window.location.hostname === "localhost"
-  ) {
-    console.log("[TaggingPanelContent Debug] 表示判定:", {
-      hasActiveActions,
-      hasLabels,
-      shouldShowLabels: hasActiveActions && hasLabels,
-      activeActionsCount: activeActions.size,
-      labelsCategories: Object.keys(labels || {}),
-      labels
-    })
-  }
-
   return (
     <div className="flex flex-col h-full">
       {/* アクションセクション */}

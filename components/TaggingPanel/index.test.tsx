@@ -118,7 +118,7 @@ describe("TaggingPanel", () => {
     const categorizedLabels = {
       Result: ["Good", "Bad", "Excellent"],
       Distance: ["Short", "Long"],
-      一般: ["Basic"]
+      General: ["Basic"]
     }
 
     render(<TaggingPanel {...defaultProps} labels={categorizedLabels} />)

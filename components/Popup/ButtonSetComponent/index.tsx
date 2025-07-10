@@ -5,7 +5,7 @@ import { LabelButton } from "../../LabelButton"
 
 type Button = {
   action: string
-  labels: Record<string, string[]> | string[] // 新旧両方の形式をサポート
+  labels: Record<string, string[]> // カテゴリ付きラベルのみサポート
 }
 
 type ButtonSet = {
@@ -30,26 +30,14 @@ const ButtonSetComponent: React.FC<ButtonSetComponentProps> = ({
     return <div>選択されたボタンセットがありません</div>
   }
 
-  // ラベル形式を正規化する関数
-  const normalizeLabelsToCategorized = (
+  // カテゴリ付きラベルのみを処理（配列形式は無視）
+  const getLabelsFromButtons = (
     labels: Record<string, string[]> | string[]
   ): Record<string, string[]> => {
     if (Array.isArray(labels)) {
-      console.warn(
-        "配列形式のラベルはサポートされていません。カテゴリ形式を使用してください。"
-      )
-      return {} // 空のオブジェクトを返して処理を停止
+      return {} // 配列形式はサポートしない
     }
-    return labels
-  }
-
-  const normalizeLabelsToFlat = (
-    labels: Record<string, string[]> | string[]
-  ): string[] => {
-    if (Array.isArray(labels)) {
-      return labels
-    }
-    return Object.values(labels).flat()
+    return labels as Record<string, string[]>
   }
 
   const handleActionClick = (action: string) => {
@@ -62,61 +50,10 @@ const ButtonSetComponent: React.FC<ButtonSetComponentProps> = ({
     onActionSelect(newSelection)
   }
 
-  const handleAddLabelToAction = (action: string, label: string) => {
-    if (!buttonSet) return
-    const updatedButtons = buttonSet.buttons.map((btn) => {
-      if (btn.action === action) {
-        const flatLabels = normalizeLabelsToFlat(btn.labels)
-        if (!flatLabels.includes(label)) {
-          // 新しいラベルを追加する場合、カテゴリ形式が必要
-          if (Array.isArray(btn.labels)) {
-            console.warn(
-              "配列形式のラベルはサポートされていません。カテゴリ形式を使用してください。"
-            )
-            return btn // 変更なし
-          } else {
-            // カテゴリ付きラベルの場合、カテゴリが必要
-            console.warn("ラベルを追加するにはカテゴリの指定が必要です。")
-            return btn // 変更なし
-          }
-        }
-      }
-      return btn
-    })
-    const updatedButtonSet = { ...buttonSet, buttons: updatedButtons }
-    onUpdateButtonSet(updatedButtonSet)
-  }
-
-  const handleRemoveLabelFromAction = (action: string, label: string) => {
-    if (!buttonSet) return
-    const updatedButtons = buttonSet.buttons.map((btn) => {
-      if (btn.action === action) {
-        if (Array.isArray(btn.labels)) {
-          return { ...btn, labels: btn.labels.filter((l) => l !== label) }
-        } else {
-          // カテゴリ付きの場合、該当するカテゴリから削除
-          const categorized = { ...btn.labels }
-          for (const [category, labels] of Object.entries(categorized)) {
-            categorized[category] = labels.filter((l) => l !== label)
-            // 空になったカテゴリは削除
-            if (categorized[category].length === 0) {
-              delete categorized[category]
-            }
-          }
-          return { ...btn, labels: categorized }
-        }
-      }
-      return btn
-    })
-    const updatedButtonSet = { ...buttonSet, buttons: updatedButtons }
-    onUpdateButtonSet(updatedButtonSet)
-  }
-
   return (
     <div>
       {buttonSet.buttons.map((btn, index) => {
-        const flatLabels = normalizeLabelsToFlat(btn.labels)
-        const categorizedLabels = normalizeLabelsToCategorized(btn.labels)
+        const categorizedLabels = getLabelsFromButtons(btn.labels)
 
         return (
           <div key={index} style={{ marginBottom: "16px" }}>
@@ -155,10 +92,10 @@ const ButtonSetComponent: React.FC<ButtonSetComponentProps> = ({
                         <LabelButton
                           key={i}
                           label={lbl}
-                          isActive={selectedAction === btn.action}
-                          isDisabled={selectedAction !== btn.action}
+                          isActive={false}
+                          isDisabled={true}
                           onClick={() => {
-                            handleAddLabelToAction(btn.action, displayLabel)
+                            // カテゴリ付きラベルは読み取り専用
                           }}
                         />
                       )

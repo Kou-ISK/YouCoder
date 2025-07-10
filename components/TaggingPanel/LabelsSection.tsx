@@ -16,18 +16,6 @@ export const LabelsSection: React.FC<LabelsSectionProps> = ({
   activeLabels,
   onLabelClick
 }) => {
-  // デバッグ用：アクションが選択されていない場合の確認
-  if (
-    typeof window !== "undefined" &&
-    window.location.hostname === "localhost"
-  ) {
-    console.log("[LabelsSection Debug] ラベル表示状況:", {
-      hasLabels: !!labels,
-      labelCount: labels ? Object.keys(labels).length : 0,
-      categories: labels ? Object.keys(labels) : []
-    })
-  }
-
   // Record<string, string[]>形式のラベルのみをサポート
   // アクションが選択されていない場合、または有効なラベルがない場合はラベルを表示しない
   if (
@@ -39,22 +27,6 @@ export const LabelsSection: React.FC<LabelsSectionProps> = ({
       (labelArray) => Array.isArray(labelArray) && labelArray.length > 0
     )
   ) {
-    if (
-      typeof window !== "undefined" &&
-      window.location.hostname === "localhost"
-    ) {
-      console.log("[LabelsSection Debug] ラベル非表示 - 条件不満:", {
-        hasLabels: !!labels,
-        isObject: typeof labels === "object",
-        isNotArray: !Array.isArray(labels),
-        hasKeys: labels ? Object.keys(labels).length > 0 : false,
-        hasValidLabelArrays: labels
-          ? Object.values(labels).some(
-              (labelArray) => Array.isArray(labelArray) && labelArray.length > 0
-            )
-          : false
-      })
-    }
     return null
   }
 

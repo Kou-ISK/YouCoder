@@ -26,7 +26,7 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   onSubmit
 }) => {
-  const [category, setCategory] = useState("一般")
+  const [category, setCategory] = useState("Result")
   const modalRef = useRef<HTMLDivElement>(null)
   const initialFocusRef = useRef<HTMLInputElement>(null)
   const previousActiveElement = useRef<Element | null>(null)

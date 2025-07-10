@@ -6,7 +6,7 @@ import { TeamList } from "./components/Popup/TeamList"
 
 type Button = {
   action: string
-  labels: Record<string, string[]> | string[] // 互換性のために一時的に配列もサポート
+  labels: Record<string, string[]> // カテゴリ付きラベルのみサポート
 }
 
 type ButtonSet = {
@@ -14,32 +14,7 @@ type ButtonSet = {
   buttons: Button[]
 }
 
-// カテゴリ付きラベルのユーティリティ関数（flat array形式は廃止）
-
-// 互換性のためのユーティリティ関数
-const normalizeLabelsToCategorized = (
-  labels: Record<string, string[]> | string[]
-): Record<string, string[]> => {
-  if (Array.isArray(labels)) {
-    console.warn(
-      "配列形式のラベルはサポートされていません。カテゴリ形式を使用してください。"
-    )
-    return {} // 空のオブジェクトを返して処理を停止
-  }
-  return labels
-}
-
-const normalizeLabelsToFlat = (
-  labels: Record<string, string[]> | string[]
-): string[] => {
-  if (Array.isArray(labels)) {
-    return labels
-  }
-  // カテゴリ付きラベルの場合、カテゴリ情報を含めて平坦化
-  return Object.entries(labels).flatMap(([category, labelList]) =>
-    labelList.map((label) => `${category} - ${label}`)
-  )
-}
+// カテゴリ付きラベルのユーティリティ関数
 
 // カテゴリ付きラベルの配列を生成（表示用）
 const getCategorizedLabelList = (
@@ -84,7 +59,7 @@ const defaultButtonSets: ButtonSet[] = [
     buttons: [
       {
         action: "fuga",
-        labels: { 一般: ["hogehoge", "fugafuga"] }
+        labels: { Result: ["hogehoge", "fugafuga"] }
       }
     ]
   },
@@ -93,7 +68,7 @@ const defaultButtonSets: ButtonSet[] = [
     buttons: [
       {
         action: "bar",
-        labels: { 一般: ["barラベル1", "barラベル2"] }
+        labels: { Type: ["barラベル1", "barラベル2"] }
       }
     ]
   }
@@ -360,10 +335,19 @@ const Popup = () => {
           const targetButton = buttons[targetButtonIndex]
 
           if (modalType === "addCategorizedLabel" && category) {
-            // カテゴリ付きラベルの場合
-            const categorizedLabels = normalizeLabelsToCategorized(
-              targetButton.labels
-            )
+            // カテゴリ付きラベルの場合のみサポート
+            if (Array.isArray(targetButton.labels)) {
+              // 配列形式はサポートしない
+              alert(
+                "このアクションは古い形式のラベルを使用しています。カテゴリ付きラベルを追加できません。"
+              )
+              return
+            }
+
+            const categorizedLabels = targetButton.labels as Record<
+              string,
+              string[]
+            >
 
             if (!categorizedLabels[category]) {
               categorizedLabels[category] = []
@@ -525,27 +509,19 @@ const Popup = () => {
             continue
           }
 
-          // ラベルの型チェック：配列か Record<string, string[]> の両方をサポート
-          let validLabels: Record<string, string[]> | string[]
+          // ラベルの型チェック：Record<string, string[]> のみサポート
+          let validLabels: Record<string, string[]>
 
           if (Array.isArray(button.labels)) {
-            // 旧形式：string[]
-            const stringLabels = button.labels.filter(
-              (label: any) => typeof label === "string"
-            )
-            if (stringLabels.length !== button.labels.length) {
-              console.log(
-                "Some labels in array are not strings:",
-                button.labels
-              )
-              hasErrors = true
-            }
-            validLabels = stringLabels
+            // 配列形式はサポートしない
+            console.log("Array format labels are not supported:", button.labels)
+            hasErrors = true
+            continue
           } else if (
             typeof button.labels === "object" &&
             button.labels !== null
           ) {
-            // 新形式：Record<string, string[]>
+            // カテゴリ付きラベル形式：Record<string, string[]>
             const validCategories: Record<string, string[]> = {}
             let categoryHasErrors = false
 
