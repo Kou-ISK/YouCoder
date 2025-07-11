@@ -81,13 +81,7 @@ const Popup = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalInput, setModalInput] = useState("")
   const [modalType, setModalType] = useState<
-    | "team"
-    | "buttonSet"
-    | "buttonInSet"
-    | "addAction"
-    | "addLabel"
-    | "addCategorizedLabel"
-    | null
+    "team" | "buttonSet" | "buttonInSet" | "addAction" | "addLabel" | null
   >(null)
   const [showExtension, setShowExtension] = useState<boolean>(true)
   const [selectedButtonSet, setSelectedButtonSet] = useState<string>("RUGBY")
@@ -191,13 +185,7 @@ const Popup = () => {
   >(null)
 
   const openModal = (
-    type:
-      | "team"
-      | "buttonSet"
-      | "buttonInSet"
-      | "addAction"
-      | "addLabel"
-      | "addCategorizedLabel"
+    type: "team" | "buttonSet" | "buttonInSet" | "addAction" | "addLabel"
   ) => {
     console.log("=== openModal called ===")
     console.log("Type:", type)
@@ -212,12 +200,7 @@ const Popup = () => {
     console.log("ButtonSets:", buttonSets)
     console.log("ButtonSets length:", buttonSets.length)
 
-    if (
-      !selectedButtonSet &&
-      (type === "addAction" ||
-        type === "addLabel" ||
-        type === "addCategorizedLabel")
-    ) {
+    if (!selectedButtonSet && (type === "addAction" || type === "addLabel")) {
       console.log(
         "ボタンセットが選択されていません - selectedButtonSet:",
         selectedButtonSet
@@ -225,10 +208,7 @@ const Popup = () => {
       alert("ボタンセットを選択してください")
       return
     }
-    if (
-      (type === "addLabel" || type === "addCategorizedLabel") &&
-      !selectedAction
-    ) {
+    if (type === "addLabel" && !selectedAction) {
       console.log("アクションが選択されていません")
       alert("ラベルを追加するアクションを選択してください")
       return
@@ -302,7 +282,6 @@ const Popup = () => {
         }
         break
       case "addLabel":
-      case "addCategorizedLabel":
         {
           console.log(`Processing ${modalType} case`)
           if (!selectedButtonSet) {
@@ -334,7 +313,7 @@ const Popup = () => {
           // ラベルを選択中のアクションに紐づける
           const targetButton = buttons[targetButtonIndex]
 
-          if (modalType === "addCategorizedLabel" && category) {
+          if (modalType === "addLabel" && category) {
             // カテゴリ付きラベルの場合のみサポート
             if (Array.isArray(targetButton.labels)) {
               // 配列形式はサポートしない
@@ -365,7 +344,7 @@ const Popup = () => {
               return
             }
           } else {
-            // 通常のラベル追加はサポートしない（カテゴリが必要）
+            // カテゴリが指定されていない場合
             alert("ラベルを追加するにはカテゴリの指定が必要です。")
             return
           }
@@ -906,38 +885,6 @@ const Popup = () => {
             padding: "6px 12px",
             fontSize: "12px",
             fontWeight: "500",
-            backgroundColor: "#f59e0b",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            transition: "all 0.2s ease"
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#d97706")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "#f59e0b")
-          }
-          onClick={() => {
-            console.log("=== ラベル追加ボタンクリック ===")
-            console.log("現在の状態:", {
-              selectedButtonSet,
-              selectedAction,
-              buttonSets,
-              isModalOpen,
-              modalType
-            })
-            openModal("addLabel")
-          }}>
-          ラベル追加
-        </button>
-
-        <button
-          style={{
-            padding: "6px 12px",
-            fontSize: "12px",
-            fontWeight: "500",
             backgroundColor: "#8b5cf6",
             color: "white",
             border: "none",
@@ -960,9 +907,9 @@ const Popup = () => {
               isModalOpen,
               modalType
             })
-            openModal("addCategorizedLabel")
+            openModal("addLabel")
           }}>
-          カテゴリ付きラベル追加
+          ラベル追加
         </button>
       </div>
     </div>
