@@ -11,7 +11,6 @@ interface ModalProps {
     | "buttonInSet"
     | "addAction"
     | "addLabel"
-    | "addCategorizedLabel"
     | null
   onInputChange: (v: string) => void
   onClose: () => void
@@ -57,7 +56,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   if (!isOpen) return null
 
-  const isCategorizedLabel = modalType === "addCategorizedLabel"
+  const isCategorizedLabel = modalType === "addLabel"
   const modalTitle =
     modalType === "team"
       ? "チームを追加"
@@ -65,13 +64,11 @@ export const Modal: React.FC<ModalProps> = ({
         ? "アクションを追加"
         : modalType === "addLabel"
           ? "ラベルを追加"
-          : modalType === "addCategorizedLabel"
-            ? "カテゴリ付きラベルを追加"
-            : modalType === "buttonSet"
-              ? "ボタンセットを追加"
-              : modalType === "buttonInSet"
-                ? "ボタンセット内にアクションを追加"
-                : ""
+          : modalType === "buttonSet"
+            ? "ボタンセットを追加"
+            : modalType === "buttonInSet"
+              ? "ボタンセット内にアクションを追加"
+              : ""
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
