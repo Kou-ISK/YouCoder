@@ -30,14 +30,11 @@ const ButtonSetComponent: React.FC<ButtonSetComponentProps> = ({
     return <div>選択されたボタンセットがありません</div>
   }
 
-  // カテゴリ付きラベルのみを処理（配列形式は無視）
+  // カテゴリ付きラベルのみを処理
   const getLabelsFromButtons = (
-    labels: Record<string, string[]> | string[]
+    labels: Record<string, string[]>
   ): Record<string, string[]> => {
-    if (Array.isArray(labels)) {
-      return {} // 配列形式はサポートしない
-    }
-    return labels as Record<string, string[]>
+    return labels
   }
 
   const handleActionClick = (action: string) => {

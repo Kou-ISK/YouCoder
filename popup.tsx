@@ -315,14 +315,6 @@ const Popup = () => {
 
           if (modalType === "addLabel" && category) {
             // カテゴリ付きラベルの場合のみサポート
-            if (Array.isArray(targetButton.labels)) {
-              // 配列形式はサポートしない
-              alert(
-                "このアクションは古い形式のラベルを使用しています。カテゴリ付きラベルを追加できません。"
-              )
-              return
-            }
-
             const categorizedLabels = targetButton.labels as Record<
               string,
               string[]
@@ -491,14 +483,10 @@ const Popup = () => {
           // ラベルの型チェック：Record<string, string[]> のみサポート
           let validLabels: Record<string, string[]>
 
-          if (Array.isArray(button.labels)) {
-            // 配列形式はサポートしない
-            console.log("Array format labels are not supported:", button.labels)
-            hasErrors = true
-            continue
-          } else if (
+          if (
             typeof button.labels === "object" &&
-            button.labels !== null
+            button.labels !== null &&
+            !Array.isArray(button.labels)
           ) {
             // カテゴリ付きラベル形式：Record<string, string[]>
             const validCategories: Record<string, string[]> = {}

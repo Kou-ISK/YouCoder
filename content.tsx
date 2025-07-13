@@ -656,7 +656,7 @@ const MainContent: React.FC = () => {
     const categorized: Record<string, string[]> = {}
 
     buttons.forEach((btn) => {
-      // Record形式のラベルのみ処理（配列形式は無視）
+      // Record形式のラベルのみ処理
       if (
         btn.labels &&
         typeof btn.labels === "object" &&

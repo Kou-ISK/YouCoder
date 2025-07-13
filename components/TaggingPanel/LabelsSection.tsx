@@ -21,7 +21,6 @@ export const LabelsSection: React.FC<LabelsSectionProps> = ({
   if (
     !labels ||
     typeof labels !== "object" ||
-    Array.isArray(labels) ||
     Object.keys(labels).length === 0 ||
     !Object.values(labels).some(
       (labelArray) => Array.isArray(labelArray) && labelArray.length > 0
