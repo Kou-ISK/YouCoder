@@ -651,9 +651,9 @@ const MainContent: React.FC = () => {
       {} as Record<string, string>
     ) || {}
 
-  // カテゴリ付きラベルのみをサポート - 配列形式は処理しない
+  // ラベルのみをサポート - 配列形式は処理しない
   const getLabelsFromButtons = (buttons: any[]): Record<string, string[]> => {
-    const categorized: Record<string, string[]> = {}
+    const labels: Record<string, string[]> = {}
 
     buttons.forEach((btn) => {
       // Record形式のラベルのみ処理
@@ -664,12 +664,12 @@ const MainContent: React.FC = () => {
       ) {
         Object.entries(btn.labels as Record<string, string[]>).forEach(
           ([category, labelList]) => {
-            if (!categorized[category]) {
-              categorized[category] = []
+            if (!labels[category]) {
+              labels[category] = []
             }
             labelList.forEach((label) => {
-              if (!categorized[category].includes(label)) {
-                categorized[category].push(label)
+              if (!labels[category].includes(label)) {
+                labels[category].push(label)
               }
             })
           }
@@ -677,7 +677,7 @@ const MainContent: React.FC = () => {
       }
     })
 
-    return categorized
+    return labels
   }
 
   // アクティブなアクションに関連するカテゴリ付きラベルのみを取得

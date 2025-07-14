@@ -56,7 +56,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   if (!isOpen) return null
 
-  const isCategorizedLabel = modalType === "addLabel"
+  const hasCategory = modalType === "addLabel"
   const modalTitle =
     modalType === "team"
       ? "チームを追加"
@@ -73,7 +73,7 @@ export const Modal: React.FC<ModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (inputValue.trim()) {
-      onSubmit(isCategorizedLabel ? category : undefined)
+      onSubmit(hasCategory ? category : undefined)
     }
   }
 
@@ -104,7 +104,7 @@ export const Modal: React.FC<ModalProps> = ({
         }}>
         <h3 id="modal-title">{modalTitle}</h3>
         <form role="form" onSubmit={handleSubmit}>
-          {isCategorizedLabel && (
+          {hasCategory && (
             <div style={{ marginBottom: "10px" }}>
               <label
                 htmlFor="category-input"
@@ -139,16 +139,14 @@ export const Modal: React.FC<ModalProps> = ({
                 marginBottom: "4px",
                 fontWeight: "600"
               }}>
-              {isCategorizedLabel ? "ラベル:" : "入力:"}
+              {hasCategory ? "ラベル:" : "入力:"}
             </label>
             <input
               id="main-input"
               type="text"
               value={inputValue}
               onChange={(e) => onInputChange(e.target.value)}
-              placeholder={
-                isCategorizedLabel ? "例: forehand, winner, error" : ""
-              }
+              placeholder={hasCategory ? "例: forehand, winner, error" : ""}
               style={{
                 width: "100%",
                 padding: "8px",

@@ -554,16 +554,16 @@ export const exportActionsToCSV = (actionsList: Action[] = actions) => {
     headers,
     ...actionsList.map((a) => {
       // ラベルをカテゴリごとに分類
-      const categorizedLabels: Record<string, string[]> = {}
+      const labelsByCategory: Record<string, string[]> = {}
 
       a.labels.forEach((label) => {
         if (label.includes(" - ")) {
           const [category, ...valueParts] = label.split(" - ")
           const value = valueParts.join(" - ")
-          if (!categorizedLabels[category]) {
-            categorizedLabels[category] = []
+          if (!labelsByCategory[category]) {
+            labelsByCategory[category] = []
           }
-          categorizedLabels[category].push(value)
+          labelsByCategory[category].push(value)
         }
       })
 
@@ -574,8 +574,8 @@ export const exportActionsToCSV = (actionsList: Action[] = actions) => {
         new Date(a.start).toISOString(),
         a.end ? new Date(a.end).toISOString() : "",
         ...sortedCategories.map((category) => {
-          return categorizedLabels[category]
-            ? categorizedLabels[category].join("; ")
+          return labelsByCategory[category]
+            ? labelsByCategory[category].join("; ")
             : ""
         })
       ]

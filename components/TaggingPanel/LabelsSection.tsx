@@ -3,20 +3,20 @@ import React from "react"
 import { LabelButton } from "~components/LabelButton"
 
 interface LabelsSectionProps {
-  labels: Record<string, string[]> // カテゴリ名をキー、ラベル配列を値とする形式のみサポート
+  labels: Record<string, string[]> // カテゴリ名をキー、ラベル配列を値とする形式
   activeLabels: Set<string>
   onLabelClick: (label: string) => void
 }
 
 /**
- * ラベルセクションコンポーネント - カテゴリベースの表示のみサポート
+ * ラベルセクションコンポーネント
  */
 export const LabelsSection: React.FC<LabelsSectionProps> = ({
   labels,
   activeLabels,
   onLabelClick
 }) => {
-  // Record<string, string[]>形式のラベルのみをサポート
+  // Record<string, string[]>形式のラベルをサポート
   // アクションが選択されていない場合、または有効なラベルがない場合はラベルを表示しない
   if (
     !labels ||
@@ -52,7 +52,7 @@ export const LabelsSection: React.FC<LabelsSectionProps> = ({
                 role="group"
                 aria-label={`${category}カテゴリのラベル`}>
                 {labelList.map((label) => {
-                  // カテゴリ付きの完全なラベル名（内部処理用）
+                  // 完全なラベル名（内部処理用）
                   const fullLabelName = `${category} - ${label}`
 
                   return (

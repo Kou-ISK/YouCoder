@@ -16,7 +16,7 @@ type MockButtonSet = {
 }
 
 // テスト用のモックデータ
-const mockButtonSetWithCategorizedLabels: MockButtonSet = {
+const mockButtonSetWithLabels: MockButtonSet = {
   setName: "サッカー基本セット",
   buttons: [
     {
@@ -64,7 +64,7 @@ const mockEmptyButtonSet: MockButtonSet = {
 
 describe("ButtonSetComponent", () => {
   const defaultProps = {
-    buttonSet: mockButtonSetWithCategorizedLabels,
+    buttonSet: mockButtonSetWithLabels,
     selectedAction: null,
     onUpdateButtonSet: jest.fn(),
     onActionSelect: jest.fn()

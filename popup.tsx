@@ -6,7 +6,7 @@ import { TeamList } from "./components/Popup/TeamList"
 
 type Button = {
   action: string
-  labels: Record<string, string[]> // カテゴリ付きラベルのみサポート
+  labels: Record<string, string[]> // ラベルはカテゴリ付きのみサポート
 }
 
 type ButtonSet = {
@@ -14,10 +14,10 @@ type ButtonSet = {
   buttons: Button[]
 }
 
-// カテゴリ付きラベルのユーティリティ関数
+// ラベルのユーティリティ関数
 
-// カテゴリ付きラベルの配列を生成（表示用）
-const getCategorizedLabelList = (
+// ラベルの配列を生成（表示用）
+const getLabelList = (
   labels: Record<string, string[]>
 ): Array<{ category: string; label: string; displayLabel: string }> => {
   const result: Array<{
@@ -40,7 +40,7 @@ const getCategorizedLabelList = (
 }
 
 // ラベル文字列からカテゴリとラベルを分解
-const parseCategorizedLabel = (
+const parseLabel = (
   displayLabel: string
 ): { category: string; label: string } | null => {
   const parts = displayLabel.split(" - ")
@@ -49,7 +49,7 @@ const parseCategorizedLabel = (
     const label = parts.slice(1).join(" - ") // "xxx - yyy - zzz"のような場合に対応
     return { category, label }
   }
-  // カテゴリがない場合はnullを返す（フォールバック処理を削除）
+  // カテゴリがない場合はnullを返す
   return null
 }
 
@@ -314,21 +314,18 @@ const Popup = () => {
           const targetButton = buttons[targetButtonIndex]
 
           if (modalType === "addLabel" && category) {
-            // カテゴリ付きラベルの場合のみサポート
-            const categorizedLabels = targetButton.labels as Record<
-              string,
-              string[]
-            >
+            // ラベルの場合のみサポート
+            const labels = targetButton.labels as Record<string, string[]>
 
-            if (!categorizedLabels[category]) {
-              categorizedLabels[category] = []
+            if (!labels[category]) {
+              labels[category] = []
             }
 
             // 重複チェック
-            if (!categorizedLabels[category].includes(modalInput)) {
-              categorizedLabels[category].push(modalInput)
-              targetButton.labels = categorizedLabels
-              console.log(`カテゴリ付きラベル追加: ${category} - ${modalInput}`)
+            if (!labels[category].includes(modalInput)) {
+              labels[category].push(modalInput)
+              targetButton.labels = labels
+              console.log(`ラベル追加: ${category} - ${modalInput}`)
             } else {
               alert(
                 `ラベル "${modalInput}" は既にカテゴリ "${category}" に存在します`
@@ -480,7 +477,7 @@ const Popup = () => {
             continue
           }
 
-          // ラベルの型チェック：Record<string, string[]> のみサポート
+          // ラベルの型チェック：Record<string, string[]> をサポート
           let validLabels: Record<string, string[]>
 
           if (
@@ -488,7 +485,7 @@ const Popup = () => {
             button.labels !== null &&
             !Array.isArray(button.labels)
           ) {
-            // カテゴリ付きラベル形式：Record<string, string[]>
+            // ラベル形式：Record<string, string[]>
             const validCategories: Record<string, string[]> = {}
             let categoryHasErrors = false
 

@@ -50,7 +50,7 @@ const ButtonSetComponent: React.FC<ButtonSetComponentProps> = ({
   return (
     <div>
       {buttonSet.buttons.map((btn, index) => {
-        const categorizedLabels = getLabelsFromButtons(btn.labels)
+        const labelsByCategory = getLabelsFromButtons(btn.labels)
 
         return (
           <div key={index} style={{ marginBottom: "16px" }}>
@@ -63,7 +63,7 @@ const ButtonSetComponent: React.FC<ButtonSetComponentProps> = ({
             />
             {/* アクションに紐づくラベルボタン群 - カテゴリ別に表示 */}
             <div style={{ marginTop: "8px" }}>
-              {Object.entries(categorizedLabels).map(([category, labels]) => (
+              {Object.entries(labelsByCategory).map(([category, labels]) => (
                 <div key={category} style={{ marginBottom: "4px" }}>
                   {/* カテゴリ名を常に表示 */}
                   <div
