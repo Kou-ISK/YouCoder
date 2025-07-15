@@ -400,7 +400,7 @@ describe("JSON インポート/エクスポート機能", () => {
   })
 
   test("カテゴリ形式のJSONを正しく処理できる", () => {
-    const categorizedButtonSet = {
+    const buttonSetWithLabels = {
       setName: "TENNIS",
       buttons: [
         {
@@ -414,10 +414,10 @@ describe("JSON インポート/エクスポート機能", () => {
       ]
     }
 
-    expect(categorizedButtonSet.setName).toBe("TENNIS")
-    expect(categorizedButtonSet.buttons[0].labels).toHaveProperty("Result")
-    expect(categorizedButtonSet.buttons[0].labels).toHaveProperty("Type")
-    expect(categorizedButtonSet.buttons[0].labels["Result"]).toContain("ace")
+    expect(buttonSetWithLabels.setName).toBe("TENNIS")
+    expect(buttonSetWithLabels.buttons[0].labels).toHaveProperty("Result")
+    expect(buttonSetWithLabels.buttons[0].labels).toHaveProperty("Type")
+    expect(buttonSetWithLabels.buttons[0].labels["Result"]).toContain("ace")
   })
 
   test("レガシー形式との後方互換性を保つ", () => {

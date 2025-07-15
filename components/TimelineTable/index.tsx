@@ -416,10 +416,10 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 }}>
                 {action.labels && action.labels.length > 0
                   ? action.labels.map((label, index) => {
-                      const isCategorizeDLabel = label.includes(" - ")
+                      const hasCategory = label.includes(" - ")
                       return (
                         <span key={index}>
-                          {isCategorizeDLabel ? (
+                          {hasCategory ? (
                             <span style={{ fontSize: "11px" }}>
                               <span
                                 style={{ color: "#9ca3af", fontWeight: "500" }}>

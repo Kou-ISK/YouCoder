@@ -22,11 +22,14 @@ export const config: PlasmoContentScript = {
   matches: ["*://*.youtube.com/*"]
 }
 
-export const getStyle = () => {
+// スタイル要素を作成する関数
+const createStyle = (cssText: string): HTMLStyleElement => {
   const style = document.createElement("style")
   style.textContent = cssText
   return style
 }
+
+export const getStyle = () => createStyle(cssText)
 
 // ネットワークエラー監視のための設定
 let networkErrorCount = 0
@@ -648,85 +651,53 @@ const MainContent: React.FC = () => {
       {} as Record<string, string>
     ) || {}
 
-  // ラベルの正規化関数：新旧両方の形式に対応
-  const normalizeLabelsToFlat = (
-    labels: Record<string, string[]> | string[]
-  ): string[] => {
-    if (Array.isArray(labels)) {
-      return labels
-    }
-    // カテゴリ付きラベルの場合、カテゴリ情報を含めて平坦化
-    return Object.entries(labels).flatMap(([category, labelList]) =>
-      labelList.map((label) =>
-        category === "一般" ? label : `${category} - ${label}`
-      )
-    )
-  }
+  // ラベルのみをサポート - 配列形式は処理しない
+  const getLabelsFromButtons = (buttons: any[]): Record<string, string[]> => {
+    const labels: Record<string, string[]> = {}
 
-  // フラットなラベル配列をカテゴリ形式に変換する関数
-  const convertLabelsToCategories = (
-    flatLabels: string[]
-  ): Record<string, string[]> => {
-    const categorized: Record<string, string[]> = {}
-
-    flatLabels.forEach((label) => {
-      // カテゴリ付きラベルの場合
-      const [category, ...labelParts] = label.split(" - ")
-      const labelName = labelParts.join(" - ")
-      if (!categorized[category]) {
-        categorized[category] = []
-      }
-      if (!categorized[category].includes(labelName)) {
-        categorized[category].push(labelName)
+    buttons.forEach((btn) => {
+      // Record形式のラベルのみ処理
+      if (
+        btn.labels &&
+        typeof btn.labels === "object" &&
+        !Array.isArray(btn.labels)
+      ) {
+        Object.entries(btn.labels as Record<string, string[]>).forEach(
+          ([category, labelList]) => {
+            if (!labels[category]) {
+              labels[category] = []
+            }
+            labelList.forEach((label) => {
+              if (!labels[category].includes(label)) {
+                labels[category].push(label)
+              }
+            })
+          }
+        )
       }
     })
 
-    return categorized
+    return labels
   }
 
-  // アクティブなアクションに関連するラベルのみを取得
-  // ユーザー要件：関連するアクションボタンが押された時のみ、ラベルエリアを表示
-  const filteredLabelsFlat =
-    activeActions.size > 0 // アクションが選択されている場合のみ処理
-      ? buttonSets
-          .find((set) => set.setName === selectedButtonSet)
-          ?.buttons.filter((btn) => {
-            // 同一アクションが複数チームで選択されている場合も考慮
-            const actionCount = Array.from(activeActions).filter((key) =>
-              key.endsWith(`_${btn.action}`)
-            ).length
-            return actionCount > 0 // 1つ以上選択されている場合にラベルを表示
-          })
-          .flatMap((btn) => {
-            const flatLabels = normalizeLabelsToFlat(btn.labels)
-            return flatLabels
-          }) || []
-      : [] // アクションが選択されていない場合は空配列
-
-  // フラットなラベルをカテゴリ形式に変換（アクションが選択されており、ラベルが存在する場合のみ）
+  // アクティブなアクションに関連するカテゴリ付きラベルのみを取得
   const filteredLabels =
-    filteredLabelsFlat.length > 0
-      ? convertLabelsToCategories(filteredLabelsFlat)
-      : {} // 空のオブジェクトを返すが、TaggingPanelContentで表示制御される
+    activeActions.size > 0 // アクションが選択されている場合のみ処理
+      ? (() => {
+          const selectedButtons =
+            buttonSets
+              .find((set) => set.setName === selectedButtonSet)
+              ?.buttons.filter((btn) => {
+                // 同一アクションが複数チームで選択されている場合も考慮
+                const actionCount = Array.from(activeActions).filter((key) =>
+                  key.endsWith(`_${btn.action}`)
+                ).length
+                return actionCount > 0 // 1つ以上選択されている場合にラベルを表示
+              }) || []
 
-  // デバッグ用：ラベル表示の状況確認（開発時のみ）
-  if (
-    typeof window !== "undefined" &&
-    window.location.hostname === "localhost"
-  ) {
-    console.log("[YouCoder Debug] ラベル表示状況:", {
-      selectedButtonSet,
-      activeActionCount: activeActions.size,
-      activeActions: Array.from(activeActions),
-      availableLabelCount: filteredLabelsFlat.length,
-      finalCategoryCount: Object.keys(filteredLabels).length,
-      showingLabels:
-        activeActions.size > 0 && Object.keys(filteredLabels).length > 0,
-      hasValidLabels: Object.values(filteredLabels).some(
-        (labelArray) => Array.isArray(labelArray) && labelArray.length > 0
-      )
-    })
-  }
+          return getLabelsFromButtons(selectedButtons)
+        })()
+      : {} // アクションが選択されていない場合は空のオブジェクト
 
   const handleActionToggle = async (team: string, action: string) => {
     // アクションの開始・停止を切り替えます。

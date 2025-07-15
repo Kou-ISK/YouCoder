@@ -369,7 +369,7 @@ describe("Google Sheets Integration", () => {
     })
 
     test("カテゴリ別ラベル情報をスプレッドシートに追加できる", () => {
-      const actionsWithCategorizedLabels = [
+      const actionsWithLabels = [
         {
           team: "Team A",
           action: "Serve",
@@ -437,7 +437,7 @@ describe("Google Sheets Integration", () => {
         return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`
       }
 
-      const sheetData = convertWithCategories(actionsWithCategorizedLabels)
+      const sheetData = convertWithCategories(actionsWithLabels)
 
       expect(sheetData[0]).toEqual([
         "Team",

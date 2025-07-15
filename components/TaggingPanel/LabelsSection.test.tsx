@@ -76,7 +76,7 @@ describe("LabelsSection", () => {
 
   test("すべてのカテゴリでカテゴリ名が表示される", () => {
     const labels = {
-      一般: ["Basic", "Simple"]
+      General: ["Basic", "Simple"]
     }
     const activeLabels = new Set<string>()
 
@@ -88,8 +88,8 @@ describe("LabelsSection", () => {
       />
     )
 
-    // "一般"カテゴリも他のカテゴリと同様に表示される
-    expect(screen.getByText("一般")).toBeInTheDocument()
+    // "General"カテゴリも他のカテゴリと同様に表示される
+    expect(screen.getByText("General")).toBeInTheDocument()
     expect(screen.getByText("Basic")).toBeInTheDocument()
     expect(screen.getByText("Simple")).toBeInTheDocument()
   })
@@ -114,7 +114,7 @@ describe("LabelsSection", () => {
     await user.click(screen.getByText("Good"))
     expect(mockOnLabelClick).toHaveBeenCalledWith("Result - Good")
 
-    // 一般カテゴリのラベルのクリック
+    // Generalカテゴリのラベルのクリック
     await user.click(screen.getByText("Basic"))
     expect(mockOnLabelClick).toHaveBeenCalledWith("General - Basic")
   })

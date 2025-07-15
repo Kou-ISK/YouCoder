@@ -115,13 +115,13 @@ describe("TaggingPanel", () => {
   })
 
   test("カテゴリ化されたラベルが正しく表示される", () => {
-    const categorizedLabels = {
+    const labelsByCategory = {
       Result: ["Good", "Bad", "Excellent"],
       Distance: ["Short", "Long"],
-      一般: ["Basic"]
+      General: ["Basic"]
     }
 
-    render(<TaggingPanel {...defaultProps} labels={categorizedLabels} />)
+    render(<TaggingPanel {...defaultProps} labels={labelsByCategory} />)
 
     // ラベルボタンの確認
     expect(screen.getByText("Good")).toBeInTheDocument()
@@ -164,7 +164,7 @@ describe("TaggingPanel", () => {
 describe("ブラケット記法表示機能", () => {
   test("カテゴリ化されたラベルが[カテゴリ] 値形式で表示されるオプション", () => {
     // 実際の実装でブラケット記法が使用される場合のテスト
-    const categorizedLabels = {
+    const labelsByCategory = {
       Result: ["ace", "fault"],
       Type: ["first serve", "second serve"]
     }
@@ -173,7 +173,7 @@ describe("ブラケット記法表示機能", () => {
     const propsWithBrackets = {
       teams: ["Team A"],
       actions: { serve: "Serve" },
-      labels: categorizedLabels,
+      labels: labelsByCategory,
       activeActions: new Set<string>(),
       activeLabels: new Set<string>(),
       onActionToggle: jest.fn(),

@@ -3,58 +3,29 @@ import React from "react"
 import { LabelButton } from "~components/LabelButton"
 
 interface LabelsSectionProps {
-  labels: Record<string, string[]> // カテゴリ名をキー、ラベル配列を値とする形式のみサポート
+  labels: Record<string, string[]> // カテゴリ名をキー、ラベル配列を値とする形式
   activeLabels: Set<string>
   onLabelClick: (label: string) => void
 }
 
 /**
- * ラベルセクションコンポーネント - カテゴリベースの表示のみサポート
+ * ラベルセクションコンポーネント
  */
 export const LabelsSection: React.FC<LabelsSectionProps> = ({
   labels,
   activeLabels,
   onLabelClick
 }) => {
-  // デバッグ用：アクションが選択されていない場合の確認
-  if (
-    typeof window !== "undefined" &&
-    window.location.hostname === "localhost"
-  ) {
-    console.log("[LabelsSection Debug] ラベル表示状況:", {
-      hasLabels: !!labels,
-      labelCount: labels ? Object.keys(labels).length : 0,
-      categories: labels ? Object.keys(labels) : []
-    })
-  }
-
-  // Record<string, string[]>形式のラベルのみをサポート
+  // Record<string, string[]>形式のラベルをサポート
   // アクションが選択されていない場合、または有効なラベルがない場合はラベルを表示しない
   if (
     !labels ||
     typeof labels !== "object" ||
-    Array.isArray(labels) ||
     Object.keys(labels).length === 0 ||
     !Object.values(labels).some(
       (labelArray) => Array.isArray(labelArray) && labelArray.length > 0
     )
   ) {
-    if (
-      typeof window !== "undefined" &&
-      window.location.hostname === "localhost"
-    ) {
-      console.log("[LabelsSection Debug] ラベル非表示 - 条件不満:", {
-        hasLabels: !!labels,
-        isObject: typeof labels === "object",
-        isNotArray: !Array.isArray(labels),
-        hasKeys: labels ? Object.keys(labels).length > 0 : false,
-        hasValidLabelArrays: labels
-          ? Object.values(labels).some(
-              (labelArray) => Array.isArray(labelArray) && labelArray.length > 0
-            )
-          : false
-      })
-    }
     return null
   }
 
@@ -81,7 +52,7 @@ export const LabelsSection: React.FC<LabelsSectionProps> = ({
                 role="group"
                 aria-label={`${category}カテゴリのラベル`}>
                 {labelList.map((label) => {
-                  // カテゴリ付きの完全なラベル名（内部処理用）
+                  // 完全なラベル名（内部処理用）
                   const fullLabelName = `${category} - ${label}`
 
                   return (

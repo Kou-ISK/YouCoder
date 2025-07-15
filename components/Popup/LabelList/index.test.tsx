@@ -72,13 +72,13 @@ describe("LabelList", () => {
   })
 
   test("カテゴリ化されたラベル名も正しく表示される", () => {
-    const categorizedLabels = {
+    const labelsByCategory = {
       "result-ace": "Result - Ace",
       "type-first-serve": "Type - First Serve",
       simple: "Simple"
     }
 
-    render(<LabelList {...defaultProps} labels={categorizedLabels} />)
+    render(<LabelList {...defaultProps} labels={labelsByCategory} />)
 
     expect(screen.getByText("Result - Ace")).toBeInTheDocument()
     expect(screen.getByText("Type - First Serve")).toBeInTheDocument()
