@@ -37,22 +37,26 @@ describe("LabelButton", () => {
     render(<LabelButton {...defaultProps} isActive={false} />)
 
     const button = screen.getByRole("button", { name: "Good" })
-    expect(button).toHaveStyle({
-      backgroundColor: "#ffffff",
-      color: "#374151",
-      borderColor: "#d1d5db"
-    })
+
+    // TailwindCSSクラスの存在を確認
+    expect(button).toHaveClass("bg-white", "text-gray-700", "border-gray-300")
+    expect(button).not.toHaveClass("bg-blue-500")
   })
 
   test("アクティブ状態では正しいスタイルが適用される", () => {
     render(<LabelButton {...defaultProps} isActive={true} />)
 
     const button = screen.getByRole("button", { name: "Good" })
-    expect(button).toHaveStyle({
-      backgroundColor: "rgb(59, 130, 246)",
-      color: "white",
-      borderColor: "rgb(59, 130, 246)"
-    })
+
+    // TailwindCSSクラスの存在を確認
+    expect(button).toHaveClass(
+      "bg-gradient-to-r",
+      "from-green-500",
+      "to-emerald-500",
+      "text-white",
+      "border-green-400"
+    )
+    expect(button).not.toHaveClass("bg-white")
   })
 
   test("無効化状態では正しいスタイルが適用される", () => {
@@ -60,10 +64,9 @@ describe("LabelButton", () => {
 
     const button = screen.getByRole("button", { name: "Good" })
     expect(button).toBeDisabled()
-    expect(button).toHaveStyle({
-      cursor: "not-allowed",
-      opacity: "0.5"
-    })
+
+    // 無効化状態のCSSクラスの存在を確認
+    expect(button).toHaveClass("opacity-50", "cursor-not-allowed")
   })
 
   test("無効化されている場合はクリックできない", async () => {
@@ -76,53 +79,37 @@ describe("LabelButton", () => {
     expect(defaultProps.onClick).not.toHaveBeenCalled()
   })
 
-  test("ホバー時にスタイルが変更される（非アクティブ）", async () => {
+  test("ホバー時にスタイルクラスが適用される（非アクティブ）", async () => {
     const user = userEvent.setup()
     render(<LabelButton {...defaultProps} isActive={false} />)
 
     const button = screen.getByRole("button", { name: "Good" })
 
-    await user.hover(button)
-    expect(button).toHaveStyle({
-      backgroundColor: "#f8fafc",
-      borderColor: "#94a3b8"
-    })
-
-    await user.unhover(button)
-    expect(button).toHaveStyle({
-      backgroundColor: "#ffffff",
-      borderColor: "#d1d5db"
-    })
+    // ホバークラスの存在を確認
+    expect(button).toHaveClass("hover:bg-gray-50", "hover:border-gray-400")
+    expect(button).toHaveClass("transition-all", "duration-200")
   })
 
-  test("ホバー時にスタイルが変更される（アクティブ）", async () => {
+  test("ホバー時にスタイルクラスが適用される（アクティブ）", async () => {
     const user = userEvent.setup()
     render(<LabelButton {...defaultProps} isActive={true} />)
 
     const button = screen.getByRole("button", { name: "Good" })
 
-    await user.hover(button)
-    expect(button).toHaveStyle({
-      backgroundColor: "#2563eb"
-    })
-
-    await user.unhover(button)
-    expect(button).toHaveStyle({
-      backgroundColor: "#3b82f6"
-    })
+    // ホバークラスの存在を確認
+    expect(button).toHaveClass("hover:from-green-600", "hover:to-emerald-600")
+    expect(button).toHaveClass("transition-all", "duration-200")
   })
 
-  test("無効化時はホバー効果が適用されない", async () => {
+  test("無効化時は適切なクラスが適用される", async () => {
     const user = userEvent.setup()
     render(<LabelButton {...defaultProps} isDisabled={true} />)
 
     const button = screen.getByRole("button", { name: "Good" })
 
-    await user.hover(button)
-    // 無効化時は背景色が変わらない
-    expect(button).toHaveStyle({
-      backgroundColor: "#ffffff"
-    })
+    // 無効化時のクラスが適用されていることを確認
+    expect(button).toHaveClass("opacity-50", "cursor-not-allowed")
+    expect(button).toBeDisabled()
   })
 
   test("複数回クリックしても正しく動作する", async () => {
@@ -197,9 +184,8 @@ describe("LabelButton", () => {
 
     const button = screen.getByRole("button", { name: "Good" })
     expect(button).toBeDisabled()
-    expect(button).toHaveStyle({
-      opacity: "0.5",
-      cursor: "not-allowed"
-    })
+
+    // 無効化状態のCSSクラスが適用されていることを確認
+    expect(button).toHaveClass("opacity-50", "cursor-not-allowed")
   })
 })

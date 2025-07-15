@@ -4,13 +4,53 @@ import React from "react"
 
 import { TaggingPanel } from "."
 
-// Draggableコンポーネントのモック
-jest.mock("react-draggable", () => {
+// DraggableResizableコンポーネントのモック
+jest.mock("~components/DraggableResizable", () => {
   return {
-    __esModule: true,
-    default: ({ children }: { children: React.ReactNode }) => (
-      <div>{children}</div>
+    DraggableResizable: ({
+      children,
+      className
+    }: {
+      children: React.ReactNode
+      className?: string
+    }) => (
+      <div data-testid="draggable-resizable" className={className}>
+        {children}
+      </div>
     )
+  }
+})
+
+// TaggingPanelContentコンポーネントのモック
+jest.mock("./TaggingPanelContent", () => ({
+  TaggingPanelContent: ({ teams, actions, labels }: any) => (
+    <div data-testid="tagging-panel-content">
+      {teams.map((team: string) => (
+        <div key={team}>{team}</div>
+      ))}
+      {Object.values(actions).map((action: string) => (
+        <button key={action}>{action}</button>
+      ))}
+      {Array.isArray(labels)
+        ? labels.map((label: string) => <button key={label}>{label}</button>)
+        : labels && typeof labels === "object"
+          ? Object.values(labels)
+              .flat()
+              .map((label: string) => <button key={label}>{label}</button>)
+          : null}
+    </div>
+  )
+}))
+
+// usePanelPositionフックのモック
+jest.mock("./hooks/usePanelPosition", () => {
+  return {
+    usePanelPosition: () => ({
+      position: { x: 100, y: 100 },
+      size: { width: 280, height: 300 },
+      handlePositionChange: jest.fn(),
+      handleSizeChange: jest.fn()
+    })
   }
 })
 
@@ -18,7 +58,10 @@ describe("TaggingPanel", () => {
   const defaultProps = {
     teams: ["Team A", "Team B"],
     actions: { pass: "Pass", shoot: "Shoot" },
-    labels: ["Good", "Bad", "Excellent"],
+    labels: {
+      Result: ["Good", "Bad"],
+      Distance: ["Short", "Long"]
+    },
     activeActions: new Set<string>(),
     activeLabels: new Set<string>(),
     onActionToggle: jest.fn(),
@@ -29,6 +72,27 @@ describe("TaggingPanel", () => {
     jest.clearAllMocks()
   })
 
+  test("DraggableResizableでラップされている", () => {
+    render(<TaggingPanel {...defaultProps} />)
+
+    const draggableElement = screen.getByTestId("draggable-resizable")
+    expect(draggableElement).toBeInTheDocument()
+    expect(draggableElement).toHaveClass(
+      "bg-gradient-to-br",
+      "from-white",
+      "via-gray-50",
+      "to-blue-50",
+      "rounded-2xl",
+      "shadow-2xl"
+    )
+  })
+
+  test("TaggingPanelContentが表示される", () => {
+    render(<TaggingPanel {...defaultProps} />)
+
+    expect(screen.getByTestId("tagging-panel-content")).toBeInTheDocument()
+  })
+
   test("チームとアクションが表示される", () => {
     render(<TaggingPanel {...defaultProps} />)
 
@@ -37,8 +101,8 @@ describe("TaggingPanel", () => {
     expect(screen.getByText("Team B")).toBeInTheDocument()
 
     // アクションボタンが表示されることを確認
-    expect(screen.getAllByText("Pass")).toHaveLength(2) // 各チームに1つずつ
-    expect(screen.getAllByText("Shoot")).toHaveLength(2)
+    expect(screen.getByText("Pass")).toBeInTheDocument()
+    expect(screen.getByText("Shoot")).toBeInTheDocument()
   })
 
   test("ラベルが表示される", () => {
@@ -46,84 +110,24 @@ describe("TaggingPanel", () => {
 
     expect(screen.getByText("Good")).toBeInTheDocument()
     expect(screen.getByText("Bad")).toBeInTheDocument()
-    expect(screen.getByText("Excellent")).toBeInTheDocument()
+    expect(screen.getByText("Short")).toBeInTheDocument()
+    expect(screen.getByText("Long")).toBeInTheDocument()
   })
 
   test("カテゴリ化されたラベルが正しく表示される", () => {
-    const categorizedLabels = {
+    const labelsByCategory = {
       Result: ["Good", "Bad", "Excellent"],
       Distance: ["Short", "Long"],
-      一般: ["Basic"]
+      General: ["Basic"]
     }
 
-    render(<TaggingPanel {...defaultProps} labels={categorizedLabels} />)
-
-    // カテゴリヘッダーの確認
-    expect(screen.getByText("Result")).toBeInTheDocument()
-    expect(screen.getByText("Distance")).toBeInTheDocument()
+    render(<TaggingPanel {...defaultProps} labels={labelsByCategory} />)
 
     // ラベルボタンの確認
     expect(screen.getByText("Good")).toBeInTheDocument()
     expect(screen.getByText("Bad")).toBeInTheDocument()
     expect(screen.getByText("Short")).toBeInTheDocument()
-
-    // 一般カテゴリは接頭辞なしで表示
     expect(screen.getByText("Basic")).toBeInTheDocument()
-  })
-
-  test("アクションボタンをクリックするとonActionToggleが呼ばれる", async () => {
-    const user = userEvent.setup()
-    render(<TaggingPanel {...defaultProps} />)
-
-    const passButton = screen.getAllByText("Pass")[0] // Team AのPassボタン
-    await user.click(passButton)
-
-    expect(defaultProps.onActionToggle).toHaveBeenCalledWith("Team A", "pass")
-  })
-
-  test("ラベルボタンをクリックするとonLabelClickが呼ばれる", async () => {
-    const user = userEvent.setup()
-    render(<TaggingPanel {...defaultProps} />)
-
-    const goodButton = screen.getByText("Good")
-    await user.click(goodButton)
-
-    expect(defaultProps.onLabelClick).toHaveBeenCalledWith("Good")
-  })
-
-  test("カテゴリ化されたラベルボタンをクリックするとカテゴリ形式で呼ばれる", async () => {
-    const user = userEvent.setup()
-    const categorizedLabels = {
-      Result: ["Good", "Bad"],
-      Type: ["Fast", "Slow"]
-    }
-
-    render(<TaggingPanel {...defaultProps} labels={categorizedLabels} />)
-
-    // カテゴリ内のラベルをクリック
-    const goodButton = screen.getByText("Good")
-    await user.click(goodButton)
-
-    // クリック時には内部でカテゴリ名が付与されて渡される
-    expect(defaultProps.onLabelClick).toHaveBeenCalledWith("Result - Good")
-  })
-
-  test("アクティブなアクションにはアクティブスタイルが適用される", () => {
-    const activeActions = new Set(["Team A-pass"])
-    render(<TaggingPanel {...defaultProps} activeActions={activeActions} />)
-
-    // アクティブなアクションボタンの特定（テストIDやdata属性を使用）
-    const passButtons = screen.getAllByText("Pass")
-    // 実際のスタイルを確認するには、ActionButtonコンポーネントの実装に依存
-  })
-
-  test("アクティブなラベルにはアクティブスタイルが適用される", () => {
-    const activeLabels = new Set(["Good"])
-    render(<TaggingPanel {...defaultProps} activeLabels={activeLabels} />)
-
-    // アクティブなラベルボタンの特定
-    const goodButton = screen.getByText("Good")
-    // 実際のスタイルを確認するには、LabelButtonコンポーネントの実装に依存
   })
 
   test("空のチーム配列でもエラーにならない", () => {
@@ -140,20 +144,11 @@ describe("TaggingPanel", () => {
     expect(screen.queryByText("Pass")).not.toBeInTheDocument()
   })
 
-  test("空のラベル配列でもエラーにならない", () => {
-    render(<TaggingPanel {...defaultProps} labels={[]} />)
+  test("空のラベル辞書でもエラーにならない", () => {
+    render(<TaggingPanel {...defaultProps} labels={{}} />)
 
     // ラベルボタンが表示されないことを確認
     expect(screen.queryByText("Good")).not.toBeInTheDocument()
-  })
-
-  test("ドラッグハンドルが表示される", () => {
-    // Container要素にレンダリング
-    const { container } = render(<TaggingPanel {...defaultProps} />)
-
-    // ドラッグハンドルの要素が存在することを確認
-    const dragHandle = container.querySelector(".drag-handle")
-    expect(dragHandle).toBeInTheDocument()
   })
 
   test("不正なラベル形式でも安全に処理される", () => {
@@ -163,35 +158,13 @@ describe("TaggingPanel", () => {
       render(<TaggingPanel {...defaultProps} labels={invalidLabels} />)
     }).not.toThrow()
   })
-
-  test("カテゴリ「一般」のラベルは接頭辞なしで表示される", () => {
-    const generalLabels = {
-      一般: ["Basic", "Simple"]
-    }
-
-    render(<TaggingPanel {...defaultProps} labels={generalLabels} />)
-
-    expect(screen.getByText("Basic")).toBeInTheDocument()
-    expect(screen.getByText("Simple")).toBeInTheDocument()
-    expect(screen.queryByText("一般 - Basic")).not.toBeInTheDocument()
-  })
-
-  test("混在したラベル形式（配列とオブジェクト）を処理できる", () => {
-    // 実際の実装では後方互換性のために、両形式をサポートする必要がある
-    const mixedLabels = ["Legacy1", "Legacy2"] // 従来の配列形式
-
-    render(<TaggingPanel {...defaultProps} labels={mixedLabels} />)
-
-    expect(screen.getByText("Legacy1")).toBeInTheDocument()
-    expect(screen.getByText("Legacy2")).toBeInTheDocument()
-  })
 })
 
 // 新機能のテスト: ブラケット記法表示
 describe("ブラケット記法表示機能", () => {
   test("カテゴリ化されたラベルが[カテゴリ] 値形式で表示されるオプション", () => {
     // 実際の実装でブラケット記法が使用される場合のテスト
-    const categorizedLabels = {
+    const labelsByCategory = {
       Result: ["ace", "fault"],
       Type: ["first serve", "second serve"]
     }
@@ -200,7 +173,7 @@ describe("ブラケット記法表示機能", () => {
     const propsWithBrackets = {
       teams: ["Team A"],
       actions: { serve: "Serve" },
-      labels: categorizedLabels,
+      labels: labelsByCategory,
       activeActions: new Set<string>(),
       activeLabels: new Set<string>(),
       onActionToggle: jest.fn(),

@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event"
 // モックデータとユーティリティ
 type Button = {
   action: string
-  labels: Record<string, string[]> | string[]
+  labels: Record<string, string[]> // カテゴリ付きラベルのみサポート
 }
 
 type ButtonSet = {
@@ -48,14 +48,21 @@ describe("ButtonSetManager", () => {
 
       const newButton: Button = {
         action: "pass",
-        labels: ["short", "long", "through"]
+        labels: {
+          Type: ["short", "long", "through"]
+        }
       }
 
       buttonSet.buttons.push(newButton)
 
       expect(buttonSet.buttons).toHaveLength(1)
       expect(buttonSet.buttons[0].action).toBe("pass")
-      expect(buttonSet.buttons[0].labels).toEqual(["short", "long", "through"])
+      expect(buttonSet.buttons[0].labels).toHaveProperty("Type")
+      expect(buttonSet.buttons[0].labels["Type"]).toEqual([
+        "short",
+        "long",
+        "through"
+      ])
     })
 
     test("カテゴリ化されたラベルを持つアクションを追加できる", () => {
@@ -91,7 +98,9 @@ describe("ButtonSetManager", () => {
       buttons: [
         {
           action: "shot",
-          labels: ["made", "missed", "blocked"]
+          labels: {
+            Result: ["made", "missed", "blocked"]
+          }
         },
         {
           action: "pass",
@@ -117,12 +126,16 @@ describe("ButtonSetManager", () => {
       const buttonSet = JSON.parse(JSON.stringify(sampleButtonSet)) // deep clone
       const shotButton = buttonSet.buttons.find((btn) => btn.action === "shot")
 
-      if (shotButton && Array.isArray(shotButton.labels)) {
-        shotButton.labels.push("fouled")
+      if (shotButton && !Array.isArray(shotButton.labels)) {
+        const labels = shotButton.labels as Record<string, string[]>
+        if (!labels["Result"]) {
+          labels["Result"] = []
+        }
+        labels["Result"].push("fouled")
       }
 
-      expect(shotButton?.labels).toContain("fouled")
-      expect((shotButton?.labels as string[]).length).toBe(4)
+      expect(shotButton?.labels["Result"]).toContain("fouled")
+      expect(shotButton?.labels["Result"].length).toBe(4)
     })
 
     test("カテゴリ化されたラベルを追加できる", () => {
@@ -145,14 +158,17 @@ describe("ButtonSetManager", () => {
       const buttonSet = JSON.parse(JSON.stringify(sampleButtonSet)) // deep clone
       const shotButton = buttonSet.buttons.find((btn) => btn.action === "shot")
 
-      if (shotButton && Array.isArray(shotButton.labels)) {
-        shotButton.labels = shotButton.labels.filter(
-          (label) => label !== "blocked"
-        )
+      if (shotButton && !Array.isArray(shotButton.labels)) {
+        const labels = shotButton.labels as Record<string, string[]>
+        if (labels["Result"]) {
+          labels["Result"] = labels["Result"].filter(
+            (label) => label !== "blocked"
+          )
+        }
       }
 
-      expect(shotButton?.labels).not.toContain("blocked")
-      expect((shotButton?.labels as string[]).length).toBe(2)
+      expect(shotButton?.labels["Result"]).not.toContain("blocked")
+      expect(shotButton?.labels["Result"].length).toBe(2)
     })
   })
 
@@ -163,7 +179,9 @@ describe("ButtonSetManager", () => {
         buttons: [
           {
             action: "valid_action",
-            labels: ["label1", "label2"]
+            labels: {
+              Category: ["label1", "label2"]
+            }
           }
         ]
       }
@@ -177,7 +195,8 @@ describe("ButtonSetManager", () => {
             (btn: any) =>
               typeof btn.action === "string" &&
               btn.action.length > 0 &&
-              (Array.isArray(btn.labels) || typeof btn.labels === "object")
+              typeof btn.labels === "object" &&
+              btn.labels !== null
           )
         )
       }
@@ -189,7 +208,7 @@ describe("ButtonSetManager", () => {
       const invalidButtonSets = [
         { setName: "", buttons: [] }, // 空のsetName
         { setName: "TEST", buttons: null }, // nullなbuttons
-        { setName: "TEST", buttons: [{ action: "", labels: [] }] }, // 空のaction
+        { setName: "TEST", buttons: [{ action: "", labels: {} }] }, // 空のaction
         { setName: "TEST", buttons: [{ action: "test", labels: null }] } // nullなlabels
       ]
 
@@ -202,8 +221,8 @@ describe("ButtonSetManager", () => {
             (btn: any) =>
               typeof btn.action === "string" &&
               btn.action.length > 0 &&
-              (Array.isArray(btn.labels) ||
-                (typeof btn.labels === "object" && btn.labels !== null))
+              typeof btn.labels === "object" &&
+              btn.labels !== null
           )
         )
       }
@@ -222,7 +241,9 @@ describe("ButtonSetManager", () => {
           buttons: [
             {
               action: "pass",
-              labels: ["short", "long"]
+              labels: {
+                Distance: ["short", "long"]
+              }
             }
           ]
         }
@@ -293,7 +314,9 @@ describe("ButtonSetManager", () => {
         buttons: [
           {
             action: "action1",
-            labels: ["label1", "label2", "label3"]
+            labels: {
+              Legacy: ["label1", "label2", "label3"]
+            }
           }
         ]
       }
@@ -303,9 +326,7 @@ describe("ButtonSetManager", () => {
           ...buttonSet,
           buttons: buttonSet.buttons.map((btn) => ({
             ...btn,
-            labels: Array.isArray(btn.labels)
-              ? { 一般: btn.labels }
-              : btn.labels
+            labels: btn.labels
           }))
         }
       }
@@ -316,7 +337,7 @@ describe("ButtonSetManager", () => {
         string[]
       >
 
-      expect(modernLabels["一般"]).toEqual(["label1", "label2", "label3"])
+      expect(modernLabels["Legacy"]).toEqual(["label1", "label2", "label3"])
     })
 
     test("モダン形式からフラット形式への変換", () => {
@@ -338,21 +359,22 @@ describe("ButtonSetManager", () => {
           ...buttonSet,
           buttons: buttonSet.buttons.map((btn) => ({
             ...btn,
-            labels: Array.isArray(btn.labels)
-              ? btn.labels
-              : Object.entries(btn.labels).flatMap(([category, labels]) =>
-                  labels.map((label) =>
-                    category === "一般" ? label : `${category} - ${label}`
-                  )
-                )
+            labels: {
+              Flat: Object.entries(btn.labels).flatMap(([category, labels]) =>
+                labels.map((label) => `${category} - ${label}`)
+              )
+            }
           }))
         }
       }
 
       const flatButtonSet = convertToFlat(modernButtonSet)
-      const flatLabels = flatButtonSet.buttons[0].labels as string[]
+      const flatLabels = flatButtonSet.buttons[0].labels as Record<
+        string,
+        string[]
+      >
 
-      expect(flatLabels).toEqual([
+      expect(flatLabels["Flat"]).toEqual([
         "Category1 - label1",
         "Category1 - label2",
         "Category2 - label3",
@@ -368,7 +390,9 @@ describe("ButtonSetManager", () => {
         buttons: [
           {
             action: "action1",
-            labels: ["label1", "label2"]
+            labels: {
+              Category: ["label1", "label2"]
+            }
           }
         ]
       }
@@ -409,7 +433,9 @@ describe("ButtonSetManager", () => {
         buttons: [
           {
             action: "duplicate",
-            labels: ["label1"]
+            labels: {
+              Category: ["label1"]
+            }
           }
         ]
       }
@@ -419,7 +445,9 @@ describe("ButtonSetManager", () => {
         buttons: [
           {
             action: "duplicate",
-            labels: ["label2"]
+            labels: {
+              Category: ["label2"]
+            }
           }
         ]
       }

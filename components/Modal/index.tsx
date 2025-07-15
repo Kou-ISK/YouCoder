@@ -11,7 +11,6 @@ interface ModalProps {
     | "buttonInSet"
     | "addAction"
     | "addLabel"
-    | "addCategorizedLabel"
     | null
   onInputChange: (v: string) => void
   onClose: () => void
@@ -26,7 +25,7 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   onSubmit
 }) => {
-  const [category, setCategory] = useState("一般")
+  const [category, setCategory] = useState("Result")
   const modalRef = useRef<HTMLDivElement>(null)
   const initialFocusRef = useRef<HTMLInputElement>(null)
   const previousActiveElement = useRef<Element | null>(null)
@@ -57,7 +56,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   if (!isOpen) return null
 
-  const isCategorizedLabel = modalType === "addCategorizedLabel"
+  const hasCategory = modalType === "addLabel"
   const modalTitle =
     modalType === "team"
       ? "チームを追加"
@@ -65,18 +64,16 @@ export const Modal: React.FC<ModalProps> = ({
         ? "アクションを追加"
         : modalType === "addLabel"
           ? "ラベルを追加"
-          : modalType === "addCategorizedLabel"
-            ? "カテゴリ付きラベルを追加"
-            : modalType === "buttonSet"
-              ? "ボタンセットを追加"
-              : modalType === "buttonInSet"
-                ? "ボタンセット内にアクションを追加"
-                : ""
+          : modalType === "buttonSet"
+            ? "ボタンセットを追加"
+            : modalType === "buttonInSet"
+              ? "ボタンセット内にアクションを追加"
+              : ""
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (inputValue.trim()) {
-      onSubmit(isCategorizedLabel ? category : undefined)
+      onSubmit(hasCategory ? category : undefined)
     }
   }
 
@@ -107,7 +104,7 @@ export const Modal: React.FC<ModalProps> = ({
         }}>
         <h3 id="modal-title">{modalTitle}</h3>
         <form role="form" onSubmit={handleSubmit}>
-          {isCategorizedLabel && (
+          {hasCategory && (
             <div style={{ marginBottom: "10px" }}>
               <label
                 htmlFor="category-input"
@@ -142,16 +139,14 @@ export const Modal: React.FC<ModalProps> = ({
                 marginBottom: "4px",
                 fontWeight: "600"
               }}>
-              {isCategorizedLabel ? "ラベル:" : "入力:"}
+              {hasCategory ? "ラベル:" : "入力:"}
             </label>
             <input
               id="main-input"
               type="text"
               value={inputValue}
               onChange={(e) => onInputChange(e.target.value)}
-              placeholder={
-                isCategorizedLabel ? "例: forehand, winner, error" : ""
-              }
+              placeholder={hasCategory ? "例: forehand, winner, error" : ""}
               style={{
                 width: "100%",
                 padding: "8px",

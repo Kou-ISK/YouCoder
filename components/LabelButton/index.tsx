@@ -25,40 +25,23 @@ export const LabelButton: React.FC<LabelButtonProps> = ({
   <button
     onClick={() => onClick(label)}
     disabled={isDisabled}
+    className={`
+      px-3 py-2 text-base font-semibold rounded-lg transition-all duration-200 
+      border-2 shadow-sm hover:shadow-md transform hover:scale-105
+      ${
+        isActive
+          ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white border-green-400 hover:from-green-600 hover:to-emerald-600"
+          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+      }
+      ${
+        isDisabled
+          ? "opacity-50 cursor-not-allowed transform-none hover:scale-100 hover:shadow-sm"
+          : "cursor-pointer"
+      }
+    `}
     style={{
-      padding: "6px 10px",
-      fontSize: "11px",
-      fontWeight: "500",
-      backgroundColor: isActive ? "rgb(59, 130, 246)" : "#ffffff",
-      color: isActive ? "white" : "#374151",
-      border: "1px solid",
-      borderColor: isActive ? "rgb(59, 130, 246)" : "#d1d5db",
-      borderRadius: "14px",
-      cursor: isDisabled ? "not-allowed" : "pointer",
-      opacity: isDisabled ? 0.5 : 1,
-      transition: "all 0.15s ease",
-      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
-      whiteSpace: "nowrap" as "nowrap"
-    }}
-    onMouseEnter={(e) => {
-      if (!isDisabled) {
-        if (isActive) {
-          e.currentTarget.style.backgroundColor = "#2563eb"
-        } else {
-          e.currentTarget.style.backgroundColor = "#f8fafc"
-          e.currentTarget.style.borderColor = "#94a3b8"
-        }
-      }
-    }}
-    onMouseLeave={(e) => {
-      if (!isDisabled) {
-        if (isActive) {
-          e.currentTarget.style.backgroundColor = "#3b82f6"
-        } else {
-          e.currentTarget.style.backgroundColor = "#ffffff"
-          e.currentTarget.style.borderColor = "#d1d5db"
-        }
-      }
+      whiteSpace: "nowrap" as "nowrap",
+      minWidth: "fit-content"
     }}>
     {label}
   </button>
