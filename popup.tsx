@@ -3,55 +3,22 @@ import React, { useEffect, useState } from "react"
 
 import ButtonSetComponent from "./components/Popup/ButtonSetComponent"
 import { TeamList } from "./components/Popup/TeamList"
-
-type Button = {
-  action: string
-  labels: Record<string, string[]> // ラベルはカテゴリ付きのみサポート
-}
-
-type ButtonSet = {
-  setName: string
-  buttons: Button[]
-}
-
-// ラベルのユーティリティ関数
-
-// ラベルの配列を生成（表示用）
-const getLabelList = (
-  labels: Record<string, string[]>
-): Array<{ category: string; label: string; displayLabel: string }> => {
-  const result: Array<{
-    category: string
-    label: string
-    displayLabel: string
-  }> = []
-
-  for (const [category, labelList] of Object.entries(labels)) {
-    for (const label of labelList) {
-      result.push({
-        category,
-        label,
-        displayLabel: `${category} - ${label}`
-      })
-    }
-  }
-
-  return result
-}
-
-// ラベル文字列からカテゴリとラベルを分解
-const parseLabel = (
-  displayLabel: string
-): { category: string; label: string } | null => {
-  const parts = displayLabel.split(" - ")
-  if (parts.length >= 2) {
-    const category = parts[0]
-    const label = parts.slice(1).join(" - ") // "xxx - yyy - zzz"のような場合に対応
-    return { category, label }
-  }
-  // カテゴリがない場合はnullを返す
-  return null
-}
+import {
+  CHROME_EXTENSION,
+  NOTIFICATION,
+  PANEL_POSITION,
+  PANEL_SIZE,
+  STYLES
+} from "./constants"
+import type {
+  Button,
+  ButtonSet,
+  ChromeStorageData,
+  ModalType,
+  Notification
+} from "./types/common"
+import { logger } from "./utils/errorHandling"
+import { getLabelList, parseLabel } from "./utils/labelUtils"
 
 const defaultButtonSets: ButtonSet[] = [
   {
@@ -80,9 +47,7 @@ const Popup = () => {
   const [teams, setTeams] = useState<string[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalInput, setModalInput] = useState("")
-  const [modalType, setModalType] = useState<
-    "team" | "buttonSet" | "buttonInSet" | "addAction" | "addLabel" | null
-  >(null)
+  const [modalType, setModalType] = useState<ModalType>(null)
   const [showExtension, setShowExtension] = useState<boolean>(true)
   const [selectedButtonSet, setSelectedButtonSet] = useState<string>("RUGBY")
   const [buttonSets, setButtonSets] = useState<ButtonSet[]>([])
@@ -90,24 +55,30 @@ const Popup = () => {
   const [importInputRef, setImportInputRef] = useState<HTMLInputElement | null>(
     null
   )
-  const [notification, setNotification] = useState<{
-    message: string
-    type: "success" | "error" | "info"
-  } | null>(null)
+  const [notification, setNotification] = useState<Notification | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+  const handleShowNotification = (
+    message: string,
+    type: Notification["type"] = "info"
+  ) => {
+    setNotification({ message, type })
+    setTimeout(() => setNotification(null), NOTIFICATION.DISPLAY_DURATION)
+  }
 
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true)
       try {
-        const data = await chrome.storage.local.get([
-          "teams",
-          "showExtension",
-          "buttonSets",
-          "selectedButtonSet",
-          "selectedAction"
+        const data: ChromeStorageData = await chrome.storage.local.get([
+          CHROME_EXTENSION.STORAGE_KEYS.TEAMS,
+          CHROME_EXTENSION.STORAGE_KEYS.SHOW_EXTENSION,
+          CHROME_EXTENSION.STORAGE_KEYS.BUTTON_SETS,
+          CHROME_EXTENSION.STORAGE_KEYS.SELECTED_BUTTON_SET,
+          CHROME_EXTENSION.STORAGE_KEYS.SELECTED_ACTION
         ])
-        console.log("Loaded data from chrome.storage:", data)
+
+        logger.info("Loaded data from chrome.storage", data)
 
         setTeams(data.teams || [])
         setShowExtension(
@@ -126,22 +97,23 @@ const Popup = () => {
           initialSelectedButtonSet = loadedButtonSets[0].setName
         }
 
-        console.log("Setting selectedButtonSet to:", initialSelectedButtonSet)
+        logger.info("Setting selectedButtonSet to:", initialSelectedButtonSet)
         setSelectedButtonSet(initialSelectedButtonSet || "")
 
         if (data.selectedAction) {
           setSelectedAction(data.selectedAction)
         }
 
-        console.log("Data loading completed. Final states:", {
+        logger.info("Data loading completed. Final states:", {
           selectedButtonSet: initialSelectedButtonSet,
           buttonSets: loadedButtonSets,
           teams: data.teams || []
         })
       } catch (error) {
-        console.error("Failed to load data:", error)
-        alert(
-          "設定データの読み込みに失敗しました。拡張機能を再読み込みしてください。"
+        logger.error("Failed to load data", error)
+        handleShowNotification(
+          "設定データの読み込みに失敗しました。拡張機能を再読み込みしてください。",
+          "error"
         )
       } finally {
         setIsLoading(false)
@@ -150,14 +122,6 @@ const Popup = () => {
     loadData()
   }, [])
 
-  const showNotification = (
-    message: string,
-    type: "success" | "error" | "info" = "info"
-  ) => {
-    setNotification({ message, type })
-    setTimeout(() => setNotification(null), 3000)
-  }
-
   // データ読み込み完了後にselectedButtonSetを確実に設定
   useEffect(() => {
     if (
@@ -165,7 +129,7 @@ const Popup = () => {
       buttonSets.length > 0 &&
       (!selectedButtonSet || selectedButtonSet.trim() === "")
     ) {
-      console.log(
+      logger.info(
         "Force setting selectedButtonSet to first available:",
         buttonSets[0].setName
       )
@@ -176,7 +140,7 @@ const Popup = () => {
 
   // デバッグ用: selectedButtonSetの変更を監視
   useEffect(() => {
-    console.log("selectedButtonSet changed:", selectedButtonSet)
+    logger.debug("selectedButtonSet changed:", selectedButtonSet)
   }, [selectedButtonSet])
 
   // ボタン追加時にどのボタンセットに追加するかを管理するstate
@@ -451,7 +415,7 @@ const Popup = () => {
 
         // バリデーション：単一のボタンセットオブジェクトかチェック
         if (!importedData.setName || typeof importedData.setName !== "string") {
-          showNotification(
+          handleShowNotification(
             "無効なファイル形式です。ボタンセットには setName が必要です。",
             "error"
           )
@@ -459,7 +423,7 @@ const Popup = () => {
         }
 
         if (!Array.isArray(importedData.buttons)) {
-          showNotification(
+          handleShowNotification(
             "無効なファイル形式です。ボタンセットには buttons 配列が必要です。",
             "error"
           )
@@ -590,14 +554,14 @@ const Popup = () => {
           selectedButtonSet: validButtonSet.setName
         })
 
-        showNotification(
+        handleShowNotification(
           `ボタンセット "${validButtonSet.setName}" を正常にインポートしました。`,
           "success"
         )
         console.log("Import completed successfully:", validButtonSet)
       } catch (error) {
         console.error("JSON parse error:", error)
-        showNotification(
+        handleShowNotification(
           "JSONファイルの解析に失敗しました。ファイル形式を確認してください。",
           "error"
         )
@@ -620,7 +584,7 @@ const Popup = () => {
         (set) => set.setName === selectedButtonSet
       )
       if (!selectedSet) {
-        showNotification(
+        handleShowNotification(
           "エクスポートするボタンセットが選択されていません。",
           "error"
         )
@@ -647,11 +611,11 @@ const Popup = () => {
       // URLオブジェクトをクリーンアップ
       URL.revokeObjectURL(url)
 
-      showNotification("ボタンセットをエクスポートしました。", "success")
+      handleShowNotification("ボタンセットをエクスポートしました。", "success")
       console.log("Export completed successfully")
     } catch (error) {
       console.error("Export error:", error)
-      showNotification("エクスポートに失敗しました。", "error")
+      handleShowNotification("エクスポートに失敗しました。", "error")
     }
   }
 
@@ -903,12 +867,12 @@ const Popup = () => {
   return (
     <div
       style={{
-        minWidth: "450px",
-        padding: "24px",
+        minWidth: PANEL_SIZE.MIN_WIDTH,
+        padding: STYLES.PADDING.LARGE,
         fontFamily:
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        backgroundColor: "#fafafa",
-        borderRadius: "8px",
+        backgroundColor: STYLES.COLORS.BACKGROUND,
+        borderRadius: STYLES.BORDER_RADIUS.LARGE,
         position: "relative"
       }}>
       {/* 通知 */}
@@ -918,18 +882,18 @@ const Popup = () => {
             position: "fixed",
             top: "20px",
             right: "20px",
-            zIndex: 1000,
-            padding: "12px 16px",
-            borderRadius: "8px",
-            fontSize: "14px",
+            zIndex: PANEL_POSITION.NOTIFICATION_Z_INDEX,
+            padding: STYLES.PADDING.SMALL,
+            borderRadius: STYLES.BORDER_RADIUS.LARGE,
+            fontSize: STYLES.FONT_SIZE.MEDIUM,
             fontWeight: "500",
-            color: "white",
+            color: STYLES.COLORS.WHITE,
             backgroundColor:
               notification.type === "success"
-                ? "#10b981"
+                ? STYLES.COLORS.SUCCESS
                 : notification.type === "error"
-                  ? "#ef4444"
-                  : "#3b82f6",
+                  ? STYLES.COLORS.ERROR
+                  : STYLES.COLORS.PRIMARY,
             boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
             transform: "translateX(0)",
             transition: "transform 0.3s ease, opacity 0.3s ease",

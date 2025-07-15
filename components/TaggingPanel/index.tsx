@@ -38,13 +38,13 @@ export const TaggingPanel: React.FC<TaggingPanelProps> = ({
     <DraggableResizable
       initialPosition={position}
       initialSize={size}
-      minWidth={320}
-      minHeight={300}
+      minWidth={380}
+      minHeight={320}
       onPositionChange={handlePositionChange}
       onSizeChange={handleSizeChange}
-      className="bg-gradient-to-br from-white via-gray-50 to-blue-50 rounded-2xl shadow-2xl border-2 border-gray-200 hover:border-blue-300 font-sans z-[1000] backdrop-blur-md transition-all duration-300">
-      <div className="p-4 w-full h-full overflow-hidden flex flex-col box-border">
-        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
+      className="bg-gradient-to-br from-white via-blue-50 to-indigo-100 rounded-3xl shadow-2xl border-2 border-gray-200 hover:border-blue-400 font-sans z-[1000] backdrop-blur-xl transition-all duration-300 hover:shadow-3xl">
+      <div className="p-6 w-full h-full overflow-hidden flex flex-col box-border">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
           <TaggingPanelContent
             teams={teams}
             actions={actions}

@@ -1,21 +1,6 @@
 import React, { useEffect, useRef, useState } from "react"
 
-interface ModalProps {
-  isOpen: boolean
-  inputValue: string
-  modalType:
-    | "action"
-    | "label"
-    | "team"
-    | "buttonSet"
-    | "buttonInSet"
-    | "addAction"
-    | "addLabel"
-    | null
-  onInputChange: (v: string) => void
-  onClose: () => void
-  onSubmit: (category?: string) => void
-}
+import type { ModalProps } from "../../types/components"
 
 export const Modal: React.FC<ModalProps> = ({
   isOpen,

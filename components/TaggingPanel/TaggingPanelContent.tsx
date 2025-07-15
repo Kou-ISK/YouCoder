@@ -41,11 +41,25 @@ export const TaggingPanelContent: React.FC<TaggingPanelContentProps> = ({
 
       {/* ラベルセクション - アクションが選択されており、かつラベルが存在する場合のみ表示 */}
       {hasActiveActions && hasLabels && (
-        <LabelsSection
-          labels={labels}
-          activeLabels={activeLabels}
-          onLabelClick={onLabelClick}
-        />
+        <div className="border-t-2 border-gray-200 pt-4">
+          <LabelsSection
+            labels={labels}
+            activeLabels={activeLabels}
+            onLabelClick={onLabelClick}
+          />
+        </div>
+      )}
+
+      {/* 状態インジケーター */}
+      {!hasActiveActions && (
+        <div className="mt-8 text-center py-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-dashed border-blue-200">
+          <div className="text-blue-600 text-lg font-semibold mb-2">
+            🎯 アクションを選択してください
+          </div>
+          <p className="text-blue-500 text-sm">
+            ラベルの選択にはアクションの選択が必要です
+          </p>
+        </div>
       )}
     </div>
   )

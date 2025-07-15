@@ -1,24 +1,9 @@
 import React, { useState } from "react"
 
+import type { Button, ButtonSet } from "../../../types/common"
+import type { ButtonSetComponentProps } from "../../../types/components"
 import { ActionButton } from "../../ActionButton"
 import { LabelButton } from "../../LabelButton"
-
-type Button = {
-  action: string
-  labels: Record<string, string[]> // カテゴリ付きラベルのみサポート
-}
-
-type ButtonSet = {
-  setName: string
-  buttons: Button[]
-}
-
-type ButtonSetComponentProps = {
-  buttonSet: ButtonSet | undefined
-  selectedAction: string | null
-  onUpdateButtonSet: (updatedSet: ButtonSet) => void
-  onActionSelect: (action: string | null) => void
-}
 
 const ButtonSetComponent: React.FC<ButtonSetComponentProps> = ({
   buttonSet,

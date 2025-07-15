@@ -30,8 +30,8 @@ export const LabelsSection: React.FC<LabelsSectionProps> = ({
   }
 
   return (
-    <div className="mt-4">
-      <div className="space-y-3">
+    <div className="mt-6">
+      <div className="space-y-4">
         {Object.entries(labels).map(([category, labelList]) => {
           // 配列でない場合はスキップ
           if (!Array.isArray(labelList) || labelList.length === 0) {
@@ -41,14 +41,20 @@ export const LabelsSection: React.FC<LabelsSectionProps> = ({
           return (
             <div
               key={category}
-              className="bg-white rounded-lg border-2 border-gray-200 shadow-sm p-3 hover:border-gray-300 transition-colors duration-200">
+              className="bg-gradient-to-r from-white to-gray-50 rounded-2xl border-2 border-gray-200 shadow-lg p-4 hover:border-blue-300 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
               {/* カテゴリヘッダー */}
-              <h4 className="text-base font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-200 bg-gray-50 -mx-3 -mt-3 px-3 pt-3 rounded-t-lg">
-                {category}
+              <h4 className="text-lg font-bold text-gray-800 mb-4 pb-3 border-b-2 border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50 -mx-4 -mt-4 px-4 pt-4 rounded-t-2xl shadow-sm">
+                <span className="inline-flex items-center gap-2">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  {category}
+                </span>
               </h4>
               {/* ラベルボタンのグリッド */}
               <div
-                className="flex flex-wrap gap-2"
+                className="grid gap-3 auto-fit-grid"
+                style={{
+                  gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))"
+                }}
                 role="group"
                 aria-label={`${category}カテゴリのラベル`}>
                 {labelList.map((label) => {

@@ -41,39 +41,46 @@ export const ActionsSection: React.FC<ActionsSectionProps> = ({
   }
 
   return (
-    <div className="mb-4">
+    <div className="mb-6">
       {/* チームヘッダー */}
       <div
-        className="grid gap-2 mb-3"
-        style={{ gridTemplateColumns: `repeat(${teams.length}, 1fr)` }}>
+        className="grid gap-3 mb-4"
+        style={{ gridTemplateColumns: `repeat(${teams.length}, 1fr)` }}
+        role="group"
+        aria-label="チーム選択">
         {teams.map((team, index) => (
           <div
             key={team}
-            className={`py-2 px-3 text-center text-base font-medium text-white rounded-lg shadow-sm ${getTeamColorClass(index)}`}>
-            {team}
+            className={`py-3 px-4 text-center text-sm font-semibold text-white rounded-xl shadow-lg ${getTeamColorClass(index)} transform transition-all duration-200 hover:scale-105 hover:shadow-xl`}
+            title={`${team}チーム`}
+            role="header"
+            aria-label={`${team}チーム`}>
+            <span className="truncate block">{team}</span>
           </div>
         ))}
       </div>
 
       {/* アクションボタン */}
-      {Object.keys(actions).map((action) => (
-        <div
-          key={action}
-          className="grid gap-2 mb-2"
-          style={{ gridTemplateColumns: `repeat(${teams.length}, 1fr)` }}>
-          {teams.map((team, teamIndex) => (
-            <div key={`${team}-${action}`} className="flex justify-center">
-              <ActionButton
-                team={team}
-                action={actions[action]}
-                isActive={activeActions.has(`${team}_${action}`)}
-                onClick={() => onActionToggle(team, action)}
-                colorClass={getTeamColorClass(teamIndex)}
-              />
-            </div>
-          ))}
-        </div>
-      ))}
+      <div className="space-y-3" role="group" aria-label="アクション選択">
+        {Object.keys(actions).map((action) => (
+          <div
+            key={action}
+            className="grid gap-3"
+            style={{ gridTemplateColumns: `repeat(${teams.length}, 1fr)` }}>
+            {teams.map((team, teamIndex) => (
+              <div key={`${team}-${action}`} className="flex justify-center">
+                <ActionButton
+                  team={team}
+                  action={actions[action]}
+                  isActive={activeActions.has(`${team}_${action}`)}
+                  onClick={() => onActionToggle(team, action)}
+                  colorClass={getTeamColorClass(teamIndex)}
+                />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

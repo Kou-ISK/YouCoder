@@ -1,10 +1,6 @@
 import React from "react"
 
-interface TeamListProps {
-  teams: string[]
-  onAdd: () => void
-  onRemove: (team: string) => void
-}
+import type { TeamListProps } from "../../../types/components"
 
 export const TeamList: React.FC<TeamListProps> = ({
   teams,
