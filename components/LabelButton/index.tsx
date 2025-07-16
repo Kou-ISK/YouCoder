@@ -2,12 +2,9 @@ import React from "react"
 
 import type { LabelButtonProps } from "../../types/components"
 
-// LabelButtonコンポーネントは、ラベルを表すボタンを提供します。
-// - label: ラベル名。
-// - isActive: ボタンがアクティブかどうか。
-// - isDisabled: ボタンが無効化されているかどうか。
-// - onClick: ボタンがクリックされたときのコールバック。
-
+/**
+ * LabelButtonコンポーネント - ラベルを表すボタンを提供
+ */
 export const LabelButton: React.FC<LabelButtonProps> = ({
   label,
   isActive,

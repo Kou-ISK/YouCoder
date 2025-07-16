@@ -24,6 +24,12 @@ export interface ButtonSetComponentProps {
 
 /**
  * ActionButton の Props
+ *
+ * @param team - アクションが属するチーム名
+ * @param action - アクション名
+ * @param isActive - ボタンがアクティブかどうか
+ * @param onClick - ボタンがクリックされたときのコールバック
+ * @param colorClass - チームごとの色クラス（オプション）
  */
 export interface ActionButtonProps {
   action: string
@@ -35,6 +41,11 @@ export interface ActionButtonProps {
 
 /**
  * LabelButton の Props
+ *
+ * @param label - ラベル名
+ * @param isActive - ボタンがアクティブかどうか
+ * @param isDisabled - ボタンが無効化されているかどうか
+ * @param onClick - ボタンがクリックされたときのコールバック
  */
 export interface LabelButtonProps {
   label: string

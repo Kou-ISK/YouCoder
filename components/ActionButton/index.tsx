@@ -2,13 +2,9 @@ import React from "react"
 
 import type { ActionButtonProps } from "../../types/components"
 
-// ActionButtonコンポーネントは、アクションを表すボタンを提供します。
-// - team: アクションが属するチーム名。
-// - action: アクション名。
-// - isActive: ボタンがアクティブかどうか。
-// - onClick: ボタンがクリックされたときのコールバック。
-// - colorClass: チームごとの色クラス（オプション）。
-
+/**
+ * ActionButtonコンポーネント - アクションを表すボタンを提供
+ */
 export const ActionButton: React.FC<ActionButtonProps> = ({
   team,
   action,

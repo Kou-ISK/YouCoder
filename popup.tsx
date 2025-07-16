@@ -151,42 +151,29 @@ const Popup = () => {
   const openModal = (
     type: "team" | "buttonSet" | "buttonInSet" | "addAction" | "addLabel"
   ) => {
-    console.log("=== openModal called ===")
-    console.log("Type:", type)
-    console.log(
-      "Selected ButtonSet:",
+    logger.debug("=== openModal called ===", {
+      type,
       selectedButtonSet,
-      "type:",
-      typeof selectedButtonSet,
-      "length:",
-      selectedButtonSet ? selectedButtonSet.length : 0
-    )
-    console.log("ButtonSets:", buttonSets)
-    console.log("ButtonSets length:", buttonSets.length)
+      buttonSetsLength: buttonSets.length
+    })
 
     if (!selectedButtonSet && (type === "addAction" || type === "addLabel")) {
-      console.log(
-        "ボタンセットが選択されていません - selectedButtonSet:",
-        selectedButtonSet
-      )
+      logger.warn("ボタンセットが選択されていません", { selectedButtonSet })
       alert("ボタンセットを選択してください")
       return
     }
     if (type === "addLabel" && !selectedAction) {
-      console.log("アクションが選択されていません")
+      logger.warn("アクションが選択されていません")
       alert("ラベルを追加するアクションを選択してください")
       return
     }
-    console.log("モーダルを開いています:", type)
-    console.log("Setting modalType to:", type)
-    console.log("Setting modalInput to empty string")
-    console.log("Setting isModalOpen to true")
+    logger.debug("モーダルを開いています", { type })
 
     setModalType(type)
     setModalInput("")
     setIsModalOpen(true)
 
-    console.log("モーダル状態設定完了:", {
+    logger.debug("モーダル状態設定完了", {
       isModalOpen: true,
       modalType: type,
       modalInput: ""
@@ -200,8 +187,7 @@ const Popup = () => {
   }
 
   const handleModalSubmit = async (category?: string) => {
-    console.log("=== handleModalSubmit START ===")
-    console.log("handleModalSubmit called", {
+    logger.debug("=== handleModalSubmit START ===", {
       modalType,
       modalInput,
       selectedButtonSet,
@@ -211,14 +197,14 @@ const Popup = () => {
     })
 
     if (!modalInput.trim()) {
-      console.log("modalInput is empty or whitespace only, returning")
+      logger.warn("modalInput is empty or whitespace only, returning")
       return
     }
 
     switch (modalType) {
       case "addAction":
         {
-          console.log("Processing addAction case")
+          logger.debug("Processing addAction case")
           if (!selectedButtonSet) {
             alert("アクションを追加するボタンセットが選択されていません")
             return
@@ -242,12 +228,12 @@ const Popup = () => {
             selectedButtonSet: selectedButtonSet
           })
           setButtonSets(updatedButtonSets)
-          console.log("Action added and saved to localStorage:", modalInput)
+          logger.info("Action added and saved to localStorage", { modalInput })
         }
         break
       case "addLabel":
         {
-          console.log(`Processing ${modalType} case`)
+          logger.debug(`Processing ${modalType} case`)
           if (!selectedButtonSet) {
             alert("ラベルを追加するボタンセットが選択されていません")
             return
@@ -289,7 +275,7 @@ const Popup = () => {
             if (!labels[category].includes(modalInput)) {
               labels[category].push(modalInput)
               targetButton.labels = labels
-              console.log(`ラベル追加: ${category} - ${modalInput}`)
+              logger.info(`ラベル追加: ${category} - ${modalInput}`)
             } else {
               alert(
                 `ラベル "${modalInput}" は既にカテゴリ "${category}" に存在します`
@@ -309,12 +295,12 @@ const Popup = () => {
             selectedAction: selectedAction
           })
           setButtonSets(updatedButtonSets)
-          console.log("Label added and saved to localStorage:", modalInput)
+          logger.info("Label added and saved to localStorage", { modalInput })
         }
         break
       case "team":
         {
-          console.log("Processing team case")
+          logger.debug("Processing team case")
           const updatedTeams = [...teams, modalInput]
           await chrome.storage.local.set({ teams: updatedTeams })
           setTeams(updatedTeams)
@@ -322,7 +308,7 @@ const Popup = () => {
         break
       case "buttonSet":
         {
-          console.log("Processing buttonSet case")
+          logger.debug("Processing buttonSet case")
           if (buttonSets.find((set) => set.setName === modalInput)) {
             alert("同名のボタンセットが既に存在します")
             return
@@ -339,14 +325,14 @@ const Popup = () => {
           })
           setButtonSets(updatedButtonSets)
           setSelectedButtonSet(modalInput)
-          console.log(
+          logger.debug(
             "ButtonSet created and saved to localStorage:",
             modalInput
           )
         }
         break
     }
-    console.log("Modal submit completed, closing modal")
+    logger.debug("Modal submit completed, closing modal")
     closeModal()
   }
 
@@ -385,13 +371,13 @@ const Popup = () => {
       })
       window.close()
     } catch (error) {
-      console.error("Failed to save settings:", error)
+      logger.error("Failed to save settings:", error)
       alert("設定の保存に失敗しました。もう一度お試しください。")
     }
   }
 
   const handleJsonImport = () => {
-    console.log("JSON import button clicked")
+    logger.debug("JSON import button clicked")
 
     // 隠れたファイル入力要素を作成
     const input = document.createElement("input")
@@ -402,16 +388,16 @@ const Popup = () => {
     input.onchange = async (event) => {
       const file = (event.target as HTMLInputElement).files?.[0]
       if (!file) {
-        console.log("No file selected")
+        logger.debug("No file selected")
         return
       }
 
       try {
         const fileContent = await file.text()
-        console.log("File content:", fileContent)
+        logger.debug("File content:", fileContent)
 
         const importedData = JSON.parse(fileContent)
-        console.log("Parsed JSON:", importedData)
+        logger.debug("Parsed JSON:", importedData)
 
         // バリデーション：単一のボタンセットオブジェクトかチェック
         if (!importedData.setName || typeof importedData.setName !== "string") {
@@ -436,7 +422,7 @@ const Popup = () => {
 
         for (const button of importedData.buttons) {
           if (!button.action || typeof button.action !== "string") {
-            console.log("Invalid button action:", button)
+            logger.debug("Invalid button action:", button)
             hasErrors = true
             continue
           }
@@ -455,17 +441,16 @@ const Popup = () => {
 
             for (const [category, labelList] of Object.entries(button.labels)) {
               if (typeof category !== "string") {
-                console.log("Invalid category name:", category)
+                logger.debug("Invalid category name:", category)
                 categoryHasErrors = true
                 continue
               }
 
               if (!Array.isArray(labelList)) {
-                console.log(
-                  "Invalid label list for category:",
+                logger.debug("Invalid label list for category", {
                   category,
                   labelList
-                )
+                })
                 categoryHasErrors = true
                 continue
               }
@@ -475,11 +460,10 @@ const Popup = () => {
               )
 
               if (validCategoryLabels.length !== labelList.length) {
-                console.log(
-                  "Some labels in category are not strings:",
+                logger.debug("Some labels in category are not strings", {
                   category,
                   labelList
-                )
+                })
                 categoryHasErrors = true
               }
 
@@ -494,7 +478,7 @@ const Popup = () => {
 
             validLabels = validCategories
           } else {
-            console.log("Invalid button labels format:", button.labels)
+            logger.debug("Invalid button labels format:", button.labels)
             hasErrors = true
             continue
           }
@@ -558,9 +542,9 @@ const Popup = () => {
           `ボタンセット "${validButtonSet.setName}" を正常にインポートしました。`,
           "success"
         )
-        console.log("Import completed successfully:", validButtonSet)
+        logger.debug("Import completed successfully:", validButtonSet)
       } catch (error) {
-        console.error("JSON parse error:", error)
+        logger.error("JSON parse error:", error)
         handleShowNotification(
           "JSONファイルの解析に失敗しました。ファイル形式を確認してください。",
           "error"
@@ -576,7 +560,7 @@ const Popup = () => {
   }
 
   const handleJsonExport = () => {
-    console.log("JSON export button clicked")
+    logger.debug("JSON export button clicked")
 
     try {
       // 選択されたボタンセットのみをエクスポート
@@ -612,9 +596,9 @@ const Popup = () => {
       URL.revokeObjectURL(url)
 
       handleShowNotification("ボタンセットをエクスポートしました。", "success")
-      console.log("Export completed successfully")
+      logger.debug("Export completed successfully")
     } catch (error) {
-      console.error("Export error:", error)
+      logger.error("Export error:", error)
       handleShowNotification("エクスポートに失敗しました。", "error")
     }
   }
@@ -628,7 +612,7 @@ const Popup = () => {
         type: "EXTENSION_VISIBILITY_UPDATED"
       })
     } catch (error) {
-      console.error("Failed to update visibility:", error)
+      logger.error("Failed to update visibility:", error)
       alert("表示設定の更新に失敗しました。ページを再読み込みしてください。")
     }
   }
@@ -662,21 +646,18 @@ const Popup = () => {
         <select
           value={selectedButtonSet}
           onChange={async (e) => {
-            console.log(
-              "Select changed from",
-              selectedButtonSet,
-              "to",
-              e.target.value
-            )
+            logger.debug("Select changed", {
+              from: selectedButtonSet,
+              to: e.target.value
+            })
             setSelectedButtonSet(e.target.value)
             // 選択変更時に即座にlocalStorageに保存
             await chrome.storage.local.set({
               selectedButtonSet: e.target.value
             })
-            console.log(
-              "Selected button set saved to localStorage:",
-              e.target.value
-            )
+            logger.debug("Selected button set saved to localStorage", {
+              value: e.target.value
+            })
           }}
           style={{
             padding: "6px 12px",
@@ -817,8 +798,8 @@ const Popup = () => {
             (e.currentTarget.style.backgroundColor = "#10b981")
           }
           onClick={() => {
-            console.log("=== アクション追加ボタンクリック ===")
-            console.log("現在の状態:", {
+            logger.debug("=== アクション追加ボタンクリック ===")
+            logger.debug("現在の状態:", {
               selectedButtonSet,
               buttonSets,
               isModalOpen,
@@ -848,8 +829,8 @@ const Popup = () => {
             (e.currentTarget.style.backgroundColor = "#8b5cf6")
           }
           onClick={() => {
-            console.log("=== カテゴリ付きラベル追加ボタンクリック ===")
-            console.log("現在の状態:", {
+            logger.debug("=== カテゴリ付きラベル追加ボタンクリック ===")
+            logger.debug("現在の状態:", {
               selectedButtonSet,
               selectedAction,
               buttonSets,
@@ -964,17 +945,17 @@ const Popup = () => {
             buttonSets: updatedButtonSets,
             selectedButtonSet: selectedButtonSet
           })
-          console.log(
+          logger.debug(
             "ButtonSet updated and saved to localStorage:",
             updatedSet.setName
           )
         }}
         onActionSelect={async (action) => {
-          console.log("Action selected:", action)
+          logger.debug("Action selected:", action)
           setSelectedAction(action)
           // アクション選択変更時に即座にlocalStorageに保存
           await chrome.storage.local.set({ selectedAction: action })
-          console.log("Selected action saved to localStorage:", action)
+          logger.debug("Selected action saved to localStorage:", action)
         }}
       />
       <TeamList
@@ -987,15 +968,15 @@ const Popup = () => {
         inputValue={modalInput}
         modalType={modalType}
         onInputChange={(value) => {
-          console.log("Modal input changed:", value)
+          logger.debug("Modal input changed:", value)
           setModalInput(value)
         }}
         onClose={() => {
-          console.log("Modal close called")
+          logger.debug("Modal close called")
           closeModal()
         }}
         onSubmit={(category) => {
-          console.log("Modal submit called with category:", category)
+          logger.debug("Modal submit called with category:", category)
           handleModalSubmit(category)
         }}
       />

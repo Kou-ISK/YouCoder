@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useRef } from "react"
 
+import { logger } from "../../utils/errorHandling"
 import type { TimelineTableProps } from "./types"
 
 const TimelineTable: React.FC<TimelineTableProps> = ({
@@ -56,9 +57,9 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
       // ミリ秒を秒に変換
       const timeInSeconds = timeInMs / 1000
       video.currentTime = timeInSeconds
-      console.log(`[YouCoder] 動画を${timeInSeconds}秒の位置に移動しました`)
+      logger.info(`[YouCoder] 動画を${timeInSeconds}秒の位置に移動しました`)
     } else {
-      console.warn("[YouCoder] 動画要素が見つかりませんでした")
+      logger.warn("[YouCoder] 動画要素が見つかりませんでした")
     }
   }
 
@@ -144,7 +145,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
 
   // ソートとフィルターを適用した最終的なアクションリスト
   const processedActions = useMemo(() => {
-    console.log(
+    logger.debug(
       `[TimelineTable] processedActions計算開始 - 入力アクション数: ${actions.length}`
     )
     let result = [...actions]
@@ -190,7 +191,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
         return sortConfig.direction === "asc" ? comparison : -comparison
       })
     }
-    console.log(
+    logger.debug(
       `[TimelineTable] processedActions計算完了 - 出力アクション数: ${result.length}`
     )
     return result

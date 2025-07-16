@@ -2,6 +2,7 @@ import React, { useState } from "react"
 
 import type { Button, ButtonSet } from "../../../types/common"
 import type { ButtonSetComponentProps } from "../../../types/components"
+import { logger } from "../../../utils/errorHandling"
 import { ActionButton } from "../../ActionButton"
 import { LabelButton } from "../../LabelButton"
 
@@ -15,7 +16,6 @@ const ButtonSetComponent: React.FC<ButtonSetComponentProps> = ({
     return <div>選択されたボタンセットがありません</div>
   }
 
-  // カテゴリ付きラベルのみを処理
   const getLabelsFromButtons = (
     labels: Record<string, string[]>
   ): Record<string, string[]> => {
@@ -24,7 +24,7 @@ const ButtonSetComponent: React.FC<ButtonSetComponentProps> = ({
 
   const handleActionClick = (action: string) => {
     const newSelection = selectedAction === action ? null : action
-    console.log("ButtonSetComponent: Action clicked", {
+    logger.debug("ButtonSetComponent: Action clicked", {
       action,
       currentSelection: selectedAction,
       newSelection
