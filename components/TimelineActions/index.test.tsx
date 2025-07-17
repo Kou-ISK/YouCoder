@@ -165,16 +165,9 @@ describe("TimelineActions", () => {
     const csvButton = screen.getByText("CSV出力")
     const saveButton = screen.getByText("保存")
 
-    // CSS-in-JSのスタイルが適用されることを確認（基本的なスタイルのみ）
-    expect(csvButton).toHaveStyle({
-      color: "white",
-      cursor: "pointer"
-    })
-
-    expect(saveButton).toHaveStyle({
-      color: "white",
-      cursor: "pointer"
-    })
+    // Tailwindクラスが適用されていることを確認
+    expect(csvButton).toHaveClass("btn-primary")
+    expect(saveButton).toHaveClass("btn-success")
 
     // ボタン要素であることを確認
     expect(csvButton.tagName).toBe("BUTTON")
@@ -187,14 +180,8 @@ describe("TimelineActions", () => {
     const selects = screen.getAllByRole("combobox")
 
     selects.forEach((select) => {
-      expect(select).toHaveStyle({
-        padding: "4px 8px",
-        border: "1px solid #e2e8f0",
-        borderRadius: "4px",
-        fontSize: "11px",
-        backgroundColor: "white",
-        color: "#334155"
-      })
+      // Tailwindクラスが適用されていることを確認
+      expect(select).toHaveClass("filter-select")
     })
   })
 
@@ -212,15 +199,8 @@ describe("TimelineActions", () => {
 
     const resetButton = screen.getByText("リセット")
 
-    expect(resetButton).toHaveStyle({
-      padding: "4px 8px",
-      border: "1px solid #f87171",
-      borderRadius: "4px",
-      fontSize: "10px",
-      backgroundColor: "white",
-      color: "#dc2626",
-      fontWeight: "500"
-    })
+    // Tailwindクラスが適用されていることを確認
+    expect(resetButton).toHaveClass("btn-danger")
   })
 
   test("CSV出力ボタンのホバー効果", async () => {
@@ -229,16 +209,14 @@ describe("TimelineActions", () => {
 
     const csvButton = screen.getByText("CSV出力")
 
-    // 初期状態の確認
-    expect(csvButton).toHaveStyle({
-      backgroundColor: "#3b82f6"
-    })
+    // ボタンが存在し、Tailwindクラスが適用されていることを確認
+    expect(csvButton).toHaveClass("btn-primary")
 
     // ホバー時のイベントハンドラが設定されていることを確認
     await user.hover(csvButton)
     await user.unhover(csvButton)
 
-    // ホバーイベントが処理されることを確認（実際のスタイル変更は DOM では確認困難）
+    // ホバーイベントが処理されることを確認
     expect(csvButton).toBeInTheDocument()
   })
 
@@ -248,10 +226,8 @@ describe("TimelineActions", () => {
 
     const saveButton = screen.getByText("保存")
 
-    // 初期状態の確認
-    expect(saveButton).toHaveStyle({
-      backgroundColor: "#10b981"
-    })
+    // ボタンが存在し、Tailwindクラスが適用されていることを確認
+    expect(saveButton).toHaveClass("btn-success")
 
     // ホバー時のイベントハンドラが設定されていることを確認
     await user.hover(saveButton)
