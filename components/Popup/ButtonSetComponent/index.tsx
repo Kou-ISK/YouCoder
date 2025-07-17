@@ -38,7 +38,7 @@ const ButtonSetComponent: React.FC<ButtonSetComponentProps> = ({
         const labelsByCategory = getLabelsFromButtons(btn.labels)
 
         return (
-          <div key={index} style={{ marginBottom: "16px" }}>
+          <div key={index} className="mb-4">
             {/* アクションボタン */}
             <ActionButton
               action={btn.action}
@@ -47,27 +47,14 @@ const ButtonSetComponent: React.FC<ButtonSetComponentProps> = ({
               isActive={selectedAction === btn.action}
             />
             {/* アクションに紐づくラベルボタン群 - カテゴリ別に表示 */}
-            <div style={{ marginTop: "8px" }}>
+            <div className="mt-2">
               {Object.entries(labelsByCategory).map(([category, labels]) => (
-                <div key={category} style={{ marginBottom: "4px" }}>
+                <div key={category} className="mb-1">
                   {/* カテゴリ名を常に表示 */}
-                  <div
-                    style={{
-                      fontSize: "10px",
-                      fontWeight: "600",
-                      color: "#6b7280",
-                      marginBottom: "2px",
-                      paddingLeft: "4px"
-                    }}>
+                  <div className="text-xs font-semibold text-gray-500 mb-0.5 pl-1">
                     {category}
                   </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "4px",
-                      marginLeft: "8px"
-                    }}>
+                  <div className="flex flex-wrap gap-1 ml-2">
                     {labels.map((lbl, i) => {
                       const displayLabel = `${category} - ${lbl}`
                       return (

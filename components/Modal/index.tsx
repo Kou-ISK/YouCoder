@@ -68,36 +68,21 @@ export const Modal: React.FC<ModalProps> = ({
       aria-modal="true"
       aria-labelledby="modal-title"
       ref={modalRef}
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center"
-      }}>
+      className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div
         role="document"
-        style={{
-          backgroundColor: "white",
-          padding: "20px",
-          borderRadius: "8px",
-          minWidth: "300px"
-        }}>
-        <h3 id="modal-title">{modalTitle}</h3>
+        className="bg-white p-5 rounded-lg min-w-75 shadow-lg">
+        <h3
+          id="modal-title"
+          className="text-lg font-semibold mb-4 text-gray-800">
+          {modalTitle}
+        </h3>
         <form role="form" onSubmit={handleSubmit}>
           {hasCategory && (
-            <div style={{ marginBottom: "10px" }}>
+            <div className="mb-2.5">
               <label
                 htmlFor="category-input"
-                style={{
-                  display: "block",
-                  marginBottom: "4px",
-                  fontWeight: "600"
-                }}>
+                className="block mb-1 font-semibold text-sm text-gray-700">
                 カテゴリ:
               </label>
               <input
@@ -106,24 +91,15 @@ export const Modal: React.FC<ModalProps> = ({
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 placeholder="例: Shot Type, Result, Position"
-                style={{
-                  width: "100%",
-                  padding: "8px",
-                  borderRadius: "4px",
-                  border: "1px solid #ced4da"
-                }}
+                className="w-full px-2 py-2 rounded border border-gray-300 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-200 focus:outline-none"
               />
             </div>
           )}
 
-          <div style={{ marginBottom: "10px" }}>
+          <div className="mb-2.5">
             <label
               htmlFor="main-input"
-              style={{
-                display: "block",
-                marginBottom: "4px",
-                fontWeight: "600"
-              }}>
+              className="block mb-1 font-semibold text-sm text-gray-700">
               {hasCategory ? "ラベル:" : "入力:"}
             </label>
             <input
@@ -132,44 +108,20 @@ export const Modal: React.FC<ModalProps> = ({
               value={inputValue}
               onChange={(e) => onInputChange(e.target.value)}
               placeholder={hasCategory ? "例: forehand, winner, error" : ""}
-              style={{
-                width: "100%",
-                padding: "8px",
-                borderRadius: "4px",
-                border: "1px solid #ced4da"
-              }}
+              className="w-full px-2 py-2 rounded border border-gray-300 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-200 focus:outline-none"
               ref={initialFocusRef}
             />
           </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: "10px"
-            }}>
+          <div className="flex justify-end gap-2.5">
             <button
               type="button"
               onClick={onClose}
-              style={{
-                padding: "5px 10px",
-                backgroundColor: "#6c757d",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer"
-              }}>
+              className="px-2.5 py-1.5 bg-gray-500 text-white border-none rounded cursor-pointer text-sm hover:bg-gray-600 transition-colors">
               キャンセル
             </button>
             <button
               type="submit"
-              style={{
-                padding: "5px 10px",
-                backgroundColor: "#28a745",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer"
-              }}>
+              className="px-2.5 py-1.5 bg-emerald-600 text-white border-none rounded cursor-pointer text-sm hover:bg-emerald-700 transition-colors">
               追加
             </button>
           </div>

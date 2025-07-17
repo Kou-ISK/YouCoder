@@ -1,26 +1,7 @@
 import React from "react"
 
-interface FilterConfig {
-  team?: string
-  action?: string
-  label?: string
-  timeRange?: {
-    start: number
-    end: number
-  }
-}
-
-interface TimelineActionsProps {
-  onSave?: () => void
-  onExportCSV?: () => void
-  // フィルター関連のprops
-  filterConfig?: FilterConfig
-  onFilterChange?: (key: keyof FilterConfig, value: string) => void
-  onFilterReset?: () => void
-  getUniqueTeams?: () => string[]
-  getUniqueActions?: () => string[]
-  getUniqueLabels?: () => string[]
-}
+import { STYLES } from "../../constants"
+import type { FilterConfig, TimelineActionsProps } from "../../types/components"
 
 const TimelineActions: React.FC<TimelineActionsProps> = ({
   onSave,
@@ -40,71 +21,18 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
     ).length
   }
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: "12px",
-        alignItems: "center",
-        width: "100%",
-        justifyContent: "space-between"
-      }}>
+    <div className="flex gap-3 items-center w-full justify-between">
       {/* ボタングループ */}
-      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+      <div className="flex gap-2 items-center">
         <button
           onClick={onExportCSV}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            padding: "6px 12px",
-            backgroundColor: "#3b82f6",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "12px",
-            fontWeight: "600",
-            fontFamily:
-              "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-            boxShadow:
-              "0 2px 4px rgba(59, 130, 246, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05)",
-            outline: "none",
-            position: "relative"
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#2563eb"
-            e.currentTarget.style.transform = "translateY(-1px)"
-            e.currentTarget.style.boxShadow =
-              "0 4px 8px rgba(59, 130, 246, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1)"
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#3b82f6"
-            e.currentTarget.style.transform = "translateY(0)"
-            e.currentTarget.style.boxShadow =
-              "0 2px 4px rgba(59, 130, 246, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05)"
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.transform = "translateY(0)"
-            e.currentTarget.style.boxShadow =
-              "0 1px 2px rgba(59, 130, 246, 0.3)"
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.transform = "translateY(-1px)"
-          }}
-          onFocus={(e) => {
-            e.currentTarget.style.outline = "2px solid #3b82f6"
-            e.currentTarget.style.outlineOffset = "2px"
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.outline = "none"
-          }}>
+          className="btn-primary flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
           <svg
             width="16"
             height="16"
             viewBox="0 0 24 24"
             fill="none"
-            style={{ flexShrink: 0 }}>
+            className="flex-shrink-0">
             <path
               d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
               stroke="currentColor"
@@ -144,59 +72,13 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
         </button>
         <button
           onClick={onSave}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            padding: "6px 12px",
-            backgroundColor: "#10b981",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "12px",
-            fontWeight: "600",
-            fontFamily:
-              "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-            boxShadow:
-              "0 2px 4px rgba(16, 185, 129, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05)",
-            outline: "none",
-            position: "relative"
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#059669"
-            e.currentTarget.style.transform = "translateY(-1px)"
-            e.currentTarget.style.boxShadow =
-              "0 4px 8px rgba(16, 185, 129, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1)"
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#10b981"
-            e.currentTarget.style.transform = "translateY(0)"
-            e.currentTarget.style.boxShadow =
-              "0 2px 4px rgba(16, 185, 129, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05)"
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.transform = "translateY(0)"
-            e.currentTarget.style.boxShadow =
-              "0 1px 2px rgba(16, 185, 129, 0.3)"
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.transform = "translateY(-1px)"
-          }}
-          onFocus={(e) => {
-            e.currentTarget.style.outline = "2px solid #10b981"
-            e.currentTarget.style.outlineOffset = "2px"
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.outline = "none"
-          }}>
+          className="btn-success flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
           <svg
             width="16"
             height="16"
             viewBox="0 0 24 24"
             fill="none"
-            style={{ flexShrink: 0 }}>
+            className="flex-shrink-0">
             <path
               d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
               stroke="currentColor"
@@ -230,13 +112,7 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
         getUniqueActions &&
         getUniqueLabels && (
           <div
-            style={{
-              display: "flex",
-              gap: "6px",
-              alignItems: "center",
-              userSelect: "auto",
-              pointerEvents: "auto"
-            }}
+            className="flex gap-1.5 items-center select-auto pointer-events-auto"
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}>
@@ -245,40 +121,8 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
               value={filterConfig.team || ""}
               onChange={(e) => onFilterChange("team", e.target.value)}
               onClick={(e) => e.stopPropagation()}
-              style={{
-                padding: "4px 8px",
-                border: "1px solid #e2e8f0",
-                borderRadius: "4px",
-                fontSize: "11px",
-                minWidth: "80px",
-                outline: "none",
-                cursor: "pointer",
-                backgroundColor: "white",
-                color: "#334155",
-                fontFamily:
-                  "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                transition: "all 0.2s ease",
-                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)"
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#94a3b8"
-                e.currentTarget.style.backgroundColor = "#f8fafc"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#e2e8f0"
-                e.currentTarget.style.backgroundColor = "white"
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#3b82f6"
-                e.currentTarget.style.boxShadow =
-                  "0 0 0 3px rgba(59, 130, 246, 0.1)"
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#e2e8f0"
-                e.currentTarget.style.boxShadow =
-                  "0 1px 2px rgba(0, 0, 0, 0.05)"
-              }}>
-              <option value="" style={{ color: "#94a3b8" }}>
+              className="filter-select min-w-20 text-xs">
+              <option value="" className="text-gray-400">
                 全チーム
               </option>
               {getUniqueTeams().map((team) => (
@@ -293,40 +137,8 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
               value={filterConfig.action || ""}
               onChange={(e) => onFilterChange("action", e.target.value)}
               onClick={(e) => e.stopPropagation()}
-              style={{
-                padding: "4px 8px",
-                border: "1px solid #e2e8f0",
-                borderRadius: "4px",
-                fontSize: "11px",
-                minWidth: "90px",
-                outline: "none",
-                cursor: "pointer",
-                backgroundColor: "white",
-                color: "#334155",
-                fontFamily:
-                  "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                transition: "all 0.2s ease",
-                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)"
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#94a3b8"
-                e.currentTarget.style.backgroundColor = "#f8fafc"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#e2e8f0"
-                e.currentTarget.style.backgroundColor = "white"
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#3b82f6"
-                e.currentTarget.style.boxShadow =
-                  "0 0 0 3px rgba(59, 130, 246, 0.1)"
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#e2e8f0"
-                e.currentTarget.style.boxShadow =
-                  "0 1px 2px rgba(0, 0, 0, 0.05)"
-              }}>
-              <option value="" style={{ color: "#94a3b8" }}>
+              className="filter-select min-w-24 text-xs">
+              <option value="" className="text-gray-400">
                 全アクション
               </option>
               {getUniqueActions().map((action) => (
@@ -341,40 +153,8 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
               value={filterConfig.label || ""}
               onChange={(e) => onFilterChange("label", e.target.value)}
               onClick={(e) => e.stopPropagation()}
-              style={{
-                padding: "4px 8px",
-                border: "1px solid #e2e8f0",
-                borderRadius: "4px",
-                fontSize: "11px",
-                minWidth: "80px",
-                outline: "none",
-                cursor: "pointer",
-                backgroundColor: "white",
-                color: "#334155",
-                fontFamily:
-                  "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                transition: "all 0.2s ease",
-                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)"
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#94a3b8"
-                e.currentTarget.style.backgroundColor = "#f8fafc"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#e2e8f0"
-                e.currentTarget.style.backgroundColor = "white"
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#3b82f6"
-                e.currentTarget.style.boxShadow =
-                  "0 0 0 3px rgba(59, 130, 246, 0.1)"
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#e2e8f0"
-                e.currentTarget.style.boxShadow =
-                  "0 1px 2px rgba(0, 0, 0, 0.05)"
-              }}>
-              <option value="" style={{ color: "#94a3b8" }}>
+              className="filter-select min-w-20 text-xs">
+              <option value="" className="text-gray-400">
                 全ラベル
               </option>
               {getUniqueLabels().map((label) => (
@@ -391,35 +171,7 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
                   e.stopPropagation()
                   onFilterReset()
                 }}
-                style={{
-                  padding: "4px 8px",
-                  border: "1px solid #f87171",
-                  borderRadius: "4px",
-                  fontSize: "10px",
-                  backgroundColor: "white",
-                  color: "#dc2626",
-                  cursor: "pointer",
-                  outline: "none",
-                  fontFamily:
-                    "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                  fontWeight: "500",
-                  transition: "all 0.2s ease",
-                  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)"
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#fef2f2"
-                  e.currentTarget.style.borderColor = "#ef4444"
-                  e.currentTarget.style.transform = "translateY(-1px)"
-                  e.currentTarget.style.boxShadow =
-                    "0 2px 4px rgba(248, 113, 113, 0.2)"
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "white"
-                  e.currentTarget.style.borderColor = "#f87171"
-                  e.currentTarget.style.transform = "translateY(0)"
-                  e.currentTarget.style.boxShadow =
-                    "0 1px 2px rgba(0, 0, 0, 0.05)"
-                }}
+                className="btn-danger px-2 py-1 text-xs font-medium"
                 title={`${getActiveFilterCount()}個のフィルターをリセット`}>
                 リセット
               </button>
@@ -431,4 +183,3 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
 }
 
 export { TimelineActions }
-export type { TimelineActionsProps }

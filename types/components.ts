@@ -100,3 +100,31 @@ export interface ActionsSectionProps {
   activeActions: Set<string>
   onActionToggle: (team: string, action: string) => void
 }
+
+/**
+ * FilterConfig の型定義
+ */
+export interface FilterConfig {
+  team?: string
+  action?: string
+  label?: string
+  timeRange?: {
+    start: number
+    end: number
+  }
+}
+
+/**
+ * TimelineActions の Props
+ */
+export interface TimelineActionsProps {
+  onSave?: () => void
+  onExportCSV?: () => void
+  // フィルター関連のprops
+  filterConfig?: FilterConfig
+  onFilterChange?: (key: keyof FilterConfig, value: string) => void
+  onFilterReset?: () => void
+  getUniqueTeams?: () => string[]
+  getUniqueActions?: () => string[]
+  getUniqueLabels?: () => string[]
+}

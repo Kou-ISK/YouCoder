@@ -261,23 +261,10 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
   return (
     <div
       ref={scrollContainerRef}
-      style={{
-        width: "100%",
-        height: "100%",
-        overflow: "auto",
-        position: "relative"
-      }}>
+      className="w-full h-full overflow-auto relative">
       <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          borderSpacing: 0,
-          tableLayout: "fixed",
-          fontSize: "12px",
-          fontFamily:
-            "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-          minWidth: "600px" // 最小幅を設定してスクロールを可能にする
-        }}>
+        className="w-full border-collapse table-fixed text-xs font-sans"
+        style={{ minWidth: "600px" }}>
         <colgroup>
           <col style={{ width: "10%" }} />
           <col style={{ width: "10%" }} />
@@ -286,44 +273,16 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
           <col style={{ width: "50%" }} />
           <col style={{ width: "10%" }} />
         </colgroup>
-        <thead
-          style={{
-            position: "sticky",
-            top: 0,
-            backgroundColor: "#f1f5f9",
-            zIndex: 10,
-            borderBottom: "1px solid #cbd5e1"
-          }}>
+        <thead className="sticky top-0 bg-slate-100 z-10 border-b border-slate-300">
           <tr>
             {renderSortHeader("チーム", "team", "15%", 0)}
             {renderSortHeader("アクション", "action", "20%", 1)}
             {renderSortHeader("開始時間", "start", "12%", 2)}
             {renderSortHeader("終了時間", "end", "12%", 3)}
-            <th
-              style={{
-                padding: "6px 8px",
-                textAlign: "left",
-                fontWeight: "600",
-                color: "#1e293b",
-                borderBottom: "none",
-                fontSize: "11px",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                width: "36%"
-              }}>
+            <th className="px-2 py-1.5 text-left font-semibold text-slate-800 text-xs overflow-hidden text-ellipsis whitespace-nowrap w-9/25">
               ラベル
             </th>
-            <th
-              style={{
-                padding: "6px 8px",
-                textAlign: "center",
-                fontWeight: "600",
-                color: "#1e293b",
-                borderBottom: "none",
-                fontSize: "11px",
-                width: "5%"
-              }}>
+            <th className="px-2 py-1.5 text-center font-semibold text-slate-800 text-xs w-1/20">
               操作
             </th>
           </tr>

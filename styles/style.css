@@ -203,3 +203,26 @@
 .timeline-row:hover .timeline-menu-dots {
   opacity: 0.7;
 }
+
+/* カスタムボタンコンポーネント */
+@layer components {
+  .btn-primary {
+    @apply flex items-center gap-2 px-3 py-2 bg-blue-500 text-white text-xs font-semibold rounded-md border-none cursor-pointer transition-all duration-200 shadow-sm hover:bg-blue-600 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-300 active:translate-y-0;
+  }
+
+  .btn-success {
+    @apply flex items-center gap-2 px-3 py-2 bg-emerald-500 text-white text-xs font-semibold rounded-md border-none cursor-pointer transition-all duration-200 shadow-sm hover:bg-emerald-600 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-emerald-300 active:translate-y-0;
+  }
+
+  .btn-danger {
+    @apply flex items-center gap-2 px-3 py-2 bg-red-500 text-white text-xs font-semibold rounded-md border-none cursor-pointer transition-all duration-200 shadow-sm hover:bg-red-600 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-red-300 active:translate-y-0;
+  }
+
+  .filter-input {
+    @apply w-full px-3 py-2 text-xs border border-gray-300 rounded-md bg-white text-gray-700 transition-all duration-200 hover:border-gray-400 hover:bg-gray-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none;
+  }
+
+  .filter-select {
+    @apply w-full px-3 py-2 text-xs border border-gray-300 rounded-md bg-white text-gray-700 cursor-pointer transition-all duration-200 hover:border-gray-400 hover:bg-gray-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none;
+  }
+}

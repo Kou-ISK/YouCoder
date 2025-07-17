@@ -67,6 +67,25 @@ export const STYLES = {
     TEXT_SECONDARY: "#6b7280",
     BACKGROUND: "#fafafa",
     BORDER: "#d1d5db"
+  },
+  Z_INDEX: {
+    DROPDOWN: 50,
+    MODAL: 1000,
+    TOOLTIP: 1500,
+    OVERLAY: 2000
+  },
+  TRANSITION: {
+    DEFAULT: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+    FAST: "all 0.15s ease-out",
+    SLOW: "all 0.3s ease-in-out"
+  },
+  SHADOW: {
+    SMALL: "0 1px 2px rgba(0, 0, 0, 0.05)",
+    MEDIUM: "0 2px 4px rgba(0, 0, 0, 0.1)",
+    LARGE: "0 4px 8px rgba(0, 0, 0, 0.15)",
+    BUTTON: "0 2px 4px rgba(59, 130, 246, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05)",
+    BUTTON_HOVER:
+      "0 4px 8px rgba(59, 130, 246, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1)"
   }
 } as const
 
