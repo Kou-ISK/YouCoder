@@ -324,14 +324,15 @@ describe("TimelineActions", () => {
   test("レイアウト確認", () => {
     render(<TimelineActions {...defaultProps} />)
 
-    // メインコンテナのレイアウトを確認
+    // メインコンテナのレイアウトを確認 - Tailwindクラスが適用されていることを確認
     const container = screen.getByText("CSV出力").closest("div")?.parentElement
-    expect(container).toHaveStyle({
-      display: "flex",
-      alignItems: "center",
-      width: "100%",
-      justifyContent: "space-between"
-    })
+    expect(container).toHaveClass(
+      "flex",
+      "gap-3",
+      "items-center",
+      "w-full",
+      "justify-between"
+    )
   })
 
   test("フィルター関連の統合テスト", async () => {

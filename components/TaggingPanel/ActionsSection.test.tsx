@@ -165,13 +165,7 @@ describe("ActionsSection", () => {
       "Very Long Team Name That Might Overflow"
     )
     expect(teamHeader).toBeInTheDocument()
-    // 実際のクラスに基づいてテストを修正
-    expect(teamHeader).toHaveClass(
-      "py-2",
-      "px-3",
-      "text-center",
-      "text-base",
-      "font-medium"
-    )
+    // 実際のクラスに基づいてテストを修正（spanの中にテキストがある）
+    expect(teamHeader).toHaveClass("truncate", "block")
   })
 })

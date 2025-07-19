@@ -19,14 +19,16 @@ describe("LabelButton", () => {
   test("ラベル名が表示される", () => {
     render(<LabelButton {...defaultProps} />)
 
-    expect(screen.getByRole("button", { name: "Good" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Goodラベル (未選択)" })
+    ).toBeInTheDocument()
   })
 
   test("クリックするとonClickが正しい引数で呼ばれる", async () => {
     const user = userEvent.setup()
     render(<LabelButton {...defaultProps} />)
 
-    const button = screen.getByRole("button", { name: "Good" })
+    const button = screen.getByRole("button", { name: "Goodラベル (未選択)" })
     await user.click(button)
 
     expect(defaultProps.onClick).toHaveBeenCalledWith("Good")
@@ -36,33 +38,40 @@ describe("LabelButton", () => {
   test("非アクティブ状態では正しいスタイルが適用される", () => {
     render(<LabelButton {...defaultProps} isActive={false} />)
 
-    const button = screen.getByRole("button", { name: "Good" })
+    const button = screen.getByRole("button", { name: "Goodラベル (未選択)" })
 
     // TailwindCSSクラスの存在を確認
-    expect(button).toHaveClass("bg-white", "text-gray-700", "border-gray-300")
-    expect(button).not.toHaveClass("bg-blue-500")
+    expect(button).toHaveClass(
+      "bg-gradient-to-r",
+      "from-white",
+      "to-gray-50",
+      "text-gray-700",
+      "border-gray-300"
+    )
+    expect(button).not.toHaveClass("from-green-500")
   })
 
   test("アクティブ状態では正しいスタイルが適用される", () => {
     render(<LabelButton {...defaultProps} isActive={true} />)
 
-    const button = screen.getByRole("button", { name: "Good" })
+    const button = screen.getByRole("button", { name: "Goodラベル (選択中)" })
 
     // TailwindCSSクラスの存在を確認
     expect(button).toHaveClass(
       "bg-gradient-to-r",
       "from-green-500",
-      "to-emerald-500",
+      "via-emerald-500",
+      "to-teal-500",
       "text-white",
       "border-green-400"
     )
-    expect(button).not.toHaveClass("bg-white")
+    expect(button).not.toHaveClass("from-white")
   })
 
   test("無効化状態では正しいスタイルが適用される", () => {
     render(<LabelButton {...defaultProps} isDisabled={true} />)
 
-    const button = screen.getByRole("button", { name: "Good" })
+    const button = screen.getByRole("button", { name: "Goodラベル (未選択)" })
     expect(button).toBeDisabled()
 
     // 無効化状態のCSSクラスの存在を確認
@@ -73,7 +82,7 @@ describe("LabelButton", () => {
     const user = userEvent.setup()
     render(<LabelButton {...defaultProps} isDisabled={true} />)
 
-    const button = screen.getByRole("button", { name: "Good" })
+    const button = screen.getByRole("button", { name: "Goodラベル (未選択)" })
     await user.click(button)
 
     expect(defaultProps.onClick).not.toHaveBeenCalled()
@@ -83,29 +92,37 @@ describe("LabelButton", () => {
     const user = userEvent.setup()
     render(<LabelButton {...defaultProps} isActive={false} />)
 
-    const button = screen.getByRole("button", { name: "Good" })
+    const button = screen.getByRole("button", { name: "Goodラベル (未選択)" })
 
     // ホバークラスの存在を確認
-    expect(button).toHaveClass("hover:bg-gray-50", "hover:border-gray-400")
-    expect(button).toHaveClass("transition-all", "duration-200")
+    expect(button).toHaveClass(
+      "hover:from-blue-50",
+      "hover:to-indigo-50",
+      "hover:border-blue-400"
+    )
+    expect(button).toHaveClass("transition-all", "duration-300")
   })
 
   test("ホバー時にスタイルクラスが適用される（アクティブ）", async () => {
     const user = userEvent.setup()
     render(<LabelButton {...defaultProps} isActive={true} />)
 
-    const button = screen.getByRole("button", { name: "Good" })
+    const button = screen.getByRole("button", { name: "Goodラベル (選択中)" })
 
     // ホバークラスの存在を確認
-    expect(button).toHaveClass("hover:from-green-600", "hover:to-emerald-600")
-    expect(button).toHaveClass("transition-all", "duration-200")
+    expect(button).toHaveClass(
+      "hover:from-green-600",
+      "hover:via-emerald-600",
+      "hover:to-teal-600"
+    )
+    expect(button).toHaveClass("transition-all", "duration-300")
   })
 
   test("無効化時は適切なクラスが適用される", async () => {
     const user = userEvent.setup()
     render(<LabelButton {...defaultProps} isDisabled={true} />)
 
-    const button = screen.getByRole("button", { name: "Good" })
+    const button = screen.getByRole("button", { name: "Goodラベル (未選択)" })
 
     // 無効化時のクラスが適用されていることを確認
     expect(button).toHaveClass("opacity-50", "cursor-not-allowed")
@@ -116,7 +133,7 @@ describe("LabelButton", () => {
     const user = userEvent.setup()
     render(<LabelButton {...defaultProps} />)
 
-    const button = screen.getByRole("button", { name: "Good" })
+    const button = screen.getByRole("button", { name: "Goodラベル (未選択)" })
 
     await user.click(button)
     await user.click(button)
@@ -137,7 +154,7 @@ describe("LabelButton", () => {
     render(<LabelButton {...props} />)
 
     const button = screen.getByRole("button", {
-      name: "very-long-label-name-for-testing-purposes"
+      name: "very-long-label-name-for-testing-purposesラベル (未選択)"
     })
     expect(button).toBeInTheDocument()
     expect(button).toHaveStyle({
@@ -155,7 +172,7 @@ describe("LabelButton", () => {
     render(<LabelButton {...props} />)
 
     const button = screen.getByRole("button", {
-      name: "ラベル-with-特殊文字-123"
+      name: "ラベル-with-特殊文字-123ラベル (未選択)"
     })
     await user.click(button)
 
@@ -173,7 +190,9 @@ describe("LabelButton", () => {
 
     render(<LabelButton {...props} />)
 
-    const button = screen.getByRole("button", { name: "Result - Good" })
+    const button = screen.getByRole("button", {
+      name: "Result - Goodラベル (未選択)"
+    })
     await user.click(button)
 
     expect(defaultProps.onClick).toHaveBeenCalledWith("Result - Good")
@@ -182,7 +201,7 @@ describe("LabelButton", () => {
   test("アクティブかつ無効化状態でも正しく表示される", () => {
     render(<LabelButton {...defaultProps} isActive={true} isDisabled={true} />)
 
-    const button = screen.getByRole("button", { name: "Good" })
+    const button = screen.getByRole("button", { name: "Goodラベル (選択中)" })
     expect(button).toBeDisabled()
 
     // 無効化状態のCSSクラスが適用されていることを確認

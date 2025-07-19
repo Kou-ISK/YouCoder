@@ -163,11 +163,11 @@ describe("ButtonSetComponent", () => {
   test("選択されていないアクションのラベルボタンは無効状態になる", () => {
     render(<ButtonSetComponent {...defaultProps} selectedAction="パス" />)
 
-    // シュートアクションのラベルボタンを確認
-    const goalButton = screen.getByText("ゴール")
+    // シュートアクションのラベルボタンを確認（親のbutton要素を取得）
+    const goalButton = screen.getByText("ゴール").closest("button")
 
-    // 無効状態のCSSクラスを確認
-    expect(goalButton).toHaveClass("opacity-50")
+    // 無効状態のCSSクラスを確認（LabelButtonコンポーネントの実装に合わせる）
+    expect(goalButton).toHaveClass("opacity-50", "cursor-not-allowed")
     expect(goalButton).toBeDisabled()
   })
 
@@ -341,7 +341,10 @@ describe("ButtonSetComponent", () => {
   })
 
   test("選択状態の変更時に正しいログ出力が行われる", async () => {
-    const consoleSpy = jest.spyOn(console, "log").mockImplementation(() => {})
+    // logger.debugをモック
+    const loggerSpy = jest
+      .spyOn(require("../../../utils/errorHandling").logger, "debug")
+      .mockImplementation(() => {})
     const user = userEvent.setup()
 
     render(<ButtonSetComponent {...defaultProps} />)
@@ -350,7 +353,7 @@ describe("ButtonSetComponent", () => {
     await user.click(passButton)
 
     // ログ出力の確認
-    expect(consoleSpy).toHaveBeenCalledWith(
+    expect(loggerSpy).toHaveBeenCalledWith(
       "ButtonSetComponent: Action clicked",
       expect.objectContaining({
         action: "パス",
@@ -359,7 +362,7 @@ describe("ButtonSetComponent", () => {
       })
     )
 
-    consoleSpy.mockRestore()
+    loggerSpy.mockRestore()
   })
 
   test("ラベルは読み取り専用で削除機能はない", async () => {

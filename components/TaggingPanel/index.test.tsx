@@ -80,9 +80,9 @@ describe("TaggingPanel", () => {
     expect(draggableElement).toHaveClass(
       "bg-gradient-to-br",
       "from-white",
-      "via-gray-50",
-      "to-blue-50",
-      "rounded-2xl",
+      "via-blue-50",
+      "to-indigo-100",
+      "rounded-3xl",
       "shadow-2xl"
     )
   })

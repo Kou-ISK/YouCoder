@@ -94,7 +94,9 @@ describe("TimelinePanel", () => {
     render(<TimelinePanel {...defaultProps} />)
 
     const exportButton = screen.getByText("CSV出力")
-    await user.click(exportButton)
+    await act(async () => {
+      await user.click(exportButton)
+    })
 
     expect(defaultProps.onExportCSV).toHaveBeenCalled()
   })
@@ -104,7 +106,9 @@ describe("TimelinePanel", () => {
     render(<TimelinePanel {...defaultProps} />)
 
     const saveButton = screen.getByText("保存")
-    await user.click(saveButton)
+    await act(async () => {
+      await user.click(saveButton)
+    })
 
     expect(defaultProps.onSave).toHaveBeenCalled()
   })
@@ -115,7 +119,9 @@ describe("TimelinePanel", () => {
 
     // 最初のアクションの開始時刻をクリック（ミリ秒を含む形式）
     const startTimeButton = screen.getByText("00:01.000") // 1000ms = 00:01.000
-    await user.click(startTimeButton)
+    await act(async () => {
+      await user.click(startTimeButton)
+    })
 
     expect(defaultProps.onSeek).toHaveBeenCalledWith(1000)
   })
@@ -126,7 +132,9 @@ describe("TimelinePanel", () => {
 
     // 最初のアクションの終了時刻をクリック（ミリ秒を含む形式）
     const endTimeButton = screen.getByText("00:02.000") // 2000ms = 00:02.000
-    await user.click(endTimeButton)
+    await act(async () => {
+      await user.click(endTimeButton)
+    })
 
     expect(defaultProps.onSeek).toHaveBeenCalledWith(2000)
   })
