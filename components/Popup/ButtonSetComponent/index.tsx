@@ -12,14 +12,58 @@ const ButtonSetComponent: React.FC<ButtonSetComponentProps> = ({
   onUpdateButtonSet,
   onActionSelect
 }) => {
-  if (!buttonSet) {
-    return <div>選択されたボタンセットがありません</div>
+  if (!buttonSet || !buttonSet.buttons || !Array.isArray(buttonSet.buttons)) {
+    logger.warn("ButtonSetComponent: Invalid buttonSet or buttons data", {
+      buttonSet,
+      hasButtonSet: !!buttonSet,
+      hasButtons: buttonSet?.buttons !== undefined,
+      isButtonsArray: Array.isArray(buttonSet?.buttons),
+      buttonSetType: typeof buttonSet,
+      buttonsType: typeof buttonSet?.buttons
+    })
+    return (
+      <div className="p-4 text-center text-gray-500">
+        選択されたボタンセットがありません
+      </div>
+    )
+  }
+
+  if (buttonSet.buttons.length === 0) {
+    return (
+      <div className="p-4 text-center text-gray-500">
+        <p>このボタンセットにはアクションが登録されていません</p>
+        <p className="text-sm mt-2">
+          「アクション追加」ボタンからアクションを追加してください
+        </p>
+      </div>
+    )
   }
 
   const getLabelsFromButtons = (
     labels: Record<string, string[]>
   ): Record<string, string[]> => {
-    return labels
+    // labelsがnullやundefinedの場合の対応
+    if (!labels || typeof labels !== "object") {
+      logger.warn("ButtonSetComponent: Invalid labels data", { labels })
+      return {}
+    }
+
+    // 各カテゴリのラベルが配列でない場合の対応
+    const normalizedLabels: Record<string, string[]> = {}
+    for (const [category, categoryLabels] of Object.entries(labels)) {
+      if (Array.isArray(categoryLabels)) {
+        normalizedLabels[category] = categoryLabels
+      } else {
+        logger.warn("ButtonSetComponent: Invalid category labels", {
+          category,
+          categoryLabels,
+          type: typeof categoryLabels
+        })
+        normalizedLabels[category] = []
+      }
+    }
+
+    return normalizedLabels
   }
 
   const handleActionClick = (action: string) => {
@@ -55,20 +99,22 @@ const ButtonSetComponent: React.FC<ButtonSetComponentProps> = ({
                     {category}
                   </div>
                   <div className="flex flex-wrap gap-1 ml-2">
-                    {labels.map((lbl, i) => {
-                      const displayLabel = `${category} - ${lbl}`
-                      return (
-                        <LabelButton
-                          key={i}
-                          label={lbl}
-                          isActive={false}
-                          isDisabled={true}
-                          onClick={() => {
-                            // カテゴリ付きラベルは読み取り専用
-                          }}
-                        />
-                      )
-                    })}
+                    {Array.isArray(labels)
+                      ? labels.map((lbl, i) => {
+                          const displayLabel = `${category} - ${lbl}`
+                          return (
+                            <LabelButton
+                              key={i}
+                              label={lbl}
+                              isActive={false}
+                              isDisabled={true}
+                              onClick={() => {
+                                // カテゴリ付きラベルは読み取り専用
+                              }}
+                            />
+                          )
+                        })
+                      : null}
                   </div>
                 </div>
               ))}

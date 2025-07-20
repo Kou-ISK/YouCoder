@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useRef } from "react"
 
+import { TABLE } from "../../constants"
 import { logger } from "../../utils/errorHandling"
 import type { TimelineTableProps } from "./types"
 
@@ -220,36 +221,25 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
           newHoveredHeaders[index] = false
           setHoveredHeaders(newHoveredHeaders)
         }}
+        className="px-2 py-1.5 text-left font-semibold text-slate-800 text-xs overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer transition-colors duration-200"
         style={{
-          padding: "6px 8px",
-          textAlign: "left",
-          fontWeight: "600",
-          color: "#1e293b",
-          borderBottom: "none",
-          fontSize: "11px",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-          cursor: "pointer",
           width,
-          transition: "background-color 0.2s ease",
           backgroundColor: isSorted
             ? "#f1f5f9"
             : hoveredHeaders[index]
               ? "#f8fafc"
               : "transparent"
         }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+        <div className="flex items-center gap-1">
           {title}
           <span
+            className="text-xs transition-colors duration-200"
             style={{
               color: isSorted
                 ? "#6b7280"
                 : hoveredHeaders[index]
                   ? "#94a3b8"
-                  : "#cbd5e1",
-              fontSize: "10px",
-              transition: "color 0.2s ease"
+                  : "#cbd5e1"
             }}>
             {isAsc ? "▲" : "▼"}
           </span>
@@ -264,14 +254,14 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
       className="w-full h-full overflow-auto relative">
       <table
         className="w-full border-collapse table-fixed text-xs font-sans"
-        style={{ minWidth: "600px" }}>
+        style={{ minWidth: TABLE.MIN_WIDTH }}>
         <colgroup>
-          <col style={{ width: "10%" }} />
-          <col style={{ width: "10%" }} />
-          <col style={{ width: "10%" }} />
-          <col style={{ width: "10%" }} />
-          <col style={{ width: "50%" }} />
-          <col style={{ width: "10%" }} />
+          <col style={{ width: TABLE.COLUMN_WIDTHS.TEAM }} />
+          <col style={{ width: TABLE.COLUMN_WIDTHS.ACTION }} />
+          <col style={{ width: TABLE.COLUMN_WIDTHS.START_TIME }} />
+          <col style={{ width: TABLE.COLUMN_WIDTHS.END_TIME }} />
+          <col style={{ width: TABLE.COLUMN_WIDTHS.LABELS }} />
+          <col style={{ width: TABLE.COLUMN_WIDTHS.MENU }} />
         </colgroup>
         <thead className="sticky top-0 bg-slate-100 z-10 border-b border-slate-300">
           <tr>
@@ -306,57 +296,25 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               }}
               onMouseEnter={(e) => handleRowMouseEnter(e, index)}
               onMouseLeave={(e) => handleRowMouseLeave(e, index)}>
-              <td
-                style={{
-                  padding: "6px 8px",
-                  color: "#374151",
-                  fontWeight: "400",
-                  borderBottom: "1px solid #e5e7eb",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap"
-                }}>
+              <td className="px-2 py-1.5 text-gray-700 font-normal border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
                 {action.team}
               </td>
-              <td
-                style={{
-                  padding: "6px 8px",
-                  color: "#111827",
-                  fontWeight: "500",
-                  borderBottom: "1px solid #e5e7eb",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap"
-                }}>
+              <td className="px-2 py-1.5 text-gray-900 font-medium border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
                 {action.action}
               </td>
               <td
                 onClick={() => seekToTime(action.start)}
-                style={{
-                  padding: "6px 8px",
-                  color: "#3b82f6",
-                  fontFamily: "monospace",
-                  fontSize: "11px",
-                  fontWeight: "500",
-                  borderBottom: "1px solid #e5e7eb",
-                  cursor: "pointer",
-                  textDecoration: "underline dotted"
-                }}
+                className="px-2 py-1.5 text-blue-500 font-mono text-xs font-medium border-b border-gray-200 cursor-pointer underline decoration-dotted"
                 title="クリックすると動画の該当位置にジャンプします">
                 {formatTime(action.start)}
               </td>
               <td
                 onClick={action.end ? () => seekToTime(action.end) : undefined}
-                style={{
-                  padding: "6px 8px",
-                  color: action.end ? "#3b82f6" : "#f59e0b",
-                  fontFamily: "monospace",
-                  fontSize: "11px",
-                  fontWeight: "500",
-                  borderBottom: "1px solid #e5e7eb",
-                  cursor: action.end ? "pointer" : "default",
-                  textDecoration: action.end ? "underline dotted" : "none"
-                }}
+                className={`px-2 py-1.5 font-mono text-xs font-medium border-b border-gray-200 ${
+                  action.end
+                    ? "text-blue-500 cursor-pointer underline decoration-dotted"
+                    : "text-amber-500 cursor-default"
+                }`}
                 title={
                   action.end
                     ? "クリックすると動画の該当位置にジャンプします"
@@ -364,49 +322,33 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 }>
                 {action.end ? formatTime(action.end) : "進行中"}
               </td>
-              <td
-                style={{
-                  padding: "6px 8px",
-                  color: "#6b7280",
-                  fontSize: "11px",
-                  borderBottom: "1px solid #e5e7eb",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap"
-                }}>
+              <td className="px-2 py-1.5 text-gray-500 text-xs border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
                 {action.labels && action.labels.length > 0
                   ? action.labels.map((label, index) => {
                       const hasCategory = label.includes(" - ")
                       return (
                         <span key={index}>
                           {hasCategory ? (
-                            <span style={{ fontSize: "11px" }}>
-                              <span
-                                style={{ color: "#9ca3af", fontWeight: "500" }}>
+                            <span className="text-xs">
+                              <span className="text-gray-400 font-medium">
                                 [{label.split(" - ")[0]}]
                               </span>
-                              <span style={{ color: "#6b7280" }}>
+                              <span className="text-gray-500">
                                 {" " + label.split(" - ").slice(1).join(" - ")}
                               </span>
                             </span>
                           ) : (
-                            <span style={{ color: "#374151" }}>{label}</span>
+                            <span className="text-gray-700">{label}</span>
                           )}
                           {index < action.labels.length - 1 && (
-                            <span style={{ color: "#d1d5db" }}>, </span>
+                            <span className="text-gray-300">, </span>
                           )}
                         </span>
                       )
                     })
                   : "-"}
               </td>
-              <td
-                style={{
-                  padding: "6px 8px",
-                  textAlign: "center",
-                  borderBottom: "1px solid #e5e7eb",
-                  position: "relative"
-                }}>
+              <td className="px-2 py-1.5 text-center border-b border-gray-200 relative">
                 {hoveredRowIndex === index ? (
                   pendingDeleteIndex === index ? (
                     // 削除確認状態のボタン

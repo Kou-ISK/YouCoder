@@ -2,6 +2,9 @@ import { Modal } from "components/Modal"
 import React, { useEffect, useState } from "react"
 
 import ButtonSetComponent from "./components/Popup/ButtonSetComponent"
+
+import "./styles/style.css"
+
 import { TeamList } from "./components/Popup/TeamList"
 import {
   CHROME_EXTENSION,
@@ -22,20 +25,40 @@ import { getLabelList, parseLabel } from "./utils/labelUtils"
 
 const defaultButtonSets: ButtonSet[] = [
   {
-    setName: "A",
+    setName: "サッカー",
     buttons: [
       {
-        action: "fuga",
-        labels: { Result: ["hogehoge", "fugafuga"] }
+        action: "パス",
+        labels: {
+          方向: ["前", "後", "左", "右"],
+          精度: ["正確", "不正確"]
+        }
+      },
+      {
+        action: "シュート",
+        labels: {
+          結果: ["ゴール", "セーブ", "外れ"],
+          位置: ["ペナルティエリア内", "ペナルティエリア外"]
+        }
       }
     ]
   },
   {
-    setName: "B",
+    setName: "バスケットボール",
     buttons: [
       {
-        action: "bar",
-        labels: { Type: ["barラベル1", "barラベル2"] }
+        action: "ドリブル",
+        labels: {
+          スピード: ["速い", "遅い"],
+          スタイル: ["テクニカル", "パワー"]
+        }
+      },
+      {
+        action: "シュート",
+        labels: {
+          結果: ["成功", "失敗"],
+          位置: ["3ポイント", "フリースロー", "ペイント内"]
+        }
       }
     ]
   }
@@ -49,7 +72,7 @@ const Popup = () => {
   const [modalInput, setModalInput] = useState("")
   const [modalType, setModalType] = useState<ModalType>(null)
   const [showExtension, setShowExtension] = useState<boolean>(true)
-  const [selectedButtonSet, setSelectedButtonSet] = useState<string>("RUGBY")
+  const [selectedButtonSet, setSelectedButtonSet] = useState<string>("")
   const [buttonSets, setButtonSets] = useState<ButtonSet[]>([])
   const [selectedAction, setSelectedAction] = useState<string | null>(null)
   const [importInputRef, setImportInputRef] = useState<HTMLInputElement | null>(
@@ -85,20 +108,47 @@ const Popup = () => {
           data.showExtension !== undefined ? data.showExtension : true
         )
         const loadedButtonSets = data.buttonSets || defaultButtonSets
-        setButtonSets(loadedButtonSets)
+
+        // ボタンセットデータの正規化（安全性確保）
+        const normalizedButtonSets = loadedButtonSets.map((buttonSet) => ({
+          ...buttonSet,
+          buttons: Array.isArray(buttonSet.buttons)
+            ? buttonSet.buttons.map((button) => ({
+                ...button,
+                labels:
+                  button.labels && typeof button.labels === "object"
+                    ? Object.fromEntries(
+                        Object.entries(button.labels).map(
+                          ([category, labels]) => [
+                            category,
+                            Array.isArray(labels) ? labels : []
+                          ]
+                        )
+                      )
+                    : {}
+              }))
+            : []
+        }))
+
+        setButtonSets(normalizedButtonSets)
 
         // selectedButtonSetの初期化を確実に行う
         let initialSelectedButtonSet = data.selectedButtonSet
         if (
           !initialSelectedButtonSet &&
-          loadedButtonSets &&
-          loadedButtonSets.length > 0
+          normalizedButtonSets &&
+          normalizedButtonSets.length > 0
         ) {
-          initialSelectedButtonSet = loadedButtonSets[0].setName
+          initialSelectedButtonSet = normalizedButtonSets[0].setName
         }
 
         logger.info("Setting selectedButtonSet to:", initialSelectedButtonSet)
-        setSelectedButtonSet(initialSelectedButtonSet || "")
+        setSelectedButtonSet(
+          initialSelectedButtonSet ||
+            (normalizedButtonSets.length > 0
+              ? normalizedButtonSets[0].setName
+              : "")
+        )
 
         if (data.selectedAction) {
           setSelectedAction(data.selectedAction)
@@ -106,7 +156,7 @@ const Popup = () => {
 
         logger.info("Data loading completed. Final states:", {
           selectedButtonSet: initialSelectedButtonSet,
-          buttonSets: loadedButtonSets,
+          buttonSets: normalizedButtonSets,
           teams: data.teams || []
         })
       } catch (error) {
@@ -619,28 +669,9 @@ const Popup = () => {
 
   // ボタンセット切り替えUI
   const renderButtonSetSelector = () => (
-    <div
-      style={{
-        marginBottom: "24px",
-        padding: "16px",
-        backgroundColor: "white",
-        borderRadius: "8px",
-        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)"
-      }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          marginBottom: "12px",
-          gap: "8px"
-        }}>
-        <label
-          style={{
-            fontSize: "14px",
-            fontWeight: "500",
-            color: "#374151",
-            minWidth: "80px"
-          }}>
+    <div className="mb-6 p-4 bg-white rounded-lg shadow-sm">
+      <div className="flex items-center mb-3 gap-2">
+        <label className="text-sm font-medium text-gray-700 min-w-[80px]">
           ボタンセット:
         </label>
         <select
@@ -659,16 +690,7 @@ const Popup = () => {
               value: e.target.value
             })
           }}
-          style={{
-            padding: "6px 12px",
-            fontSize: "14px",
-            border: "1px solid #d1d5db",
-            borderRadius: "6px",
-            backgroundColor: "white",
-            color: "#374151",
-            cursor: "pointer",
-            flex: "1"
-          }}>
+          className="filter-select min-w-0 flex-1">
           {buttonSets.map((set) => (
             <option key={set.setName} value={set.setName}>
               {set.setName}
@@ -677,126 +699,35 @@ const Popup = () => {
         </select>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "8px",
-          marginBottom: "8px"
-        }}>
-        <button
-          style={{
-            padding: "6px 12px",
-            fontSize: "12px",
-            fontWeight: "500",
-            backgroundColor: "#3b82f6",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            transition: "all 0.2s ease"
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#2563eb")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "#3b82f6")
-          }
-          onClick={() => openModal("buttonSet")}>
+      <div className="flex flex-wrap gap-2 mb-2">
+        <button className="btn-primary" onClick={() => openModal("buttonSet")}>
           セット追加
         </button>
 
         <button
-          style={{
-            padding: "6px 12px",
-            fontSize: "12px",
-            fontWeight: "500",
-            backgroundColor: "#ef4444",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            transition: "all 0.2s ease"
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#dc2626")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "#ef4444")
-          }
+          className="btn-success"
+          onClick={() => openModal("buttonInSet")}>
+          ボタン追加
+        </button>
+
+        <button
+          className="btn-danger"
           onClick={() => handleRemoveItem("buttonSet", selectedButtonSet)}>
           セット削除
         </button>
 
-        <button
-          style={{
-            padding: "6px 12px",
-            fontSize: "12px",
-            fontWeight: "500",
-            backgroundColor: "#8b5cf6",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            transition: "all 0.2s ease"
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#7c3aed")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "#8b5cf6")
-          }
-          onClick={handleJsonImport}>
+        <button className="btn-primary" onClick={handleJsonImport}>
           インポート
         </button>
 
-        <button
-          style={{
-            padding: "6px 12px",
-            fontSize: "12px",
-            fontWeight: "500",
-            backgroundColor: "#6b7280",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            transition: "all 0.2s ease"
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#4b5563")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "#6b7280")
-          }
-          onClick={handleJsonExport}>
+        <button className="btn-secondary" onClick={handleJsonExport}>
           エクスポート
         </button>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "8px"
-        }}>
+      <div className="flex flex-wrap gap-2">
         <button
-          style={{
-            padding: "6px 12px",
-            fontSize: "12px",
-            fontWeight: "500",
-            backgroundColor: "#10b981",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            transition: "all 0.2s ease"
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#059669")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "#10b981")
-          }
+          className="btn-success"
           onClick={() => {
             logger.debug("=== アクション追加ボタンクリック ===")
             logger.debug("現在の状態:", {
@@ -811,23 +742,7 @@ const Popup = () => {
         </button>
 
         <button
-          style={{
-            padding: "6px 12px",
-            fontSize: "12px",
-            fontWeight: "500",
-            backgroundColor: "#8b5cf6",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            transition: "all 0.2s ease"
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#7c3aed")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "#8b5cf6")
-          }
+          className="btn-primary"
           onClick={() => {
             logger.debug("=== カテゴリ付きラベル追加ボタンクリック ===")
             logger.debug("現在の状態:", {
@@ -847,82 +762,51 @@ const Popup = () => {
 
   return (
     <div
+      className="relative p-6 bg-gray-50 rounded-lg font-sans"
       style={{
-        minWidth: PANEL_SIZE.MIN_WIDTH,
-        padding: STYLES.PADDING.LARGE,
-        fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        backgroundColor: STYLES.COLORS.BACKGROUND,
-        borderRadius: STYLES.BORDER_RADIUS.LARGE,
-        position: "relative"
+        minWidth: PANEL_SIZE.MIN_WIDTH
       }}>
       {/* 通知 */}
       {notification && (
         <div
+          className="fixed top-5 right-5 px-3 py-1.5 text-sm font-medium text-white rounded-lg shadow-lg transition-all duration-300 opacity-100"
           style={{
-            position: "fixed",
-            top: "20px",
-            right: "20px",
             zIndex: PANEL_POSITION.NOTIFICATION_Z_INDEX,
-            padding: STYLES.PADDING.SMALL,
-            borderRadius: STYLES.BORDER_RADIUS.LARGE,
-            fontSize: STYLES.FONT_SIZE.MEDIUM,
-            fontWeight: "500",
-            color: STYLES.COLORS.WHITE,
             backgroundColor:
               notification.type === "success"
                 ? STYLES.COLORS.SUCCESS
                 : notification.type === "error"
                   ? STYLES.COLORS.ERROR
-                  : STYLES.COLORS.PRIMARY,
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-            transform: "translateX(0)",
-            transition: "transform 0.3s ease, opacity 0.3s ease",
-            opacity: 1
+                  : STYLES.COLORS.PRIMARY
           }}>
           {notification.message}
         </div>
       )}
 
-      <h2
-        style={{
-          margin: "0 0 24px 0",
-          fontSize: "20px",
-          fontWeight: "600",
-          color: "#1a1a1a",
-          letterSpacing: "-0.025em"
-        }}>
+      <h2 className="m-0 mb-6 text-xl font-semibold text-gray-900 tracking-tight">
         設定
       </h2>
-      <div style={{ marginBottom: "24px" }}>
+      <div className="mb-6">
         <button
           onClick={() => {
             setShowExtension((prev) => !prev)
             handleVisibilityToggle()
           }}
+          className="w-full px-4 py-3 text-sm font-medium text-white border-none rounded-lg cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
           style={{
-            padding: "12px 16px",
-            fontSize: "14px",
-            fontWeight: "500",
-            backgroundColor: showExtension ? "#ef4444" : "#22c55e",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-            width: "100%",
-            transition: "all 0.2s ease",
+            backgroundColor: showExtension
+              ? STYLES.COLORS.ERROR
+              : STYLES.COLORS.SUCCESS,
             boxShadow: showExtension
               ? "0 2px 4px rgba(239, 68, 68, 0.2)"
               : "0 2px 4px rgba(34, 197, 94, 0.2)"
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-1px)"
             e.currentTarget.style.boxShadow = showExtension
               ? "0 4px 8px rgba(239, 68, 68, 0.3)"
               : "0 4px 8px rgba(34, 197, 94, 0.3)"
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateY(0)"
             e.currentTarget.style.boxShadow = showExtension
               ? "0 2px 4px rgba(239, 68, 68, 0.2)"
               : "0 2px 4px rgba(34, 197, 94, 0.2)"
@@ -932,7 +816,12 @@ const Popup = () => {
       </div>
       {renderButtonSetSelector()}
       <ButtonSetComponent
-        buttonSet={buttonSets.find((set) => set.setName === selectedButtonSet)}
+        buttonSet={
+          selectedButtonSet && buttonSets.length > 0
+            ? buttonSets.find((set) => set.setName === selectedButtonSet) ||
+              buttonSets[0]
+            : undefined
+        }
         selectedAction={selectedAction}
         onUpdateButtonSet={async (updatedSet) => {
           const updatedButtonSets = buttonSets.map((set) =>
@@ -980,30 +869,20 @@ const Popup = () => {
           handleModalSubmit(category)
         }}
       />
-      <div style={{ marginTop: "24px" }}>
+      <div className="mt-6">
         <button
           onClick={handleSave}
+          className="w-full px-4 py-3 text-sm font-medium text-white border-none rounded-lg cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
           style={{
-            padding: "12px 16px",
-            fontSize: "14px",
-            fontWeight: "500",
-            backgroundColor: "#22c55e",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-            width: "100%",
-            transition: "all 0.2s ease",
+            backgroundColor: STYLES.COLORS.SUCCESS,
             boxShadow: "0 2px 4px rgba(34, 197, 94, 0.2)"
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#16a34a"
-            e.currentTarget.style.transform = "translateY(-1px)"
+            e.currentTarget.style.backgroundColor = STYLES.COLORS.SUCCESS_HOVER
             e.currentTarget.style.boxShadow = "0 4px 8px rgba(34, 197, 94, 0.3)"
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#22c55e"
-            e.currentTarget.style.transform = "translateY(0)"
+            e.currentTarget.style.backgroundColor = STYLES.COLORS.SUCCESS
             e.currentTarget.style.boxShadow = "0 2px 4px rgba(34, 197, 94, 0.2)"
           }}>
           保存して閉じる

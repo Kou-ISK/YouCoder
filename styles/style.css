@@ -218,6 +218,10 @@
     @apply flex items-center gap-2 px-3 py-2 bg-red-500 text-white text-xs font-semibold rounded-md border-none cursor-pointer transition-all duration-200 shadow-sm hover:bg-red-600 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-red-300 active:translate-y-0;
   }
 
+  .btn-secondary {
+    @apply flex items-center gap-2 px-3 py-2 bg-gray-500 text-white text-xs font-semibold rounded-md border-none cursor-pointer transition-all duration-200 shadow-sm hover:bg-gray-600 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-gray-300 active:translate-y-0;
+  }
+
   .filter-input {
     @apply w-full px-3 py-2 text-xs border border-gray-300 rounded-md bg-white text-gray-700 transition-all duration-200 hover:border-gray-400 hover:bg-gray-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none;
   }
