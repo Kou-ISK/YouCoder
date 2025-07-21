@@ -26,7 +26,7 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
       <div className="flex gap-2 items-center">
         <button
           onClick={onExportCSV}
-          className="btn-primary flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
+          className="btn-primary flex items-center gap-1.5 px-3 py-1.5 text-base font-semibold">
           <svg
             width="16"
             height="16"
@@ -72,7 +72,7 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
         </button>
         <button
           onClick={onSave}
-          className="btn-success flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
+          className="btn-success flex items-center gap-1.5 px-3 py-1.5 text-base font-semibold">
           <svg
             width="16"
             height="16"
@@ -121,7 +121,7 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
               value={filterConfig.team || ""}
               onChange={(e) => onFilterChange("team", e.target.value)}
               onClick={(e) => e.stopPropagation()}
-              className="filter-select min-w-20 text-xs">
+              className="filter-select min-w-20 text-base">
               <option value="" className="text-gray-400">
                 全チーム
               </option>
@@ -137,7 +137,7 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
               value={filterConfig.action || ""}
               onChange={(e) => onFilterChange("action", e.target.value)}
               onClick={(e) => e.stopPropagation()}
-              className="filter-select min-w-24 text-xs">
+              className="filter-select min-w-24 text-base">
               <option value="" className="text-gray-400">
                 全アクション
               </option>
@@ -153,7 +153,7 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
               value={filterConfig.label || ""}
               onChange={(e) => onFilterChange("label", e.target.value)}
               onClick={(e) => e.stopPropagation()}
-              className="filter-select min-w-20 text-xs">
+              className="filter-select min-w-20 text-base">
               <option value="" className="text-gray-400">
                 全ラベル
               </option>
@@ -171,7 +171,7 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
                   e.stopPropagation()
                   onFilterReset()
                 }}
-                className="btn-danger px-2 py-1 text-xs font-medium"
+                className="btn-danger px-2 py-1 text-base font-medium"
                 title={`${getActiveFilterCount()}個のフィルターをリセット`}>
                 リセット
               </button>

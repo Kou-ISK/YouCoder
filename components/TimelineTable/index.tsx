@@ -221,7 +221,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
           newHoveredHeaders[index] = false
           setHoveredHeaders(newHoveredHeaders)
         }}
-        className="px-2 py-1.5 text-left font-semibold text-slate-800 text-xs overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer transition-colors duration-200"
+        className="px-2 py-1.5 text-left font-semibold text-slate-800 text-base overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer transition-colors duration-200"
         style={{
           width,
           backgroundColor: isSorted
@@ -233,7 +233,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
         <div className="flex items-center gap-1">
           {title}
           <span
-            className="text-xs transition-colors duration-200"
+            className="text-sm transition-colors duration-200"
             style={{
               color: isSorted
                 ? "#6b7280"
@@ -253,7 +253,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
       ref={scrollContainerRef}
       className="w-full h-full overflow-auto relative">
       <table
-        className="w-full border-collapse table-fixed text-xs font-sans"
+        className="w-full border-collapse table-fixed text-base font-sans"
         style={{ minWidth: TABLE.MIN_WIDTH }}>
         <colgroup>
           <col style={{ width: TABLE.COLUMN_WIDTHS.TEAM }} />
@@ -269,10 +269,10 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
             {renderSortHeader("アクション", "action", "20%", 1)}
             {renderSortHeader("開始時間", "start", "12%", 2)}
             {renderSortHeader("終了時間", "end", "12%", 3)}
-            <th className="px-2 py-1.5 text-left font-semibold text-slate-800 text-xs overflow-hidden text-ellipsis whitespace-nowrap w-9/25">
+            <th className="px-2 py-1.5 text-left font-semibold text-slate-800 text-base overflow-hidden text-ellipsis whitespace-nowrap w-9/25">
               ラベル
             </th>
-            <th className="px-2 py-1.5 text-center font-semibold text-slate-800 text-xs w-1/20">
+            <th className="px-2 py-1.5 text-center font-semibold text-slate-800 text-base w-1/20">
               操作
             </th>
           </tr>
@@ -304,13 +304,13 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               </td>
               <td
                 onClick={() => seekToTime(action.start)}
-                className="px-2 py-1.5 text-blue-500 font-mono text-xs font-medium border-b border-gray-200 cursor-pointer underline decoration-dotted"
+                className="px-2 py-1.5 text-blue-500 font-mono text-base font-medium border-b border-gray-200 cursor-pointer underline decoration-dotted"
                 title="クリックすると動画の該当位置にジャンプします">
                 {formatTime(action.start)}
               </td>
               <td
                 onClick={action.end ? () => seekToTime(action.end) : undefined}
-                className={`px-2 py-1.5 font-mono text-xs font-medium border-b border-gray-200 ${
+                className={`px-2 py-1.5 font-mono text-base font-medium border-b border-gray-200 ${
                   action.end
                     ? "text-blue-500 cursor-pointer underline decoration-dotted"
                     : "text-amber-500 cursor-default"
@@ -322,14 +322,14 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 }>
                 {action.end ? formatTime(action.end) : "進行中"}
               </td>
-              <td className="px-2 py-1.5 text-gray-500 text-xs border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
+              <td className="px-2 py-1.5 text-gray-500 text-base border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
                 {action.labels && action.labels.length > 0
                   ? action.labels.map((label, index) => {
                       const hasCategory = label.includes(" - ")
                       return (
                         <span key={index}>
                           {hasCategory ? (
-                            <span className="text-xs">
+                            <span className="text-base">
                               <span className="text-gray-400 font-medium">
                                 [{label.split(" - ")[0]}]
                               </span>
@@ -367,7 +367,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                         border: "none",
                         borderRadius: "4px",
                         padding: "4px 8px",
-                        fontSize: "10px",
+                        fontSize: "14px",
                         cursor: "pointer",
                         fontWeight: "600",
                         animation: "pulse 1s infinite"
@@ -392,7 +392,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                         border: "1px solid #d1d5db",
                         borderRadius: "4px",
                         padding: "2px 6px",
-                        fontSize: "10px",
+                        fontSize: "14px",
                         cursor: "pointer",
                         transition: "all 0.2s ease"
                       }}
@@ -427,7 +427,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       border: "none",
                       borderRadius: "4px",
                       padding: "4px 8px",
-                      fontSize: "10px",
+                      fontSize: "14px",
                       cursor: "pointer",
                       fontWeight: "600",
                       animation: "pulse 1s infinite"
@@ -440,7 +440,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                   <span
                     style={{
                       color: "#e5e7eb",
-                      fontSize: "10px",
+                      fontSize: "14px",
                       fontWeight: "400",
                       userSelect: "none"
                     }}>

@@ -81,7 +81,7 @@ export const TimelinePanelContent: React.FC<TimelinePanelContentProps> = ({
               color: "white",
               padding: "4px 8px",
               borderRadius: "12px",
-              fontSize: "10px",
+              fontSize: "14px",
               fontWeight: "500",
               animation: "pulse 1s infinite",
               boxShadow: "0 2px 4px rgba(16, 185, 129, 0.3)"
@@ -126,7 +126,7 @@ export const TimelinePanelContent: React.FC<TimelinePanelContentProps> = ({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "14px",
+              fontSize: "16px",
               zIndex: 1000,
               transition: "all 0.2s ease",
               animation: "fadeIn 0.3s ease"
