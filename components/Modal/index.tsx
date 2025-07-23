@@ -11,12 +11,20 @@ export const Modal: React.FC<ModalProps> = ({
   onSubmit
 }) => {
   const [category, setCategory] = useState("Result")
+  const [isComposingMain, setIsComposingMain] = useState(false)
+  const [isComposingCategory, setIsComposingCategory] = useState(false)
+  const [tempInputValue, setTempInputValue] = useState("")
+  const [tempCategoryValue, setTempCategoryValue] = useState("")
   const modalRef = useRef<HTMLDivElement>(null)
   const initialFocusRef = useRef<HTMLInputElement>(null)
   const previousActiveElement = useRef<Element | null>(null)
 
   useEffect(() => {
     if (isOpen) {
+      // モーダルが開いた時に一時的な値を初期化
+      setTempInputValue(inputValue)
+      setTempCategoryValue(category)
+
       // モーダルを開いた時に前のフォーカス要素を保存
       previousActiveElement.current = document.activeElement
       // モーダルを開いた時に入力フィールドにフォーカス
@@ -37,7 +45,7 @@ export const Modal: React.FC<ModalProps> = ({
         }
       }
     }
-  }, [isOpen, onClose])
+  }, [isOpen, onClose, inputValue, category])
 
   if (!isOpen) return null
 
@@ -55,9 +63,58 @@ export const Modal: React.FC<ModalProps> = ({
               ? "ボタンセット内にアクションを追加"
               : ""
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setTempInputValue(value)
+
+    // IME入力中でない場合のみ親コンポーネントに通知
+    if (!isComposingMain) {
+      onInputChange(value)
+    }
+  }
+
+  const handleCompositionStart = () => {
+    setIsComposingMain(true)
+  }
+
+  const handleCompositionEnd = (
+    e: React.CompositionEvent<HTMLInputElement>
+  ) => {
+    setIsComposingMain(false)
+    const value = e.currentTarget.value
+    setTempInputValue(value)
+    // IME入力完了時に最終的な値を親コンポーネントに送信
+    onInputChange(value)
+  }
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setTempCategoryValue(value)
+
+    // IME入力中でない場合のみカテゴリを更新
+    if (!isComposingCategory) {
+      setCategory(value)
+    }
+  }
+
+  const handleCategoryCompositionStart = () => {
+    setIsComposingCategory(true)
+  }
+
+  const handleCategoryCompositionEnd = (
+    e: React.CompositionEvent<HTMLInputElement>
+  ) => {
+    setIsComposingCategory(false)
+    const value = e.currentTarget.value
+    setTempCategoryValue(value)
+    setCategory(value)
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (inputValue.trim()) {
+    // IME入力中の場合は一時的な値、そうでなければ通常の値を使用
+    const finalInputValue = isComposingMain ? tempInputValue : inputValue
+    if (finalInputValue.trim()) {
       onSubmit(hasCategory ? category : undefined)
     }
   }
@@ -88,8 +145,10 @@ export const Modal: React.FC<ModalProps> = ({
               <input
                 id="category-input"
                 type="text"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                value={isComposingCategory ? tempCategoryValue : category}
+                onChange={handleCategoryChange}
+                onCompositionStart={handleCategoryCompositionStart}
+                onCompositionEnd={handleCategoryCompositionEnd}
                 placeholder="例: Shot Type, Result, Position"
                 className="w-full px-2 py-2 rounded border border-gray-300 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-200 focus:outline-none"
               />
@@ -105,8 +164,10 @@ export const Modal: React.FC<ModalProps> = ({
             <input
               id="main-input"
               type="text"
-              value={inputValue}
-              onChange={(e) => onInputChange(e.target.value)}
+              value={isComposingMain ? tempInputValue : inputValue}
+              onChange={handleInputChange}
+              onCompositionStart={handleCompositionStart}
+              onCompositionEnd={handleCompositionEnd}
               placeholder={hasCategory ? "例: forehand, winner, error" : ""}
               className="w-full px-2 py-2 rounded border border-gray-300 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-200 focus:outline-none"
               ref={initialFocusRef}
