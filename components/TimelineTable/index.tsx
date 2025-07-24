@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef } from "react"
 
-import { TABLE } from "../../constants"
+import { STYLES, TABLE } from "../../constants"
 import { logger } from "../../utils/errorHandling"
 import type { TimelineTableProps } from "./types"
 
@@ -263,7 +263,9 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
           <col style={{ width: TABLE.COLUMN_WIDTHS.LABELS }} />
           <col style={{ width: TABLE.COLUMN_WIDTHS.MENU }} />
         </colgroup>
-        <thead className="sticky top-0 bg-slate-100 z-10 border-b border-slate-300">
+        <thead
+          className="sticky top-0 bg-slate-100 border-b border-slate-300"
+          style={{ zIndex: STYLES.Z_INDEX.TABLE_HEADER }}>
           <tr>
             {renderSortHeader("チーム", "team", "15%", 0)}
             {renderSortHeader("アクション", "action", "20%", 1)}

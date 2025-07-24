@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react"
 
+import { STYLES } from "../../constants"
 import type { ModalProps } from "../../types/components"
 
 export const Modal: React.FC<ModalProps> = ({
@@ -125,10 +126,12 @@ export const Modal: React.FC<ModalProps> = ({
       aria-modal="true"
       aria-labelledby="modal-title"
       ref={modalRef}
-      className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+      style={{ zIndex: STYLES.Z_INDEX.MODAL }}>
       <div
         role="document"
-        className="bg-white p-5 rounded-lg min-w-75 shadow-lg">
+        className="bg-white p-5 rounded-lg shadow-lg"
+        style={{ minWidth: "300px" }}>
         <h3
           id="modal-title"
           className="text-lg font-semibold mb-4 text-gray-800">
@@ -177,12 +180,12 @@ export const Modal: React.FC<ModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-2.5 py-1.5 bg-gray-500 text-white border-none rounded cursor-pointer text-sm hover:bg-gray-600 transition-colors">
+              className="px-2.5 py-1.5 bg-gray-500 text-white rounded cursor-pointer text-sm hover:bg-gray-600 transition-colors">
               キャンセル
             </button>
             <button
               type="submit"
-              className="px-2.5 py-1.5 bg-emerald-600 text-white border-none rounded cursor-pointer text-sm hover:bg-emerald-700 transition-colors">
+              className="px-2.5 py-1.5 bg-emerald-600 text-white rounded cursor-pointer text-sm hover:bg-emerald-700 transition-colors">
               追加
             </button>
           </div>

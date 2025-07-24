@@ -2,6 +2,7 @@ import React from "react"
 
 import { DraggableResizable } from "~components/DraggableResizable"
 
+import { PANEL_SIZE, STYLES } from "../../constants"
 import { usePanelPosition } from "./hooks/usePanelPosition"
 import { TaggingPanelContent } from "./TaggingPanelContent"
 
@@ -38,11 +39,12 @@ export const TaggingPanel: React.FC<TaggingPanelProps> = ({
     <DraggableResizable
       initialPosition={position}
       initialSize={size}
-      minWidth={380}
-      minHeight={320}
+      minWidth={PANEL_SIZE.TAGGING_PANEL.MIN_WIDTH}
+      minHeight={PANEL_SIZE.TAGGING_PANEL.MIN_HEIGHT}
       onPositionChange={handlePositionChange}
       onSizeChange={handleSizeChange}
-      className="bg-gradient-to-br from-white via-blue-50 to-indigo-100 rounded-3xl shadow-2xl border-2 border-gray-200 hover:border-blue-400 font-sans z-[1000] backdrop-blur-xl transition-all duration-300 hover:shadow-3xl">
+      className="bg-gradient-to-br from-white via-blue-50 to-indigo-100 rounded-3xl shadow-2xl border-2 border-gray-200 hover:border-blue-400 font-sans backdrop-blur-xl transition-all duration-300 hover:shadow-3xl"
+      style={{ zIndex: STYLES.Z_INDEX.TAGGING_PANEL }}>
       <div className="p-6 w-full h-full overflow-hidden flex flex-col box-border">
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <TaggingPanelContent

@@ -19,7 +19,11 @@ export const PANEL_SIZE = {
   MIN_WIDTH: 450,
   MIN_HEIGHT: 300,
   DEFAULT_WIDTH: 500,
-  DEFAULT_HEIGHT: 400
+  DEFAULT_HEIGHT: 400,
+  TAGGING_PANEL: {
+    MIN_WIDTH: 380,
+    MIN_HEIGHT: 320
+  }
 } as const
 
 /**
@@ -50,6 +54,12 @@ export const STYLES = {
     LARGE: "16px",
     HEADING: "20px"
   },
+  DIMENSIONS: {
+    BUTTON_SIZE: "40px",
+    MIN_HEIGHT: "30px",
+    BORDER_RADIUS_SM: "8px",
+    BORDER_RADIUS_LG: "12px"
+  },
   COLORS: {
     PRIMARY: "#3b82f6",
     PRIMARY_HOVER: "#2563eb",
@@ -70,7 +80,9 @@ export const STYLES = {
   },
   Z_INDEX: {
     DROPDOWN: 50,
+    TABLE_HEADER: 10,
     MODAL: 1000,
+    TAGGING_PANEL: 1000,
     TOOLTIP: 1500,
     OVERLAY: 2000
   },
@@ -85,7 +97,9 @@ export const STYLES = {
     LARGE: "0 4px 8px rgba(0, 0, 0, 0.15)",
     BUTTON: "0 2px 4px rgba(59, 130, 246, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05)",
     BUTTON_HOVER:
-      "0 4px 8px rgba(59, 130, 246, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1)"
+      "0 4px 8px rgba(59, 130, 246, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1)",
+    SUCCESS_BUTTON: "0 2px 4px rgba(34, 197, 94, 0.2)",
+    SUCCESS_BUTTON_HOVER: "0 4px 8px rgba(34, 197, 94, 0.3)"
   }
 } as const
 

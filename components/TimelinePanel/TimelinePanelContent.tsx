@@ -1,5 +1,6 @@
 import React from "react"
 
+import { STYLES } from "../../constants"
 import { TimelineActions } from "../TimelineActions"
 import { TimelineTable } from "../TimelineTable"
 import type { Action, FilterConfig, SortConfig } from "./types"
@@ -54,9 +55,9 @@ export const TimelinePanelContent: React.FC<TimelinePanelContentProps> = ({
       <div
         className="timeline-actions flex items-center justify-between border-b border-gray-100/60 bg-gradient-to-r from-white/80 via-white/60 to-gray-50/40 backdrop-blur-sm cursor-grab px-1.5 py-1.5 flex-shrink-0 relative"
         style={{
-          borderTopLeftRadius: "8px",
-          borderTopRightRadius: "8px",
-          minHeight: "30px"
+          borderTopLeftRadius: STYLES.DIMENSIONS.BORDER_RADIUS_SM,
+          borderTopRightRadius: STYLES.DIMENSIONS.BORDER_RADIUS_SM,
+          minHeight: STYLES.DIMENSIONS.MIN_HEIGHT
         }}>
         <TimelineActions
           onExportCSV={onExportCSV}
@@ -80,8 +81,8 @@ export const TimelinePanelContent: React.FC<TimelinePanelContentProps> = ({
               backgroundColor: "#10b981",
               color: "white",
               padding: "4px 8px",
-              borderRadius: "12px",
-              fontSize: "14px",
+              borderRadius: STYLES.DIMENSIONS.BORDER_RADIUS_LG,
+              fontSize: STYLES.FONT_SIZE.MEDIUM,
               fontWeight: "500",
               animation: "pulse 1s infinite",
               boxShadow: "0 2px 4px rgba(16, 185, 129, 0.3)"
@@ -119,8 +120,8 @@ export const TimelinePanelContent: React.FC<TimelinePanelContentProps> = ({
               color: "white",
               border: "none",
               borderRadius: "50%",
-              width: "40px",
-              height: "40px",
+              width: STYLES.DIMENSIONS.BUTTON_SIZE,
+              height: STYLES.DIMENSIONS.BUTTON_SIZE,
               cursor: "pointer",
               boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)",
               display: "flex",

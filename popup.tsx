@@ -875,15 +875,15 @@ const Popup = () => {
           className="w-full px-4 py-3 text-sm font-medium text-white border-none rounded-lg cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
           style={{
             backgroundColor: STYLES.COLORS.SUCCESS,
-            boxShadow: "0 2px 4px rgba(34, 197, 94, 0.2)"
+            boxShadow: STYLES.SHADOW.SUCCESS_BUTTON
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = STYLES.COLORS.SUCCESS_HOVER
-            e.currentTarget.style.boxShadow = "0 4px 8px rgba(34, 197, 94, 0.3)"
+            e.currentTarget.style.boxShadow = STYLES.SHADOW.SUCCESS_BUTTON_HOVER
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = STYLES.COLORS.SUCCESS
-            e.currentTarget.style.boxShadow = "0 2px 4px rgba(34, 197, 94, 0.2)"
+            e.currentTarget.style.boxShadow = STYLES.SHADOW.SUCCESS_BUTTON
           }}>
           保存して閉じる
         </button>
