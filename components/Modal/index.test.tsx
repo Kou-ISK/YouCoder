@@ -95,6 +95,11 @@ describe("Modal", () => {
         const categoryInput = screen.getByLabelText("カテゴリ:")
         await user.clear(categoryInput)
         await user.type(categoryInput, "Shot Type")
+
+        // IME入力完了のイベントを発火
+        fireEvent.compositionEnd(categoryInput, {
+          target: { value: "Shot Type" }
+        })
       })
 
       await act(async () => {

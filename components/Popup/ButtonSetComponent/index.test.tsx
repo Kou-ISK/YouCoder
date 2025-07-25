@@ -90,35 +90,50 @@ describe("ButtonSetComponent", () => {
     ).toBeInTheDocument()
   })
 
-  test("カテゴリ化されたラベルが正しく表示される", () => {
-    render(<ButtonSetComponent {...defaultProps} />)
+  test("カテゴリ化されたラベルが正しく表示される", async () => {
+    const user = userEvent.setup()
+    
+    // 選択されたアクション状態をシミュレート
+    render(<ButtonSetComponent {...defaultProps} selectedAction="パス" />)
 
     // カテゴリ名が表示されることを確認
     expect(screen.getByText("方向")).toBeInTheDocument()
     expect(screen.getByText("精度")).toBeInTheDocument()
     expect(screen.getByText("Result")).toBeInTheDocument()
-    expect(screen.getByText("結果")).toBeInTheDocument()
-    expect(screen.getByText("位置")).toBeInTheDocument()
 
     // ラベルが表示されることを確認
     expect(screen.getByText("前")).toBeInTheDocument()
     expect(screen.getByText("正確")).toBeInTheDocument()
     expect(screen.getByText("良い")).toBeInTheDocument()
-    expect(screen.getByText("良い")).toBeInTheDocument()
   })
 
-  test("カテゴリ付きラベルが正しく表示される（旧フラット形式のデータ構造更新）", () => {
+  test("カテゴリ付きラベルが正しく表示される（旧フラット形式のデータ構造更新）", async () => {
+    const user = userEvent.setup()
+    
+    // ドリブルアクションが選択された状態をテスト
     render(
       <ButtonSetComponent
         {...defaultProps}
         buttonSet={mockButtonSetWithFlatLabels}
+        selectedAction="ドリブル"
       />
     )
 
-    // カテゴリ付きに変更されたラベルが表示されることを確認
+    // ドリブルアクションのカテゴリ付きラベルが表示されることを確認
     expect(screen.getByText("速い")).toBeInTheDocument()
     expect(screen.getByText("遅い")).toBeInTheDocument()
     expect(screen.getByText("テクニカル")).toBeInTheDocument()
+
+    // シュートアクションが選択された状態をテスト
+    render(
+      <ButtonSetComponent
+        {...defaultProps}
+        buttonSet={mockButtonSetWithFlatLabels}
+        selectedAction="シュート"
+      />
+    )
+
+    // シュートアクションのカテゴリ付きラベルが表示されることを確認
     expect(screen.getByText("成功")).toBeInTheDocument()
     expect(screen.getByText("失敗")).toBeInTheDocument()
     expect(screen.getByText("ブロック")).toBeInTheDocument()
@@ -160,15 +175,26 @@ describe("ButtonSetComponent", () => {
     expect(passActionButtons.length).toBeGreaterThan(0)
   })
 
-  test("選択されていないアクションのラベルボタンは無効状態になる", () => {
+  test("選択されていないアクションのラベルボタンは無効状態になる", async () => {
+    const user = userEvent.setup()
+    
+    // パスアクションが選択されている状態
     render(<ButtonSetComponent {...defaultProps} selectedAction="パス" />)
 
-    // シュートアクションのラベルボタンを確認（親のbutton要素を取得）
-    const goalButton = screen.getByText("ゴール").closest("button")
+    // パスアクションのラベルが表示されることを確認
+    expect(screen.getByText("前")).toBeInTheDocument()
+    
+    // シュートアクションが選択されている状態に変更
+    render(<ButtonSetComponent {...defaultProps} selectedAction="シュート" />)
 
-    // 無効状態のCSSクラスを確認（LabelButtonコンポーネントの実装に合わせる）
+    // シュートアクションのラベルボタンが表示されることを確認
+    const goalButton = screen.getByText("ゴール").closest("button")
+    expect(goalButton).toBeInTheDocument()
     expect(goalButton).toHaveClass("opacity-50", "cursor-not-allowed")
     expect(goalButton).toBeDisabled()
+    
+    // パスアクションのラベルは表示されないことを確認
+    expect(screen.queryByText("前")).not.toBeInTheDocument()
   })
 
   test("ラベルボタンは読み取り専用で、クリックしてもonUpdateButtonSetが呼ばれない", async () => {
@@ -234,7 +260,8 @@ describe("ButtonSetComponent", () => {
     expect(screen.getByText("アクション2")).toBeInTheDocument()
   })
 
-  test("長いアクション名とラベル名が適切に表示される", () => {
+  test("長いアクション名とラベル名が適切に表示される", async () => {
+    const user = userEvent.setup()
     const buttonSetWithLongNames: MockButtonSet = {
       setName: "長い名前のセット",
       buttons: [
@@ -251,20 +278,24 @@ describe("ButtonSetComponent", () => {
       <ButtonSetComponent
         {...defaultProps}
         buttonSet={buttonSetWithLongNames}
+        selectedAction="とても長いアクション名をテストするためのアクション"
       />
     )
 
-    // 長い名前も表示されることを確認
+    // アクション名が表示されることを確認
     expect(
       screen.getByText("とても長いアクション名をテストするためのアクション")
     ).toBeInTheDocument()
+
+    // 長いカテゴリ名とラベル名が表示されることを確認
     expect(screen.getByText("とても長いカテゴリ名")).toBeInTheDocument()
     expect(
       screen.getByText("とても長いラベル名をテストするためのラベル")
     ).toBeInTheDocument()
   })
 
-  test("特殊文字を含むラベルが正しく処理される", () => {
+  test("特殊文字を含むラベルが正しく処理される", async () => {
+    const user = userEvent.setup()
     const buttonSetWithSpecialChars: MockButtonSet = {
       setName: "特殊文字セット",
       buttons: [
@@ -282,6 +313,7 @@ describe("ButtonSetComponent", () => {
       <ButtonSetComponent
         {...defaultProps}
         buttonSet={buttonSetWithSpecialChars}
+        selectedAction="特殊アクション"
       />
     )
 
@@ -293,7 +325,8 @@ describe("ButtonSetComponent", () => {
     expect(screen.getByText("under_score")).toBeInTheDocument()
   })
 
-  test("ラベル形式の正規化が正しく動作する", () => {
+  test("ラベル形式の正規化が正しく動作する", async () => {
+    const user = userEvent.setup()
     // カテゴリ付きラベルのみをサポート
     const mixedButtonSet: MockButtonSet = {
       setName: "混在セット",
@@ -312,7 +345,7 @@ describe("ButtonSetComponent", () => {
       ]
     }
 
-    render(<ButtonSetComponent {...defaultProps} buttonSet={mixedButtonSet} />)
+    render(<ButtonSetComponent {...defaultProps} buttonSet={mixedButtonSet} selectedAction="カテゴリ" />)
 
     // フラット形式のラベルは表示されない（カテゴリなしラベルのサポート削除）
     expect(screen.queryByText("ラベル1")).not.toBeInTheDocument()
