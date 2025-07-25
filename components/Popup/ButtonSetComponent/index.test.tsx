@@ -92,7 +92,7 @@ describe("ButtonSetComponent", () => {
 
   test("カテゴリ化されたラベルが正しく表示される", async () => {
     const user = userEvent.setup()
-    
+
     // 選択されたアクション状態をシミュレート
     render(<ButtonSetComponent {...defaultProps} selectedAction="パス" />)
 
@@ -109,7 +109,7 @@ describe("ButtonSetComponent", () => {
 
   test("カテゴリ付きラベルが正しく表示される（旧フラット形式のデータ構造更新）", async () => {
     const user = userEvent.setup()
-    
+
     // ドリブルアクションが選択された状態をテスト
     render(
       <ButtonSetComponent
@@ -177,13 +177,13 @@ describe("ButtonSetComponent", () => {
 
   test("選択されていないアクションのラベルボタンは無効状態になる", async () => {
     const user = userEvent.setup()
-    
+
     // パスアクションが選択されている状態
     render(<ButtonSetComponent {...defaultProps} selectedAction="パス" />)
 
     // パスアクションのラベルが表示されることを確認
     expect(screen.getByText("前")).toBeInTheDocument()
-    
+
     // シュートアクションが選択されている状態に変更
     render(<ButtonSetComponent {...defaultProps} selectedAction="シュート" />)
 
@@ -192,7 +192,7 @@ describe("ButtonSetComponent", () => {
     expect(goalButton).toBeInTheDocument()
     expect(goalButton).toHaveClass("opacity-50", "cursor-not-allowed")
     expect(goalButton).toBeDisabled()
-    
+
     // パスアクションのラベルは表示されないことを確認
     expect(screen.queryByText("前")).not.toBeInTheDocument()
   })
@@ -345,7 +345,13 @@ describe("ButtonSetComponent", () => {
       ]
     }
 
-    render(<ButtonSetComponent {...defaultProps} buttonSet={mixedButtonSet} selectedAction="カテゴリ" />)
+    render(
+      <ButtonSetComponent
+        {...defaultProps}
+        buttonSet={mixedButtonSet}
+        selectedAction="カテゴリ"
+      />
+    )
 
     // フラット形式のラベルは表示されない（カテゴリなしラベルのサポート削除）
     expect(screen.queryByText("ラベル1")).not.toBeInTheDocument()
