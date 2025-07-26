@@ -41,13 +41,7 @@ describe("LabelButton", () => {
     const button = screen.getByRole("button", { name: "Goodラベル (未選択)" })
 
     // TailwindCSSクラスの存在を確認
-    expect(button).toHaveClass(
-      "bg-gradient-to-r",
-      "from-white",
-      "to-gray-50",
-      "text-gray-700",
-      "border-gray-300"
-    )
+    expect(button).toHaveClass("bg-white", "text-gray-600", "border-gray-200")
     expect(button).not.toHaveClass("from-green-500")
   })
 
@@ -60,12 +54,11 @@ describe("LabelButton", () => {
     expect(button).toHaveClass(
       "bg-gradient-to-r",
       "from-green-500",
-      "via-emerald-500",
-      "to-teal-500",
+      "to-emerald-500",
       "text-white",
       "border-green-400"
     )
-    expect(button).not.toHaveClass("from-white")
+    expect(button).not.toHaveClass("bg-white")
   })
 
   test("無効化状態では正しいスタイルが適用される", () => {
@@ -96,11 +89,11 @@ describe("LabelButton", () => {
 
     // ホバークラスの存在を確認
     expect(button).toHaveClass(
-      "hover:from-blue-50",
-      "hover:to-indigo-50",
-      "hover:border-blue-400"
+      "hover:bg-gray-50",
+      "hover:border-gray-300",
+      "hover:text-gray-700"
     )
-    expect(button).toHaveClass("transition-all", "duration-300")
+    expect(button).toHaveClass("transition-all", "duration-200")
   })
 
   test("ホバー時にスタイルクラスが適用される（アクティブ）", async () => {
@@ -110,12 +103,8 @@ describe("LabelButton", () => {
     const button = screen.getByRole("button", { name: "Goodラベル (選択中)" })
 
     // ホバークラスの存在を確認
-    expect(button).toHaveClass(
-      "hover:from-green-600",
-      "hover:via-emerald-600",
-      "hover:to-teal-600"
-    )
-    expect(button).toHaveClass("transition-all", "duration-300")
+    expect(button).toHaveClass("hover:from-green-600", "hover:to-emerald-600")
+    expect(button).toHaveClass("transition-all", "duration-200")
   })
 
   test("無効化時は適切なクラスが適用される", async () => {

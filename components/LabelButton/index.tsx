@@ -1,5 +1,6 @@
 import React from "react"
 
+import { STYLES } from "../../constants"
 import type { LabelButtonProps } from "../../types/components"
 
 /**
@@ -26,7 +27,7 @@ export const LabelButton: React.FC<LabelButtonProps> = ({
       }
       ${
         isDisabled
-          ? "opacity-60 cursor-not-allowed"
+          ? `opacity-${STYLES.OPACITY.DISABLED} cursor-not-allowed`
           : "cursor-pointer hover:scale-[1.02]"
       }
     `}
