@@ -1,5 +1,6 @@
 import React from "react"
 
+import { STYLES } from "../../constants"
 import { TimelineActions } from "../TimelineActions"
 import { TimelineTable } from "../TimelineTable"
 import type { Action, FilterConfig, SortConfig } from "./types"
@@ -50,22 +51,13 @@ export const TimelinePanelContent: React.FC<TimelinePanelContentProps> = ({
   onSave
 }) => {
   return (
-    <div
-      style={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden"
-      }}>
+    <div className="h-full flex flex-col overflow-hidden">
       <div
-        className="timeline-actions flex items-center justify-between border-b border-gray-100/60 bg-gradient-to-r from-white/80 via-white/60 to-gray-50/40 backdrop-blur-sm cursor-grab"
+        className="timeline-actions flex items-center justify-between border-b border-gray-100/60 bg-gradient-to-r from-white/80 via-white/60 to-gray-50/40 backdrop-blur-sm cursor-grab px-1.5 py-1.5 flex-shrink-0 relative"
         style={{
-          padding: "5px 5px",
-          borderTopLeftRadius: "8px",
-          borderTopRightRadius: "8px",
-          flexShrink: 0,
-          minHeight: "30px",
-          position: "relative"
+          borderTopLeftRadius: STYLES.DIMENSIONS.BORDER_RADIUS_SM,
+          borderTopRightRadius: STYLES.DIMENSIONS.BORDER_RADIUS_SM,
+          minHeight: STYLES.DIMENSIONS.MIN_HEIGHT
         }}>
         <TimelineActions
           onExportCSV={onExportCSV}
@@ -89,8 +81,8 @@ export const TimelinePanelContent: React.FC<TimelinePanelContentProps> = ({
               backgroundColor: "#10b981",
               color: "white",
               padding: "4px 8px",
-              borderRadius: "12px",
-              fontSize: "10px",
+              borderRadius: STYLES.DIMENSIONS.BORDER_RADIUS_LG,
+              fontSize: STYLES.FONT_SIZE.MEDIUM,
               fontWeight: "500",
               animation: "pulse 1s infinite",
               boxShadow: "0 2px 4px rgba(16, 185, 129, 0.3)"
@@ -102,13 +94,9 @@ export const TimelinePanelContent: React.FC<TimelinePanelContentProps> = ({
 
       <div
         ref={tableRef}
-        className="timeline-content bg-white/95 cursor-default"
+        className="timeline-content bg-white/95 cursor-default flex-1 overflow-hidden p-2 relative"
         style={{
-          flex: 1,
-          overflow: "hidden",
-          padding: "8px",
-          minHeight: 0, // フレックスアイテムが縮小可能にする
-          position: "relative"
+          minHeight: 0 // フレックスアイテムが縮小可能にする
         }}>
         <TimelineTable
           actions={actions}
@@ -132,14 +120,14 @@ export const TimelinePanelContent: React.FC<TimelinePanelContentProps> = ({
               color: "white",
               border: "none",
               borderRadius: "50%",
-              width: "40px",
-              height: "40px",
+              width: STYLES.DIMENSIONS.BUTTON_SIZE,
+              height: STYLES.DIMENSIONS.BUTTON_SIZE,
               cursor: "pointer",
               boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "14px",
+              fontSize: "16px",
               zIndex: 1000,
               transition: "all 0.2s ease",
               animation: "fadeIn 0.3s ease"

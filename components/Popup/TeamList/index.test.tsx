@@ -81,21 +81,14 @@ describe("TeamList", () => {
   test("チーム項目が適切なスタイルで表示される", () => {
     render(<TeamList {...defaultProps} />)
 
-    // チーム名の表示スタイルを確認
+    // チーム名のTailwindクラスを確認
     const teamA = screen.getByText("チームA")
-    expect(teamA).toHaveStyle({
-      fontSize: "14px",
-      color: "#374151"
-    })
+    expect(teamA).toHaveClass("text-sm", "text-gray-700")
 
-    // 削除ボタンのスタイルを確認
+    // 削除ボタンのTailwindクラスを確認
     const deleteButtons = screen.getAllByText("削除")
     deleteButtons.forEach((button) => {
-      expect(button).toHaveStyle({
-        backgroundColor: "rgb(239, 68, 68)",
-        color: "white",
-        fontSize: "12px"
-      })
+      expect(button).toHaveClass("bg-red-500", "text-white", "text-xs")
     })
   })
 
@@ -105,10 +98,8 @@ describe("TeamList", () => {
 
     const addButton = screen.getByText("チームを追加")
 
-    // 初期状態の確認
-    expect(addButton).toHaveStyle({
-      backgroundColor: "#3b82f6"
-    })
+    // Tailwindクラスの確認
+    expect(addButton).toHaveClass("bg-blue-500", "hover:bg-blue-600")
 
     await user.hover(addButton)
 
@@ -123,10 +114,8 @@ describe("TeamList", () => {
     const deleteButtons = screen.getAllByText("削除")
     const firstDeleteButton = deleteButtons[0]
 
-    // 初期状態の確認
-    expect(firstDeleteButton).toHaveStyle({
-      backgroundColor: "#ef4444"
-    })
+    // Tailwindクラスの確認
+    expect(firstDeleteButton).toHaveClass("bg-red-500", "hover:bg-red-600")
 
     await user.hover(firstDeleteButton)
 
@@ -250,38 +239,29 @@ describe("TeamList", () => {
   test("コンポーネントの基本スタイル構造", () => {
     render(<TeamList {...defaultProps} />)
 
-    // メインコンテナのスタイル確認
+    // メインコンテナのTailwindクラス確認
     const container = screen.getByText("チーム").closest("div")
-    expect(container).toHaveStyle({
-      marginBottom: "24px",
-      padding: "16px",
-      backgroundColor: "rgb(255, 255, 255)",
-      borderRadius: "8px"
-    })
+    expect(container).toHaveClass("mb-6", "p-4", "bg-white", "rounded-lg")
   })
 
   test("アクセシビリティ属性の確認", () => {
     render(<TeamList {...defaultProps} />)
 
-    // ボタン要素の確認
+    // ボタン要素のTailwindクラス確認
     const addButton = screen.getByText("チームを追加")
-    expect(addButton).toHaveAttribute("style")
+    expect(addButton).toHaveClass("px-4", "py-2", "bg-blue-500")
 
     const deleteButtons = screen.getAllByText("削除")
     deleteButtons.forEach((button) => {
-      expect(button).toHaveAttribute("style")
+      expect(button).toHaveClass("px-2", "py-1", "bg-red-500")
     })
   })
 
   test("レスポンシブ対応の基本確認", () => {
     render(<TeamList {...defaultProps} />)
 
-    // フレックスボックスレイアウトの確認
+    // フレックスボックスレイアウトのTailwindクラス確認
     const teamItems = screen.getByText("チームA").closest("div")
-    expect(teamItems).toHaveStyle({
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center"
-    })
+    expect(teamItems).toHaveClass("flex", "justify-between", "items-center")
   })
 })

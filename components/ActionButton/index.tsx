@@ -1,19 +1,10 @@
 import React from "react"
 
-// ActionButtonコンポーネントは、アクションを表すボタンを提供します。
-// - team: アクションが属するチーム名。
-// - action: アクション名。
-// - isActive: ボタンがアクティブかどうか。
-// - onClick: ボタンがクリックされたときのコールバック。
-// - colorClass: チームごとの色クラス（オプション）。
-interface ActionButtonProps {
-  team: string
-  action: string
-  isActive: boolean
-  onClick: (team: string, action: string) => void
-  colorClass?: string
-}
+import type { ActionButtonProps } from "../../types/components"
 
+/**
+ * ActionButtonコンポーネント - アクションを表すボタンを提供
+ */
 export const ActionButton: React.FC<ActionButtonProps> = ({
   team,
   action,
@@ -24,7 +15,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   // チームカラーに基づくTailwindクラスを生成
   const getButtonClasses = () => {
     const baseClasses =
-      "w-full px-3 py-2 text-base font-medium rounded transition-all duration-150 border cursor-pointer min-w-20"
+      "w-full px-2 py-1 text-xs font-medium rounded-md transition-all duration-150 border cursor-pointer min-w-12"
 
     if (!colorClass) {
       return `${baseClasses} ${
@@ -101,7 +92,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
       className={getButtonClasses()}
       title={`${team}: ${action} (${isActive ? "アクティブ" : "非アクティブ"})`}
       aria-label={`${team}チームの${action}アクション (${isActive ? "アクティブ" : "非アクティブ"})`}>
-      <span className="text-lg font-semibold">{action}</span>
+      <span className="text-sm font-medium">{action}</span>
     </button>
   )
 }

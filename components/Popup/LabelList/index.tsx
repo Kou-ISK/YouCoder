@@ -1,10 +1,6 @@
 import React from "react"
 
-interface LabelListProps {
-  labels: Record<string, string>
-  onAdd: () => void
-  onRemove: (label: string) => void
-}
+import type { LabelListProps } from "../../../types/components"
 
 export const LabelList: React.FC<LabelListProps> = ({
   labels,

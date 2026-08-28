@@ -1,10 +1,6 @@
 import React from "react"
 
-interface ActionListProps {
-  actions: Record<string, string>
-  onAdd: () => void
-  onRemove: (action: string) => void
-}
+import type { ActionListProps } from "../../../types/components"
 
 export const ActionList: React.FC<ActionListProps> = ({
   actions,

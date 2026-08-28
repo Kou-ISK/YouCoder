@@ -2,73 +2,63 @@ import { Modal } from "components/Modal"
 import React, { useEffect, useState } from "react"
 
 import ButtonSetComponent from "./components/Popup/ButtonSetComponent"
+
+import "./styles/style.css"
+
 import { TeamList } from "./components/Popup/TeamList"
-
-type Button = {
-  action: string
-  labels: Record<string, string[]> // ラベルはカテゴリ付きのみサポート
-}
-
-type ButtonSet = {
-  setName: string
-  buttons: Button[]
-}
-
-// ラベルのユーティリティ関数
-
-// ラベルの配列を生成（表示用）
-const getLabelList = (
-  labels: Record<string, string[]>
-): Array<{ category: string; label: string; displayLabel: string }> => {
-  const result: Array<{
-    category: string
-    label: string
-    displayLabel: string
-  }> = []
-
-  for (const [category, labelList] of Object.entries(labels)) {
-    for (const label of labelList) {
-      result.push({
-        category,
-        label,
-        displayLabel: `${category} - ${label}`
-      })
-    }
-  }
-
-  return result
-}
-
-// ラベル文字列からカテゴリとラベルを分解
-const parseLabel = (
-  displayLabel: string
-): { category: string; label: string } | null => {
-  const parts = displayLabel.split(" - ")
-  if (parts.length >= 2) {
-    const category = parts[0]
-    const label = parts.slice(1).join(" - ") // "xxx - yyy - zzz"のような場合に対応
-    return { category, label }
-  }
-  // カテゴリがない場合はnullを返す
-  return null
-}
+import {
+  CHROME_EXTENSION,
+  NOTIFICATION,
+  PANEL_POSITION,
+  PANEL_SIZE,
+  STYLES
+} from "./constants"
+import type {
+  Button,
+  ButtonSet,
+  ChromeStorageData,
+  ModalType,
+  Notification
+} from "./types/common"
+import { logger } from "./utils/errorHandling"
+import { getLabelList, parseLabel } from "./utils/labelUtils"
 
 const defaultButtonSets: ButtonSet[] = [
   {
-    setName: "A",
+    setName: "サッカー",
     buttons: [
       {
-        action: "fuga",
-        labels: { Result: ["hogehoge", "fugafuga"] }
+        action: "パス",
+        labels: {
+          方向: ["前", "後", "左", "右"],
+          精度: ["正確", "不正確"]
+        }
+      },
+      {
+        action: "シュート",
+        labels: {
+          結果: ["ゴール", "セーブ", "外れ"],
+          位置: ["ペナルティエリア内", "ペナルティエリア外"]
+        }
       }
     ]
   },
   {
-    setName: "B",
+    setName: "バスケットボール",
     buttons: [
       {
-        action: "bar",
-        labels: { Type: ["barラベル1", "barラベル2"] }
+        action: "ドリブル",
+        labels: {
+          スピード: ["速い", "遅い"],
+          スタイル: ["テクニカル", "パワー"]
+        }
+      },
+      {
+        action: "シュート",
+        labels: {
+          結果: ["成功", "失敗"],
+          位置: ["3ポイント", "フリースロー", "ペイント内"]
+        }
       }
     ]
   }
@@ -80,68 +70,100 @@ const Popup = () => {
   const [teams, setTeams] = useState<string[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalInput, setModalInput] = useState("")
-  const [modalType, setModalType] = useState<
-    "team" | "buttonSet" | "buttonInSet" | "addAction" | "addLabel" | null
-  >(null)
+  const [modalType, setModalType] = useState<ModalType>(null)
   const [showExtension, setShowExtension] = useState<boolean>(true)
-  const [selectedButtonSet, setSelectedButtonSet] = useState<string>("RUGBY")
+  const [selectedButtonSet, setSelectedButtonSet] = useState<string>("")
   const [buttonSets, setButtonSets] = useState<ButtonSet[]>([])
   const [selectedAction, setSelectedAction] = useState<string | null>(null)
   const [importInputRef, setImportInputRef] = useState<HTMLInputElement | null>(
     null
   )
-  const [notification, setNotification] = useState<{
-    message: string
-    type: "success" | "error" | "info"
-  } | null>(null)
+  const [notification, setNotification] = useState<Notification | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+  const handleShowNotification = (
+    message: string,
+    type: Notification["type"] = "info"
+  ) => {
+    setNotification({ message, type })
+    setTimeout(() => setNotification(null), NOTIFICATION.DISPLAY_DURATION)
+  }
 
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true)
       try {
-        const data = await chrome.storage.local.get([
-          "teams",
-          "showExtension",
-          "buttonSets",
-          "selectedButtonSet",
-          "selectedAction"
+        const data: ChromeStorageData = await chrome.storage.local.get([
+          CHROME_EXTENSION.STORAGE_KEYS.TEAMS,
+          CHROME_EXTENSION.STORAGE_KEYS.SHOW_EXTENSION,
+          CHROME_EXTENSION.STORAGE_KEYS.BUTTON_SETS,
+          CHROME_EXTENSION.STORAGE_KEYS.SELECTED_BUTTON_SET,
+          CHROME_EXTENSION.STORAGE_KEYS.SELECTED_ACTION
         ])
-        console.log("Loaded data from chrome.storage:", data)
+
+        logger.info("Loaded data from chrome.storage", data)
 
         setTeams(data.teams || [])
         setShowExtension(
           data.showExtension !== undefined ? data.showExtension : true
         )
         const loadedButtonSets = data.buttonSets || defaultButtonSets
-        setButtonSets(loadedButtonSets)
+
+        // ボタンセットデータの正規化（安全性確保）
+        const normalizedButtonSets = loadedButtonSets.map((buttonSet) => ({
+          ...buttonSet,
+          buttons: Array.isArray(buttonSet.buttons)
+            ? buttonSet.buttons.map((button) => ({
+                ...button,
+                labels:
+                  button.labels && typeof button.labels === "object"
+                    ? Object.fromEntries(
+                        Object.entries(button.labels).map(
+                          ([category, labels]) => [
+                            category,
+                            Array.isArray(labels) ? labels : []
+                          ]
+                        )
+                      )
+                    : {}
+              }))
+            : []
+        }))
+
+        setButtonSets(normalizedButtonSets)
 
         // selectedButtonSetの初期化を確実に行う
         let initialSelectedButtonSet = data.selectedButtonSet
         if (
           !initialSelectedButtonSet &&
-          loadedButtonSets &&
-          loadedButtonSets.length > 0
+          normalizedButtonSets &&
+          normalizedButtonSets.length > 0
         ) {
-          initialSelectedButtonSet = loadedButtonSets[0].setName
+          initialSelectedButtonSet = normalizedButtonSets[0].setName
         }
 
-        console.log("Setting selectedButtonSet to:", initialSelectedButtonSet)
-        setSelectedButtonSet(initialSelectedButtonSet || "")
+        logger.info("Setting selectedButtonSet to:", initialSelectedButtonSet)
+        setSelectedButtonSet(
+          initialSelectedButtonSet ||
+            (normalizedButtonSets.length > 0
+              ? normalizedButtonSets[0].setName
+              : "")
+        )
 
         if (data.selectedAction) {
           setSelectedAction(data.selectedAction)
         }
 
-        console.log("Data loading completed. Final states:", {
+        logger.info("Data loading completed. Final states:", {
           selectedButtonSet: initialSelectedButtonSet,
-          buttonSets: loadedButtonSets,
+          buttonSets: normalizedButtonSets,
           teams: data.teams || []
         })
       } catch (error) {
-        console.error("Failed to load data:", error)
-        alert(
-          "設定データの読み込みに失敗しました。拡張機能を再読み込みしてください。"
+        logger.error("Failed to load data", error)
+        handleShowNotification(
+          "設定データの読み込みに失敗しました。拡張機能を再読み込みしてください。",
+          "error"
         )
       } finally {
         setIsLoading(false)
@@ -150,14 +172,6 @@ const Popup = () => {
     loadData()
   }, [])
 
-  const showNotification = (
-    message: string,
-    type: "success" | "error" | "info" = "info"
-  ) => {
-    setNotification({ message, type })
-    setTimeout(() => setNotification(null), 3000)
-  }
-
   // データ読み込み完了後にselectedButtonSetを確実に設定
   useEffect(() => {
     if (
@@ -165,7 +179,7 @@ const Popup = () => {
       buttonSets.length > 0 &&
       (!selectedButtonSet || selectedButtonSet.trim() === "")
     ) {
-      console.log(
+      logger.info(
         "Force setting selectedButtonSet to first available:",
         buttonSets[0].setName
       )
@@ -176,7 +190,7 @@ const Popup = () => {
 
   // デバッグ用: selectedButtonSetの変更を監視
   useEffect(() => {
-    console.log("selectedButtonSet changed:", selectedButtonSet)
+    logger.debug("selectedButtonSet changed:", selectedButtonSet)
   }, [selectedButtonSet])
 
   // ボタン追加時にどのボタンセットに追加するかを管理するstate
@@ -187,42 +201,29 @@ const Popup = () => {
   const openModal = (
     type: "team" | "buttonSet" | "buttonInSet" | "addAction" | "addLabel"
   ) => {
-    console.log("=== openModal called ===")
-    console.log("Type:", type)
-    console.log(
-      "Selected ButtonSet:",
+    logger.debug("=== openModal called ===", {
+      type,
       selectedButtonSet,
-      "type:",
-      typeof selectedButtonSet,
-      "length:",
-      selectedButtonSet ? selectedButtonSet.length : 0
-    )
-    console.log("ButtonSets:", buttonSets)
-    console.log("ButtonSets length:", buttonSets.length)
+      buttonSetsLength: buttonSets.length
+    })
 
     if (!selectedButtonSet && (type === "addAction" || type === "addLabel")) {
-      console.log(
-        "ボタンセットが選択されていません - selectedButtonSet:",
-        selectedButtonSet
-      )
+      logger.warn("ボタンセットが選択されていません", { selectedButtonSet })
       alert("ボタンセットを選択してください")
       return
     }
     if (type === "addLabel" && !selectedAction) {
-      console.log("アクションが選択されていません")
+      logger.warn("アクションが選択されていません")
       alert("ラベルを追加するアクションを選択してください")
       return
     }
-    console.log("モーダルを開いています:", type)
-    console.log("Setting modalType to:", type)
-    console.log("Setting modalInput to empty string")
-    console.log("Setting isModalOpen to true")
+    logger.debug("モーダルを開いています", { type })
 
     setModalType(type)
     setModalInput("")
     setIsModalOpen(true)
 
-    console.log("モーダル状態設定完了:", {
+    logger.debug("モーダル状態設定完了", {
       isModalOpen: true,
       modalType: type,
       modalInput: ""
@@ -236,8 +237,7 @@ const Popup = () => {
   }
 
   const handleModalSubmit = async (category?: string) => {
-    console.log("=== handleModalSubmit START ===")
-    console.log("handleModalSubmit called", {
+    logger.debug("=== handleModalSubmit START ===", {
       modalType,
       modalInput,
       selectedButtonSet,
@@ -247,14 +247,14 @@ const Popup = () => {
     })
 
     if (!modalInput.trim()) {
-      console.log("modalInput is empty or whitespace only, returning")
+      logger.warn("modalInput is empty or whitespace only, returning")
       return
     }
 
     switch (modalType) {
       case "addAction":
         {
-          console.log("Processing addAction case")
+          logger.debug("Processing addAction case")
           if (!selectedButtonSet) {
             alert("アクションを追加するボタンセットが選択されていません")
             return
@@ -278,12 +278,12 @@ const Popup = () => {
             selectedButtonSet: selectedButtonSet
           })
           setButtonSets(updatedButtonSets)
-          console.log("Action added and saved to localStorage:", modalInput)
+          logger.info("Action added and saved to localStorage", { modalInput })
         }
         break
       case "addLabel":
         {
-          console.log(`Processing ${modalType} case`)
+          logger.debug(`Processing ${modalType} case`)
           if (!selectedButtonSet) {
             alert("ラベルを追加するボタンセットが選択されていません")
             return
@@ -325,7 +325,7 @@ const Popup = () => {
             if (!labels[category].includes(modalInput)) {
               labels[category].push(modalInput)
               targetButton.labels = labels
-              console.log(`ラベル追加: ${category} - ${modalInput}`)
+              logger.info(`ラベル追加: ${category} - ${modalInput}`)
             } else {
               alert(
                 `ラベル "${modalInput}" は既にカテゴリ "${category}" に存在します`
@@ -345,12 +345,12 @@ const Popup = () => {
             selectedAction: selectedAction
           })
           setButtonSets(updatedButtonSets)
-          console.log("Label added and saved to localStorage:", modalInput)
+          logger.info("Label added and saved to localStorage", { modalInput })
         }
         break
       case "team":
         {
-          console.log("Processing team case")
+          logger.debug("Processing team case")
           const updatedTeams = [...teams, modalInput]
           await chrome.storage.local.set({ teams: updatedTeams })
           setTeams(updatedTeams)
@@ -358,7 +358,7 @@ const Popup = () => {
         break
       case "buttonSet":
         {
-          console.log("Processing buttonSet case")
+          logger.debug("Processing buttonSet case")
           if (buttonSets.find((set) => set.setName === modalInput)) {
             alert("同名のボタンセットが既に存在します")
             return
@@ -375,14 +375,14 @@ const Popup = () => {
           })
           setButtonSets(updatedButtonSets)
           setSelectedButtonSet(modalInput)
-          console.log(
+          logger.debug(
             "ButtonSet created and saved to localStorage:",
             modalInput
           )
         }
         break
     }
-    console.log("Modal submit completed, closing modal")
+    logger.debug("Modal submit completed, closing modal")
     closeModal()
   }
 
@@ -421,13 +421,13 @@ const Popup = () => {
       })
       window.close()
     } catch (error) {
-      console.error("Failed to save settings:", error)
+      logger.error("Failed to save settings:", error)
       alert("設定の保存に失敗しました。もう一度お試しください。")
     }
   }
 
   const handleJsonImport = () => {
-    console.log("JSON import button clicked")
+    logger.debug("JSON import button clicked")
 
     // 隠れたファイル入力要素を作成
     const input = document.createElement("input")
@@ -438,20 +438,20 @@ const Popup = () => {
     input.onchange = async (event) => {
       const file = (event.target as HTMLInputElement).files?.[0]
       if (!file) {
-        console.log("No file selected")
+        logger.debug("No file selected")
         return
       }
 
       try {
         const fileContent = await file.text()
-        console.log("File content:", fileContent)
+        logger.debug("File content:", fileContent)
 
         const importedData = JSON.parse(fileContent)
-        console.log("Parsed JSON:", importedData)
+        logger.debug("Parsed JSON:", importedData)
 
         // バリデーション：単一のボタンセットオブジェクトかチェック
         if (!importedData.setName || typeof importedData.setName !== "string") {
-          showNotification(
+          handleShowNotification(
             "無効なファイル形式です。ボタンセットには setName が必要です。",
             "error"
           )
@@ -459,7 +459,7 @@ const Popup = () => {
         }
 
         if (!Array.isArray(importedData.buttons)) {
-          showNotification(
+          handleShowNotification(
             "無効なファイル形式です。ボタンセットには buttons 配列が必要です。",
             "error"
           )
@@ -472,7 +472,7 @@ const Popup = () => {
 
         for (const button of importedData.buttons) {
           if (!button.action || typeof button.action !== "string") {
-            console.log("Invalid button action:", button)
+            logger.debug("Invalid button action:", button)
             hasErrors = true
             continue
           }
@@ -491,17 +491,16 @@ const Popup = () => {
 
             for (const [category, labelList] of Object.entries(button.labels)) {
               if (typeof category !== "string") {
-                console.log("Invalid category name:", category)
+                logger.debug("Invalid category name:", category)
                 categoryHasErrors = true
                 continue
               }
 
               if (!Array.isArray(labelList)) {
-                console.log(
-                  "Invalid label list for category:",
+                logger.debug("Invalid label list for category", {
                   category,
                   labelList
-                )
+                })
                 categoryHasErrors = true
                 continue
               }
@@ -511,11 +510,10 @@ const Popup = () => {
               )
 
               if (validCategoryLabels.length !== labelList.length) {
-                console.log(
-                  "Some labels in category are not strings:",
+                logger.debug("Some labels in category are not strings", {
                   category,
                   labelList
-                )
+                })
                 categoryHasErrors = true
               }
 
@@ -530,7 +528,7 @@ const Popup = () => {
 
             validLabels = validCategories
           } else {
-            console.log("Invalid button labels format:", button.labels)
+            logger.debug("Invalid button labels format:", button.labels)
             hasErrors = true
             continue
           }
@@ -590,14 +588,14 @@ const Popup = () => {
           selectedButtonSet: validButtonSet.setName
         })
 
-        showNotification(
+        handleShowNotification(
           `ボタンセット "${validButtonSet.setName}" を正常にインポートしました。`,
           "success"
         )
-        console.log("Import completed successfully:", validButtonSet)
+        logger.debug("Import completed successfully:", validButtonSet)
       } catch (error) {
-        console.error("JSON parse error:", error)
-        showNotification(
+        logger.error("JSON parse error:", error)
+        handleShowNotification(
           "JSONファイルの解析に失敗しました。ファイル形式を確認してください。",
           "error"
         )
@@ -612,7 +610,7 @@ const Popup = () => {
   }
 
   const handleJsonExport = () => {
-    console.log("JSON export button clicked")
+    logger.debug("JSON export button clicked")
 
     try {
       // 選択されたボタンセットのみをエクスポート
@@ -620,7 +618,7 @@ const Popup = () => {
         (set) => set.setName === selectedButtonSet
       )
       if (!selectedSet) {
-        showNotification(
+        handleShowNotification(
           "エクスポートするボタンセットが選択されていません。",
           "error"
         )
@@ -647,11 +645,11 @@ const Popup = () => {
       // URLオブジェクトをクリーンアップ
       URL.revokeObjectURL(url)
 
-      showNotification("ボタンセットをエクスポートしました。", "success")
-      console.log("Export completed successfully")
+      handleShowNotification("ボタンセットをエクスポートしました。", "success")
+      logger.debug("Export completed successfully")
     } catch (error) {
-      console.error("Export error:", error)
-      showNotification("エクスポートに失敗しました。", "error")
+      logger.error("Export error:", error)
+      handleShowNotification("エクスポートに失敗しました。", "error")
     }
   }
 
@@ -664,66 +662,35 @@ const Popup = () => {
         type: "EXTENSION_VISIBILITY_UPDATED"
       })
     } catch (error) {
-      console.error("Failed to update visibility:", error)
+      logger.error("Failed to update visibility:", error)
       alert("表示設定の更新に失敗しました。ページを再読み込みしてください。")
     }
   }
 
   // ボタンセット切り替えUI
   const renderButtonSetSelector = () => (
-    <div
-      style={{
-        marginBottom: "24px",
-        padding: "16px",
-        backgroundColor: "white",
-        borderRadius: "8px",
-        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)"
-      }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          marginBottom: "12px",
-          gap: "8px"
-        }}>
-        <label
-          style={{
-            fontSize: "14px",
-            fontWeight: "500",
-            color: "#374151",
-            minWidth: "80px"
-          }}>
+    <div className="mb-6 p-4 bg-white rounded-lg shadow-sm">
+      <div className="flex items-center mb-3 gap-2">
+        <label className="text-sm font-medium text-gray-700 min-w-[80px]">
           ボタンセット:
         </label>
         <select
           value={selectedButtonSet}
           onChange={async (e) => {
-            console.log(
-              "Select changed from",
-              selectedButtonSet,
-              "to",
-              e.target.value
-            )
+            logger.debug("Select changed", {
+              from: selectedButtonSet,
+              to: e.target.value
+            })
             setSelectedButtonSet(e.target.value)
             // 選択変更時に即座にlocalStorageに保存
             await chrome.storage.local.set({
               selectedButtonSet: e.target.value
             })
-            console.log(
-              "Selected button set saved to localStorage:",
-              e.target.value
-            )
+            logger.debug("Selected button set saved to localStorage", {
+              value: e.target.value
+            })
           }}
-          style={{
-            padding: "6px 12px",
-            fontSize: "14px",
-            border: "1px solid #d1d5db",
-            borderRadius: "6px",
-            backgroundColor: "white",
-            color: "#374151",
-            cursor: "pointer",
-            flex: "1"
-          }}>
+          className="filter-select min-w-0 flex-1">
           {buttonSets.map((set) => (
             <option key={set.setName} value={set.setName}>
               {set.setName}
@@ -732,129 +699,38 @@ const Popup = () => {
         </select>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "8px",
-          marginBottom: "8px"
-        }}>
-        <button
-          style={{
-            padding: "6px 12px",
-            fontSize: "12px",
-            fontWeight: "500",
-            backgroundColor: "#3b82f6",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            transition: "all 0.2s ease"
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#2563eb")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "#3b82f6")
-          }
-          onClick={() => openModal("buttonSet")}>
+      <div className="flex flex-wrap gap-2 mb-2">
+        <button className="btn-primary" onClick={() => openModal("buttonSet")}>
           セット追加
         </button>
 
         <button
-          style={{
-            padding: "6px 12px",
-            fontSize: "12px",
-            fontWeight: "500",
-            backgroundColor: "#ef4444",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            transition: "all 0.2s ease"
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#dc2626")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "#ef4444")
-          }
+          className="btn-success"
+          onClick={() => openModal("buttonInSet")}>
+          ボタン追加
+        </button>
+
+        <button
+          className="btn-danger"
           onClick={() => handleRemoveItem("buttonSet", selectedButtonSet)}>
           セット削除
         </button>
 
-        <button
-          style={{
-            padding: "6px 12px",
-            fontSize: "12px",
-            fontWeight: "500",
-            backgroundColor: "#8b5cf6",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            transition: "all 0.2s ease"
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#7c3aed")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "#8b5cf6")
-          }
-          onClick={handleJsonImport}>
+        <button className="btn-primary" onClick={handleJsonImport}>
           インポート
         </button>
 
-        <button
-          style={{
-            padding: "6px 12px",
-            fontSize: "12px",
-            fontWeight: "500",
-            backgroundColor: "#6b7280",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            transition: "all 0.2s ease"
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#4b5563")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "#6b7280")
-          }
-          onClick={handleJsonExport}>
+        <button className="btn-secondary" onClick={handleJsonExport}>
           エクスポート
         </button>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "8px"
-        }}>
+      <div className="flex flex-wrap gap-2">
         <button
-          style={{
-            padding: "6px 12px",
-            fontSize: "12px",
-            fontWeight: "500",
-            backgroundColor: "#10b981",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            transition: "all 0.2s ease"
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#059669")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "#10b981")
-          }
+          className="btn-success"
           onClick={() => {
-            console.log("=== アクション追加ボタンクリック ===")
-            console.log("現在の状態:", {
+            logger.debug("=== アクション追加ボタンクリック ===")
+            logger.debug("現在の状態:", {
               selectedButtonSet,
               buttonSets,
               isModalOpen,
@@ -866,26 +742,10 @@ const Popup = () => {
         </button>
 
         <button
-          style={{
-            padding: "6px 12px",
-            fontSize: "12px",
-            fontWeight: "500",
-            backgroundColor: "#8b5cf6",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            transition: "all 0.2s ease"
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#7c3aed")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "#8b5cf6")
-          }
+          className="btn-primary"
           onClick={() => {
-            console.log("=== カテゴリ付きラベル追加ボタンクリック ===")
-            console.log("現在の状態:", {
+            logger.debug("=== カテゴリ付きラベル追加ボタンクリック ===")
+            logger.debug("現在の状態:", {
               selectedButtonSet,
               selectedAction,
               buttonSets,
@@ -902,82 +762,51 @@ const Popup = () => {
 
   return (
     <div
+      className="relative p-6 bg-gray-50 rounded-lg font-sans"
       style={{
-        minWidth: "450px",
-        padding: "24px",
-        fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        backgroundColor: "#fafafa",
-        borderRadius: "8px",
-        position: "relative"
+        minWidth: PANEL_SIZE.MIN_WIDTH
       }}>
       {/* 通知 */}
       {notification && (
         <div
+          className="fixed top-5 right-5 px-3 py-1.5 text-sm font-medium text-white rounded-lg shadow-lg transition-all duration-300 opacity-100"
           style={{
-            position: "fixed",
-            top: "20px",
-            right: "20px",
-            zIndex: 1000,
-            padding: "12px 16px",
-            borderRadius: "8px",
-            fontSize: "14px",
-            fontWeight: "500",
-            color: "white",
+            zIndex: PANEL_POSITION.NOTIFICATION_Z_INDEX,
             backgroundColor:
               notification.type === "success"
-                ? "#10b981"
+                ? STYLES.COLORS.SUCCESS
                 : notification.type === "error"
-                  ? "#ef4444"
-                  : "#3b82f6",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-            transform: "translateX(0)",
-            transition: "transform 0.3s ease, opacity 0.3s ease",
-            opacity: 1
+                  ? STYLES.COLORS.ERROR
+                  : STYLES.COLORS.PRIMARY
           }}>
           {notification.message}
         </div>
       )}
 
-      <h2
-        style={{
-          margin: "0 0 24px 0",
-          fontSize: "20px",
-          fontWeight: "600",
-          color: "#1a1a1a",
-          letterSpacing: "-0.025em"
-        }}>
+      <h2 className="m-0 mb-6 text-xl font-semibold text-gray-900 tracking-tight">
         設定
       </h2>
-      <div style={{ marginBottom: "24px" }}>
+      <div className="mb-6">
         <button
           onClick={() => {
             setShowExtension((prev) => !prev)
             handleVisibilityToggle()
           }}
+          className="w-full px-4 py-3 text-sm font-medium text-white border-none rounded-lg cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
           style={{
-            padding: "12px 16px",
-            fontSize: "14px",
-            fontWeight: "500",
-            backgroundColor: showExtension ? "#ef4444" : "#22c55e",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-            width: "100%",
-            transition: "all 0.2s ease",
+            backgroundColor: showExtension
+              ? STYLES.COLORS.ERROR
+              : STYLES.COLORS.SUCCESS,
             boxShadow: showExtension
               ? "0 2px 4px rgba(239, 68, 68, 0.2)"
               : "0 2px 4px rgba(34, 197, 94, 0.2)"
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-1px)"
             e.currentTarget.style.boxShadow = showExtension
               ? "0 4px 8px rgba(239, 68, 68, 0.3)"
               : "0 4px 8px rgba(34, 197, 94, 0.3)"
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateY(0)"
             e.currentTarget.style.boxShadow = showExtension
               ? "0 2px 4px rgba(239, 68, 68, 0.2)"
               : "0 2px 4px rgba(34, 197, 94, 0.2)"
@@ -987,7 +816,12 @@ const Popup = () => {
       </div>
       {renderButtonSetSelector()}
       <ButtonSetComponent
-        buttonSet={buttonSets.find((set) => set.setName === selectedButtonSet)}
+        buttonSet={
+          selectedButtonSet && buttonSets.length > 0
+            ? buttonSets.find((set) => set.setName === selectedButtonSet) ||
+              buttonSets[0]
+            : undefined
+        }
         selectedAction={selectedAction}
         onUpdateButtonSet={async (updatedSet) => {
           const updatedButtonSets = buttonSets.map((set) =>
@@ -1000,17 +834,17 @@ const Popup = () => {
             buttonSets: updatedButtonSets,
             selectedButtonSet: selectedButtonSet
           })
-          console.log(
+          logger.debug(
             "ButtonSet updated and saved to localStorage:",
             updatedSet.setName
           )
         }}
         onActionSelect={async (action) => {
-          console.log("Action selected:", action)
+          logger.debug("Action selected:", action)
           setSelectedAction(action)
           // アクション選択変更時に即座にlocalStorageに保存
           await chrome.storage.local.set({ selectedAction: action })
-          console.log("Selected action saved to localStorage:", action)
+          logger.debug("Selected action saved to localStorage:", action)
         }}
       />
       <TeamList
@@ -1023,43 +857,33 @@ const Popup = () => {
         inputValue={modalInput}
         modalType={modalType}
         onInputChange={(value) => {
-          console.log("Modal input changed:", value)
+          logger.debug("Modal input changed:", value)
           setModalInput(value)
         }}
         onClose={() => {
-          console.log("Modal close called")
+          logger.debug("Modal close called")
           closeModal()
         }}
         onSubmit={(category) => {
-          console.log("Modal submit called with category:", category)
+          logger.debug("Modal submit called with category:", category)
           handleModalSubmit(category)
         }}
       />
-      <div style={{ marginTop: "24px" }}>
+      <div className="mt-6">
         <button
           onClick={handleSave}
+          className="w-full px-4 py-3 text-sm font-medium text-white border-none rounded-lg cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
           style={{
-            padding: "12px 16px",
-            fontSize: "14px",
-            fontWeight: "500",
-            backgroundColor: "#22c55e",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-            width: "100%",
-            transition: "all 0.2s ease",
-            boxShadow: "0 2px 4px rgba(34, 197, 94, 0.2)"
+            backgroundColor: STYLES.COLORS.SUCCESS,
+            boxShadow: STYLES.SHADOW.SUCCESS_BUTTON
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#16a34a"
-            e.currentTarget.style.transform = "translateY(-1px)"
-            e.currentTarget.style.boxShadow = "0 4px 8px rgba(34, 197, 94, 0.3)"
+            e.currentTarget.style.backgroundColor = STYLES.COLORS.SUCCESS_HOVER
+            e.currentTarget.style.boxShadow = STYLES.SHADOW.SUCCESS_BUTTON_HOVER
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#22c55e"
-            e.currentTarget.style.transform = "translateY(0)"
-            e.currentTarget.style.boxShadow = "0 2px 4px rgba(34, 197, 94, 0.2)"
+            e.currentTarget.style.backgroundColor = STYLES.COLORS.SUCCESS
+            e.currentTarget.style.boxShadow = STYLES.SHADOW.SUCCESS_BUTTON
           }}>
           保存して閉じる
         </button>

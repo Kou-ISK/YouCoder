@@ -1,21 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 
-interface ModalProps {
-  isOpen: boolean
-  inputValue: string
-  modalType:
-    | "action"
-    | "label"
-    | "team"
-    | "buttonSet"
-    | "buttonInSet"
-    | "addAction"
-    | "addLabel"
-    | null
-  onInputChange: (v: string) => void
-  onClose: () => void
-  onSubmit: (category?: string) => void
-}
+import { STYLES } from "../../constants"
+import type { ModalProps } from "../../types/components"
 
 export const Modal: React.FC<ModalProps> = ({
   isOpen,
@@ -26,12 +12,20 @@ export const Modal: React.FC<ModalProps> = ({
   onSubmit
 }) => {
   const [category, setCategory] = useState("Result")
+  const [isComposingMain, setIsComposingMain] = useState(false)
+  const [isComposingCategory, setIsComposingCategory] = useState(false)
+  const [tempInputValue, setTempInputValue] = useState("")
+  const [tempCategoryValue, setTempCategoryValue] = useState("")
   const modalRef = useRef<HTMLDivElement>(null)
   const initialFocusRef = useRef<HTMLInputElement>(null)
   const previousActiveElement = useRef<Element | null>(null)
 
   useEffect(() => {
     if (isOpen) {
+      // モーダルが開いた時に一時的な値を初期化
+      setTempInputValue(inputValue)
+      setTempCategoryValue(category)
+
       // モーダルを開いた時に前のフォーカス要素を保存
       previousActiveElement.current = document.activeElement
       // モーダルを開いた時に入力フィールドにフォーカス
@@ -52,7 +46,7 @@ export const Modal: React.FC<ModalProps> = ({
         }
       }
     }
-  }, [isOpen, onClose])
+  }, [isOpen, onClose, inputValue, category])
 
   if (!isOpen) return null
 
@@ -70,9 +64,58 @@ export const Modal: React.FC<ModalProps> = ({
               ? "ボタンセット内にアクションを追加"
               : ""
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setTempInputValue(value)
+
+    // IME入力中でない場合のみ親コンポーネントに通知
+    if (!isComposingMain) {
+      onInputChange(value)
+    }
+  }
+
+  const handleCompositionStart = () => {
+    setIsComposingMain(true)
+  }
+
+  const handleCompositionEnd = (
+    e: React.CompositionEvent<HTMLInputElement>
+  ) => {
+    setIsComposingMain(false)
+    const value = e.currentTarget.value
+    setTempInputValue(value)
+    // IME入力完了時に最終的な値を親コンポーネントに送信
+    onInputChange(value)
+  }
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setTempCategoryValue(value)
+
+    // IME入力中でない場合のみカテゴリを更新
+    if (!isComposingCategory) {
+      setCategory(value)
+    }
+  }
+
+  const handleCategoryCompositionStart = () => {
+    setIsComposingCategory(true)
+  }
+
+  const handleCategoryCompositionEnd = (
+    e: React.CompositionEvent<HTMLInputElement>
+  ) => {
+    setIsComposingCategory(false)
+    const value = e.currentTarget.value
+    setTempCategoryValue(value)
+    setCategory(value)
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (inputValue.trim()) {
+    // IME入力中の場合は一時的な値、そうでなければ通常の値を使用
+    const finalInputValue = isComposingMain ? tempInputValue : inputValue
+    if (finalInputValue.trim()) {
       onSubmit(hasCategory ? category : undefined)
     }
   }
@@ -83,108 +126,66 @@ export const Modal: React.FC<ModalProps> = ({
       aria-modal="true"
       aria-labelledby="modal-title"
       ref={modalRef}
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center"
-      }}>
+      className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+      style={{ zIndex: STYLES.Z_INDEX.MODAL }}>
       <div
         role="document"
-        style={{
-          backgroundColor: "white",
-          padding: "20px",
-          borderRadius: "8px",
-          minWidth: "300px"
-        }}>
-        <h3 id="modal-title">{modalTitle}</h3>
+        className="bg-white p-5 rounded-lg shadow-lg"
+        style={{ minWidth: "300px" }}>
+        <h3
+          id="modal-title"
+          className="text-lg font-semibold mb-4 text-gray-800">
+          {modalTitle}
+        </h3>
         <form role="form" onSubmit={handleSubmit}>
           {hasCategory && (
-            <div style={{ marginBottom: "10px" }}>
+            <div className="mb-2.5">
               <label
                 htmlFor="category-input"
-                style={{
-                  display: "block",
-                  marginBottom: "4px",
-                  fontWeight: "600"
-                }}>
+                className="block mb-1 font-semibold text-sm text-gray-700">
                 カテゴリ:
               </label>
               <input
                 id="category-input"
                 type="text"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                value={isComposingCategory ? tempCategoryValue : category}
+                onChange={handleCategoryChange}
+                onCompositionStart={handleCategoryCompositionStart}
+                onCompositionEnd={handleCategoryCompositionEnd}
                 placeholder="例: Shot Type, Result, Position"
-                style={{
-                  width: "100%",
-                  padding: "8px",
-                  borderRadius: "4px",
-                  border: "1px solid #ced4da"
-                }}
+                className="w-full px-2 py-2 rounded border border-gray-300 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-200 focus:outline-none"
               />
             </div>
           )}
 
-          <div style={{ marginBottom: "10px" }}>
+          <div className="mb-2.5">
             <label
               htmlFor="main-input"
-              style={{
-                display: "block",
-                marginBottom: "4px",
-                fontWeight: "600"
-              }}>
+              className="block mb-1 font-semibold text-sm text-gray-700">
               {hasCategory ? "ラベル:" : "入力:"}
             </label>
             <input
               id="main-input"
               type="text"
-              value={inputValue}
-              onChange={(e) => onInputChange(e.target.value)}
+              value={isComposingMain ? tempInputValue : inputValue}
+              onChange={handleInputChange}
+              onCompositionStart={handleCompositionStart}
+              onCompositionEnd={handleCompositionEnd}
               placeholder={hasCategory ? "例: forehand, winner, error" : ""}
-              style={{
-                width: "100%",
-                padding: "8px",
-                borderRadius: "4px",
-                border: "1px solid #ced4da"
-              }}
+              className="w-full px-2 py-2 rounded border border-gray-300 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-200 focus:outline-none"
               ref={initialFocusRef}
             />
           </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: "10px"
-            }}>
+          <div className="flex justify-end gap-2.5">
             <button
               type="button"
               onClick={onClose}
-              style={{
-                padding: "5px 10px",
-                backgroundColor: "#6c757d",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer"
-              }}>
+              className="px-2.5 py-1.5 bg-gray-500 text-white rounded cursor-pointer text-sm hover:bg-gray-600 transition-colors">
               キャンセル
             </button>
             <button
               type="submit"
-              style={{
-                padding: "5px 10px",
-                backgroundColor: "#28a745",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer"
-              }}>
+              className="px-2.5 py-1.5 bg-emerald-600 text-white rounded cursor-pointer text-sm hover:bg-emerald-700 transition-colors">
               追加
             </button>
           </div>

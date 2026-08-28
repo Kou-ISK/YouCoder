@@ -1,5 +1,6 @@
 import React from "react"
 
+import { logger } from "../../utils/errorHandling"
 import { DraggableResizable } from "../DraggableResizable"
 import { useTimelinePanel } from "./hooks/useTimelinePanel"
 import { useTimelinePanelPosition } from "./hooks/useTimelinePanelPosition"
@@ -22,7 +23,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   defaultSort,
   defaultFilter
 }) => {
-  console.log(
+  logger.debug(
     `[TimelinePanel] レンダリング開始 - 受信アクション数: ${actions.length}`
   )
 
