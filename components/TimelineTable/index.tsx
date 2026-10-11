@@ -330,18 +330,22 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 {formatTime(action.start)}
               </td>
               <td
-                onClick={action.end ? () => seekToTime(action.end) : undefined}
+                onClick={
+                  action.end !== undefined
+                    ? () => seekToTime(action.end)
+                    : undefined
+                }
                 className={`px-2 py-1.5 font-mono text-base font-medium border-b border-gray-200 ${
-                  action.end
+                  action.end !== undefined
                     ? "text-blue-500 cursor-pointer underline decoration-dotted"
                     : "text-amber-500 cursor-default"
                 }`}
                 title={
-                  action.end
+                  action.end !== undefined
                     ? "クリックすると動画の該当位置にジャンプします"
                     : "進行中のアクション"
                 }>
-                {action.end ? formatTime(action.end) : "進行中"}
+                {action.end !== undefined ? formatTime(action.end) : "進行中"}
               </td>
               <td className="px-2 py-1.5 text-gray-500 text-base border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
                 {action.labels && action.labels.length > 0

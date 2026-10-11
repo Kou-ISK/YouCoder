@@ -39,6 +39,29 @@ describe("TimelineTable action identity", () => {
     jest.restoreAllMocks()
   })
 
+  test("a record completed at zero displays its end time and seeks to zero", () => {
+    const onSeek = jest.fn()
+    render(
+      <TimelineTable
+        actions={[{ ...firstAction, start: 0, end: 0 }]}
+        onDelete={onDelete}
+        onSeek={onSeek}
+      />
+    )
+
+    const row = screen.getAllByRole("row")[1]
+    const endCell = within(row).getAllByRole("cell")[3]
+    expect(endCell).toHaveTextContent("00:00.000")
+    expect(within(row).queryByText("進行中")).not.toBeInTheDocument()
+    expect(endCell).toHaveAttribute(
+      "title",
+      "クリックすると動画の該当位置にジャンプします"
+    )
+
+    fireEvent.click(endCell)
+    expect(onSeek).toHaveBeenCalledWith(0)
+  })
+
   test("identical action values delete only the selected stable ID without duplicate keys", () => {
     const consoleError = jest
       .spyOn(console, "error")
