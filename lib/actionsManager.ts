@@ -107,39 +107,15 @@ export const startAction = async (team: string, action: string) => {
     start: getYoutubeCurrentTime()
   })
 }
-const activeStart = (team: string, action: string) => {
-  const active = getActions().find(
-    (item) =>
-      item.team === team && item.action === action && item.end === undefined
-  )
-  if (!active)
-    throw new Error(
-      "進行中の記録を確認できません。内容を再読み込みしてください。"
-    )
-  return active.start
-}
-export const stopAction = async (team: string, action: string) => {
+export const stopAction = async (actionId: string) => {
   return requestTimeline(currentVideoId(), {
     type: "stop",
-    team,
-    action,
-    end: getYoutubeCurrentTime(),
-    expectedStart: activeStart(team, action)
+    actionId,
+    end: getYoutubeCurrentTime()
   })
 }
-export const addLabel = async (
-  team: string,
-  action: string,
-  label: string,
-  expectedStart = activeStart(team, action)
-) => {
-  return requestTimeline(currentVideoId(), {
-    type: "label",
-    team,
-    action,
-    label,
-    expectedStart
-  })
+export const addLabel = async (actionId: string, label: string) => {
+  return requestTimeline(currentVideoId(), { type: "label", actionId, label })
 }
 export const getActions = (): Action[] =>
   getYoutubeVideoId() === activeVideoId
@@ -165,19 +141,9 @@ export const loadTimelineForVideo = async (
   }
   return (await requestTimeline(videoId, { type: "read" })).actions
 }
-export const deleteAction = async (
-  team: string,
-  action: string,
-  start: number
-): Promise<boolean> => {
-  return (
-    await requestTimeline(currentVideoId(), {
-      type: "delete",
-      team,
-      action,
-      start
-    })
-  ).changed
+export const deleteAction = async (actionId: string): Promise<boolean> => {
+  return (await requestTimeline(currentVideoId(), { type: "delete", actionId }))
+    .changed
 }
 export const exportActionsToCSV = (actionsList: Action[] = getActions()) => {
   const blob = new Blob([buildActionsCsv(actionsList)], {

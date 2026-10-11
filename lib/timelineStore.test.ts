@@ -11,12 +11,23 @@ import {
 } from "./timelineStore"
 
 const action = (overrides: Partial<TimelineAction> = {}): TimelineAction => ({
+  id: "stored-1",
   team: "Team A",
   action: "Pass",
   start: 0,
   labels: [],
   ...overrides
 })
+
+const createdAction = (
+  overrides: Partial<TimelineAction> = {},
+  sequence = 1
+): TimelineAction => action({ id: `generated-${sequence}`, ...overrides })
+
+const legacyAction = (overrides: Partial<TimelineAction> = {}) => {
+  const { id, ...legacy } = action(overrides)
+  return legacy
+}
 
 const start = (
   name = "Pass",
@@ -30,6 +41,8 @@ const start = (
 
 const memoryStorage = (initial: Record<string, unknown> = {}) => {
   const data = { ...initial }
+  let nextId = 0
+  const createId = jest.fn(() => `generated-${++nextId}`)
   // Deliberately return references. The store must copy before editing data,
   // even if a storage adapter itself does not provide Chrome's cloned values.
   const storage = {
@@ -46,7 +59,12 @@ const memoryStorage = (initial: Record<string, unknown> = {}) => {
       Object.assign(data, items)
     })
   }
-  return { data, storage, store: createTimelineStore(storage) }
+  return {
+    data,
+    storage,
+    createId,
+    store: createTimelineStore(storage, createId)
+  }
 }
 
 const deferred = () => {
@@ -58,7 +76,7 @@ const deferred = () => {
 }
 
 describe("serialized timeline persistence", () => {
-  test("serializes same-video operations from separate callers", async () => {
+  test("serializes same-video operations from separate tabs", async () => {
     const { data, storage, store } = memoryStorage()
     const saving = deferred()
     const releaseSave = deferred()
@@ -72,24 +90,22 @@ describe("serialized timeline persistence", () => {
     await saving.promise
     const secondTab = store.execute("video-a", start("Shot", 10))
     const followingRead = store.execute("video-a", { type: "read" })
-    expect(storage.get).toHaveBeenCalledTimes(1)
+    expect(storage.get).toHaveBeenCalledTimes(2)
     expect(data[timelineStorageKey("video-a")]).toBeUndefined()
 
     releaseSave.resolve()
     await expect(firstTab).resolves.toMatchObject({ changed: true })
-    await expect(secondTab).resolves.toEqual({
-      changed: true,
-      actions: [action(), action({ action: "Shot", start: 10 })]
-    })
-    await expect(followingRead).resolves.toEqual({
-      changed: false,
-      actions: [action(), action({ action: "Shot", start: 10 })]
-    })
-    expect(data[timelineStorageKey("video-a")]).toHaveLength(2)
+    const actions = [
+      createdAction(),
+      createdAction({ action: "Shot", start: 10 }, 2)
+    ]
+    await expect(secondTab).resolves.toEqual({ changed: true, actions })
+    await expect(followingRead).resolves.toEqual({ changed: false, actions })
+    expect(data[timelineStorageKey("video-a")]).toEqual(actions)
   })
 
   test("concurrent different-video commands preserve both videos and legacy data", async () => {
-    const legacy = { existing: [action({ action: "Legacy" })] }
+    const legacy = { existing: [legacyAction({ action: "Legacy" })] }
     const { data, storage, store } = memoryStorage({ timelines: legacy })
     await Promise.all([
       store.execute("video-a", start("Pass")),
@@ -99,12 +115,12 @@ describe("serialized timeline persistence", () => {
     ])
 
     expect(data[timelineStorageKey("video-a")]).toEqual([
-      action(),
-      action({ action: "Run" })
+      createdAction(),
+      createdAction({ action: "Run" }, 3)
     ])
     expect(data[timelineStorageKey("video-b")]).toEqual([
-      action({ action: "Shot" }),
-      action({ action: "Save" })
+      createdAction({ action: "Shot" }, 2),
+      createdAction({ action: "Save" }, 4)
     ])
     expect(data.timelines).toBe(legacy)
     for (const [items] of storage.set.mock.calls) {
@@ -124,33 +140,10 @@ describe("serialized timeline persistence", () => {
     ])
   })
 
-  test("reads legacy storage without a write and migrates only on an edit", async () => {
-    const original = action({ labels: ["Original"] })
-    const legacy = { "legacy-video": [original], other: [action()] }
-    const { data, storage, store } = memoryStorage({ timelines: legacy })
-
-    const read = await store.execute("legacy-video", { type: "read" })
-    expect(read).toEqual({ actions: [original], changed: false })
-    expect(storage.set).not.toHaveBeenCalled()
-    read.actions[0].labels.push("Only the returned copy")
-
-    await store.execute("legacy-video", {
-      type: "label",
-      team: "Team A",
-      action: "Pass",
-      label: "New label"
-    })
-    expect(data[timelineStorageKey("legacy-video")]).toEqual([
-      action({ labels: ["Original", "New label"] })
-    ])
-    expect(legacy["legacy-video"]).toEqual([action({ labels: ["Original"] })])
-    expect(data.timelines).toBe(legacy)
-  })
-
   test("an empty per-video timeline takes precedence over undeleted legacy data", async () => {
     const { storage, store } = memoryStorage({
       [timelineStorageKey("video")]: [],
-      timelines: { video: [action()] }
+      timelines: { video: [legacyAction()] }
     })
     await expect(store.execute("video", { type: "read" })).resolves.toEqual({
       actions: [],
@@ -162,47 +155,46 @@ describe("serialized timeline persistence", () => {
   test("legacy lookup ignores inherited keys", async () => {
     const { storage, store } = memoryStorage({ timelines: {} })
     await expect(store.execute("__proto__", { type: "read" })).resolves.toEqual(
-      { actions: [], changed: false }
+      {
+        actions: [],
+        changed: false
+      }
     )
     expect(storage.set).not.toHaveBeenCalled()
   })
 
-  test("treats end zero as completed and does not label or stop it again", async () => {
+  test("treats end zero as completed and rejects later labels and stops", async () => {
     const { store } = memoryStorage()
-    await store.execute("video", start())
+    const started = await store.execute("video", start())
+    const actionId = started.actions[0].id
     await expect(
-      store.execute("video", {
-        type: "stop",
-        team: "Team A",
-        action: "Pass",
-        end: 0
-      })
-    ).resolves.toEqual({ actions: [action({ end: 0 })], changed: true })
+      store.execute("video", { type: "stop", actionId, end: 0 })
+    ).resolves.toEqual({ actions: [createdAction({ end: 0 })], changed: true })
 
     for (const operation of [
-      { type: "stop", team: "Team A", action: "Pass", end: 100 },
-      { type: "label", team: "Team A", action: "Pass", label: "Late" }
+      { type: "stop", actionId, end: 100 },
+      { type: "label", actionId, label: "Late" }
     ] as TimelineOperation[]) {
-      await expect(store.execute("video", operation)).resolves.toEqual({
-        actions: [action({ end: 0 })],
-        changed: false
-      })
+      await expect(store.execute("video", operation)).rejects.toThrow(
+        "Timeline action changed"
+      )
     }
     await expect(store.execute("video", start("Pass", 100))).resolves.toEqual({
-      actions: [action({ end: 0 }), action({ start: 100 })],
+      actions: [createdAction({ end: 0 }), createdAction({ start: 100 }, 2)],
       changed: true
     })
   })
 
   test("does not create duplicate simultaneous active actions", async () => {
-    const { store, storage } = memoryStorage()
+    const { store, storage, createId } = memoryStorage()
     const results = await Promise.all([
       store.execute("video", start()),
       store.execute("video", start())
     ])
     expect(results.map((result) => result.changed)).toEqual([true, false])
-    expect(results[1].actions).toEqual([action()])
+    expect(results[1].actions).toEqual([createdAction()])
     expect(storage.set).toHaveBeenCalledTimes(1)
+    expect(createId).toHaveBeenCalledTimes(1)
   })
 
   test("rejects a stop after seeking backward without modifying the interval", async () => {
@@ -211,84 +203,73 @@ describe("serialized timeline persistence", () => {
       [timelineStorageKey("video")]: [original]
     })
     await expect(
-      store.execute("video", {
-        type: "stop",
-        team: "Team A",
-        action: "Pass",
-        end: 50,
-        expectedStart: 100
-      })
+      store.execute("video", { type: "stop", actionId: original.id, end: 50 })
     ).rejects.toThrow("end time cannot be before the action start time")
     expect(storage.set).not.toHaveBeenCalled()
     expect(original.end).toBeUndefined()
     expect(data[timelineStorageKey("video")]).toEqual([action({ start: 100 })])
   })
 
-  test("labels the matching active action and deletes only the exact target", async () => {
+  test("labels the matching active ID and deletes only the exact ID", async () => {
     const { data, store } = memoryStorage({
       [timelineStorageKey("video")]: [
-        action({ start: 0, end: 5 }),
-        action({ start: 10 }),
-        action({ team: "Team B", start: 10 })
+        action({ id: "completed", start: 0, end: 5 }),
+        action({ id: "active", start: 10 }),
+        action({ id: "other-team", team: "Team B", start: 10 })
       ]
     })
     await store.execute("video", {
       type: "label",
-      team: "Team A",
-      action: "Pass",
+      actionId: "active",
       label: "Result - good"
     })
-    await store.execute("video", {
-      type: "delete",
-      team: "Team A",
-      action: "Pass",
-      start: 0
-    })
+    await store.execute("video", { type: "delete", actionId: "completed" })
     expect(data[timelineStorageKey("video")]).toEqual([
-      action({ start: 10, labels: ["Result - good"] }),
-      action({ team: "Team B", start: 10 })
+      action({ id: "active", start: 10, labels: ["Result - good"] }),
+      action({ id: "other-team", team: "Team B", start: 10 })
     ])
   })
 
   test.each<TimelineOperation>([
-    {
-      type: "stop",
-      team: "Team A",
-      action: "Pass",
-      end: 30,
-      expectedStart: 0
-    },
-    {
-      type: "label",
-      team: "Team A",
-      action: "Pass",
-      label: "Stale label",
-      expectedStart: 0
-    }
+    { type: "stop", actionId: "stored-1", end: 30 },
+    { type: "label", actionId: "stored-1", label: "Stale label" }
   ])(
-    "rejects a queued stale $type after the interval restarts",
+    "rejects a queued stale $type after a restart at the same timestamp",
     async (stale) => {
       const { data, storage, store } = memoryStorage({
         [timelineStorageKey("video")]: [action()]
       })
-      const stop = store.execute("video", {
+      const stopped = store.execute("video", {
         type: "stop",
-        team: "Team A",
-        action: "Pass",
-        end: 10,
-        expectedStart: 0
+        actionId: "stored-1",
+        end: 10
       })
-      const restart = store.execute("video", start("Pass", 20))
+      const restarted = store.execute("video", start("Pass", 0))
       const obsoleteEdit = store.execute("video", stale)
       await expect(obsoleteEdit).rejects.toThrow("Timeline action changed")
-      await Promise.all([stop, restart])
+      await Promise.all([stopped, restarted])
       expect(data[timelineStorageKey("video")]).toEqual([
         action({ end: 10 }),
-        action({ start: 20 })
+        createdAction()
       ])
       expect(storage.set).toHaveBeenCalledTimes(2)
     }
   )
+
+  test("deletes the selected ID when all identifying timestamps and names repeat", async () => {
+    const sameInterval = { start: 0, end: 10, labels: ["Same"] }
+    const first = action({ ...sameInterval, id: "first" })
+    const second = action({ ...sameInterval, id: "second" })
+    const { data, store } = memoryStorage({
+      [timelineStorageKey("video")]: [first, second]
+    })
+    await store.execute("video", { type: "delete", actionId: "second" })
+    expect(data[timelineStorageKey("video")]).toEqual([first])
+    await expect(
+      store.execute("video", { type: "delete", actionId: "second" })
+    ).rejects.toThrow("Timeline action changed")
+    expect(data[timelineStorageKey("video")]).toEqual([first])
+  })
 
   test("rejects an expected interval that has already stopped", async () => {
     const { data, storage, store } = memoryStorage({
@@ -297,26 +278,22 @@ describe("serialized timeline persistence", () => {
     await expect(
       store.execute("video", {
         type: "label",
-        team: "Team A",
-        action: "Pass",
-        label: "Late label",
-        expectedStart: 0
+        actionId: "stored-1",
+        label: "Late label"
       })
     ).rejects.toThrow("Timeline action changed")
     expect(storage.set).not.toHaveBeenCalled()
     expect(data[timelineStorageKey("video")]).toEqual([action({ end: 0 })])
   })
 
-  test("allows zero expectedStart and deduplicates repeated label retries", async () => {
+  test("deduplicates repeated label retries for the same stable ID", async () => {
     const { data, storage, store } = memoryStorage({
       [timelineStorageKey("video")]: [action()]
     })
     const label: TimelineOperation = {
       type: "label",
-      team: "Team A",
-      action: "Pass",
-      label: "Result - good",
-      expectedStart: 0
+      actionId: "stored-1",
+      label: "Result - good"
     }
     const results = await Promise.all([
       store.execute("video", label),
@@ -330,15 +307,14 @@ describe("serialized timeline persistence", () => {
   })
 
   test.each<TimelineOperation>([
-    { type: "stop", team: "Team A", action: "Missing", end: 5 },
-    { type: "label", team: "Team A", action: "Missing", label: "Good" },
-    { type: "delete", team: "Team A", action: "Missing", start: 0 }
-  ])("a missing $type target is a no-op", async (operation) => {
+    { type: "stop", actionId: "missing", end: 5 },
+    { type: "label", actionId: "missing", label: "Good" },
+    { type: "delete", actionId: "missing" }
+  ])("rejects an unknown $type ID without writing", async (operation) => {
     const { storage, store } = memoryStorage()
-    await expect(store.execute("video", operation)).resolves.toEqual({
-      actions: [],
-      changed: false
-    })
+    await expect(store.execute("video", operation)).rejects.toThrow(
+      "Timeline action changed"
+    )
     expect(storage.set).not.toHaveBeenCalled()
   })
 
@@ -348,7 +324,7 @@ describe("serialized timeline persistence", () => {
     const pending = store.execute("video", operation)
     operation.action = "Changed after enqueue"
     await expect(pending).resolves.toEqual({
-      actions: [action()],
+      actions: [createdAction()],
       changed: true
     })
   })
@@ -357,8 +333,9 @@ describe("serialized timeline persistence", () => {
     const { data, store } = memoryStorage()
     const result = await store.execute("video", start())
     result.actions[0].labels.push("Not saved")
+    result.actions[0].id = "Changed ID"
     result.actions.push(action({ action: "Not saved" }))
-    expect(data[timelineStorageKey("video")]).toEqual([action()])
+    expect(data[timelineStorageKey("video")]).toEqual([createdAction()])
   })
 
   test("failed writes reject without mutating saved data and the queue recovers", async () => {
@@ -369,22 +346,19 @@ describe("serialized timeline persistence", () => {
     storage.set.mockRejectedValueOnce(new Error("secret internal details"))
     const failed = store.execute("video", {
       type: "label",
-      team: "Team A",
-      action: "Pass",
+      actionId: original.id,
       label: "Must not survive"
     })
     const next = store.execute("video", start("Shot"))
 
     await expect(failed).rejects.toThrow("Your changes were not saved")
     expect(original.labels).toEqual(["Saved"])
-    await expect(next).resolves.toEqual({
-      actions: [action({ labels: ["Saved"] }), action({ action: "Shot" })],
-      changed: true
-    })
-    expect(data[timelineStorageKey("video")]).toEqual([
+    const actions = [
       action({ labels: ["Saved"] }),
-      action({ action: "Shot" })
-    ])
+      createdAction({ action: "Shot" })
+    ]
+    await expect(next).resolves.toEqual({ actions, changed: true })
+    expect(data[timelineStorageKey("video")]).toEqual(actions)
   })
 
   test("failed delete leaves the original action intact", async () => {
@@ -394,12 +368,7 @@ describe("serialized timeline persistence", () => {
     })
     storage.set.mockRejectedValueOnce(new Error("quota exceeded"))
     await expect(
-      store.execute("video", {
-        type: "delete",
-        team: "Team A",
-        action: "Pass",
-        start: 0
-      })
+      store.execute("video", { type: "delete", actionId: "stored-1" })
     ).rejects.toThrow("write failed")
     expect(data[timelineStorageKey("video")]).toEqual([action()])
   })
@@ -422,17 +391,221 @@ describe("serialized timeline persistence", () => {
     [action({ labels: null as unknown as string[] })],
     [action({ end: NaN })],
     [action({ start: -1 })],
-    [action(), { team: "Incomplete" }]
+    [action(), { team: "Incomplete" }],
+    [action(), action()],
+    ...[undefined, null, "", " ", 0, {}, []].map((id) => [
+      { ...legacyAction(), id }
+    ]),
+    Array(1)
   ])("does not overwrite malformed persisted data: %j", async (invalid) => {
-    const { data, storage, store } = memoryStorage({
+    const { data, storage, store, createId } = memoryStorage({
       [timelineStorageKey("video")]: invalid,
-      timelines: { video: [action()] }
+      timelines: { video: [legacyAction()] }
     })
     await expect(store.execute("video", start())).rejects.toThrow(
       "Existing data was not changed"
     )
     expect(storage.set).not.toHaveBeenCalled()
+    expect(createId).not.toHaveBeenCalled()
     expect(data[timelineStorageKey("video")]).toBe(invalid)
+  })
+
+  test.each(["stored-1", "", " ", undefined, null, 123])(
+    "fails closed if a generated ID is duplicate or malformed: %j",
+    async (generated) => {
+      const { data, storage } = memoryStorage({
+        [timelineStorageKey("video")]: [action()]
+      })
+      const store = createTimelineStore(storage, () => generated as string)
+      await expect(store.execute("video", start("Shot"))).rejects.toThrow(
+        "Timeline action ID could not be created"
+      )
+      expect(storage.set).not.toHaveBeenCalled()
+      expect(data[timelineStorageKey("video")]).toEqual([action()])
+    }
+  )
+})
+
+describe("persistent stable-ID migration", () => {
+  test("persists legacy IDs on read and reuses them after a store restart", async () => {
+    const original = legacyAction({ labels: ["Original"] })
+    const legacy = { "legacy-video": [original], other: [legacyAction()] }
+    const { data, storage, store } = memoryStorage({ timelines: legacy })
+
+    const read = await store.execute("legacy-video", { type: "read" })
+    const migrated = createdAction({ labels: ["Original"] })
+    expect(read).toEqual({ actions: [migrated], changed: false })
+    expect(storage.set).toHaveBeenCalledTimes(1)
+    expect(data[timelineStorageKey("legacy-video")]).toEqual([migrated])
+    expect(data.timelines).toBe(legacy)
+    expect(legacy["legacy-video"]).toEqual([original])
+    expect(original).not.toHaveProperty("id")
+
+    read.actions[0].labels.push("Only the returned copy")
+    read.actions[0].id = "Only the returned ID"
+    const unexpectedId = jest.fn(() => "must-not-be-generated")
+    const restarted = createTimelineStore(storage, unexpectedId)
+    await expect(
+      restarted.execute("legacy-video", { type: "read" })
+    ).resolves.toEqual({
+      actions: [migrated],
+      changed: false
+    })
+    expect(unexpectedId).not.toHaveBeenCalled()
+    expect(storage.get.mock.calls).toEqual([
+      [[timelineStorageKey("legacy-video")]],
+      [["timelines"]],
+      [[timelineStorageKey("legacy-video")]]
+    ])
+    await restarted.execute("legacy-video", {
+      type: "label",
+      actionId: migrated.id,
+      label: "New label"
+    })
+    expect(data[timelineStorageKey("legacy-video")]).toEqual([
+      createdAction({ labels: ["Original", "New label"] })
+    ])
+    expect(legacy["legacy-video"]).toEqual([
+      legacyAction({ labels: ["Original"] })
+    ])
+  })
+
+  test("migrates existing per-video records while preserving IDs already present", async () => {
+    const original = [
+      legacyAction({ end: 10 }),
+      action({ id: "retained", start: 10 })
+    ]
+    const { data, storage, store, createId } = memoryStorage({
+      [timelineStorageKey("video")]: original
+    })
+    const result = await store.execute("video", { type: "read" })
+    expect(result.actions).toEqual([
+      createdAction({ end: 10 }),
+      action({ id: "retained", start: 10 })
+    ])
+    expect(storage.set).toHaveBeenCalledTimes(1)
+    expect(createId).toHaveBeenCalledTimes(1)
+    expect(original[0]).not.toHaveProperty("id")
+    const restarted = createTimelineStore(storage, () => "unexpected")
+    expect(await restarted.execute("video", { type: "read" })).toEqual(result)
+    expect(data[timelineStorageKey("video")]).toEqual(result.actions)
+    expect(storage.set).toHaveBeenCalledTimes(1)
+  })
+
+  test("separate tabs wait for migration and receive identical durable IDs", async () => {
+    const { data, storage, store, createId } = memoryStorage({
+      timelines: {
+        video: [legacyAction(), legacyAction({ start: 10, end: 20 })]
+      }
+    })
+    const saving = deferred()
+    const releaseSave = deferred()
+    storage.set.mockImplementationOnce(async (items) => {
+      saving.resolve()
+      await releaseSave.promise
+      Object.assign(data, items)
+    })
+    const firstResponse = jest.fn()
+    const firstTab = store.execute("video", { type: "read" }).then((result) => {
+      firstResponse(result)
+      return result
+    })
+    await saving.promise
+    const secondTab = store.execute("video", { type: "read" })
+    expect(firstResponse).not.toHaveBeenCalled()
+    expect(storage.get).toHaveBeenCalledTimes(2)
+    expect(data[timelineStorageKey("video")]).toBeUndefined()
+    releaseSave.resolve()
+    expect(await secondTab).toEqual(await firstTab)
+    expect(createId).toHaveBeenCalledTimes(2)
+    expect(storage.set).toHaveBeenCalledTimes(1)
+  })
+
+  test.each(["legacy", "per-video"])(
+    "failed %s migration exposes no IDs and leaves saved data unchanged",
+    async (source) => {
+      const original = [legacyAction({ labels: ["Saved"] })]
+      const legacy = { video: original }
+      const initial =
+        source === "legacy"
+          ? { timelines: legacy }
+          : { [timelineStorageKey("video")]: original }
+      const { data, storage, store } = memoryStorage(initial)
+      storage.set.mockRejectedValueOnce(new Error("interrupted migration"))
+      await expect(store.execute("video", { type: "read" })).rejects.toThrow(
+        "Your changes were not saved"
+      )
+      expect(original).toEqual([legacyAction({ labels: ["Saved"] })])
+      if (source === "legacy") {
+        expect(data[timelineStorageKey("video")]).toBeUndefined()
+        expect(data.timelines).toBe(legacy)
+      } else {
+        expect(data[timelineStorageKey("video")]).toBe(original)
+      }
+      const retry = await store.execute("video", { type: "read" })
+      expect(retry.actions).toEqual([createdAction({ labels: ["Saved"] }, 2)])
+      const restarted = createTimelineStore(storage, () => "unexpected")
+      expect(await restarted.execute("video", { type: "read" })).toEqual(retry)
+    }
+  )
+
+  test("a failed edit after successful migration cannot alter its durable snapshot", async () => {
+    const original = legacyAction({ labels: ["Saved"] })
+    const { data, storage, store } = memoryStorage({
+      timelines: { video: [original] }
+    })
+    storage.set.mockImplementationOnce(async (items) => {
+      Object.assign(data, items)
+    })
+    storage.set.mockRejectedValueOnce(new Error("interrupted edit"))
+    await expect(
+      store.execute("video", {
+        type: "label",
+        actionId: "generated-1",
+        label: "Must not survive"
+      })
+    ).rejects.toThrow("Your changes were not saved")
+    expect(data[timelineStorageKey("video")]).toEqual([
+      createdAction({ labels: ["Saved"] })
+    ])
+    expect(original).toEqual(legacyAction({ labels: ["Saved"] }))
+  })
+
+  test("validates the entire legacy array before assigning any IDs", async () => {
+    const legacy = { video: [legacyAction(), action(), action()] }
+    const { storage, store, createId } = memoryStorage({ timelines: legacy })
+    await expect(store.execute("video", { type: "read" })).rejects.toThrow(
+      "Existing data was not changed"
+    )
+    expect(createId).not.toHaveBeenCalled()
+    expect(storage.set).not.toHaveBeenCalled()
+    expect(legacy.video[0]).not.toHaveProperty("id")
+  })
+
+  test("a generated migration ID cannot collide with a later persisted ID", async () => {
+    const original = [legacyAction(), action({ id: "generated-1" })]
+    const { storage, store, data } = memoryStorage({
+      [timelineStorageKey("video")]: original
+    })
+    await expect(store.execute("video", { type: "read" })).rejects.toThrow(
+      "Timeline action ID could not be created"
+    )
+    expect(storage.set).not.toHaveBeenCalled()
+    expect(data[timelineStorageKey("video")]).toBe(original)
+    expect(original[0]).not.toHaveProperty("id")
+  })
+
+  test("duplicate generated IDs abort migration without a partial write", async () => {
+    const original = [legacyAction(), legacyAction({ start: 10 })]
+    const { storage, data } = memoryStorage({
+      [timelineStorageKey("video")]: original
+    })
+    const store = createTimelineStore(storage, () => "duplicate")
+    await expect(store.execute("video", { type: "read" })).rejects.toThrow(
+      "Timeline action ID could not be created"
+    )
+    expect(storage.set).not.toHaveBeenCalled()
+    expect(data[timelineStorageKey("video")]).toBe(original)
   })
 })
 
@@ -464,23 +637,41 @@ describe("timeline message validation and service-worker responses", () => {
     request({ ...start(), start: NaN }),
     request({ ...start(), start: Infinity }),
     request({ ...start(), start: "0" }),
-    request({ type: "stop", team: "A", action: "Pass" }),
-    request({ type: "label", team: "A", action: "Pass", label: {} }),
-    ...["stop", "label"].flatMap((type) =>
-      [undefined, null, -1, NaN, Infinity, "0"].map((expectedStart) =>
-        request({
-          type,
-          team: "Team A",
-          action: "Pass",
-          end: 1,
-          label: "Good",
-          expectedStart
-        })
+    request({
+      type: "stop",
+      team: "A",
+      action: "Pass",
+      end: 10,
+      expectedStart: 0
+    }),
+    request({
+      type: "label",
+      team: "A",
+      action: "Pass",
+      label: "Good",
+      expectedStart: 0
+    }),
+    request({ type: "delete", team: "A", action: "Pass", start: 0 }),
+    request({ type: "stop", actionId: "stored-1" }),
+    request({ type: "stop", actionId: "stored-1", end: -1 }),
+    request({ type: "label", actionId: "stored-1", label: {} }),
+    ...["stop", "label", "delete"].flatMap((type) =>
+      [undefined, null, "", " ", 0, [], {}].map((actionId) =>
+        request({ type, actionId, end: 1, label: "Good" })
       )
-    ),
-    request({ type: "delete", team: "A", action: "Pass" })
+    )
   ])("rejects malformed request %j", (invalid) => {
     expect(isTimelineRequest(invalid)).toBe(false)
+  })
+
+  test.each<TimelineOperation>([
+    { type: "read" },
+    start(),
+    { type: "stop", actionId: "stable-id", end: 0 },
+    { type: "label", actionId: "stable-id", label: "Good" },
+    { type: "delete", actionId: "stable-id" }
+  ])("accepts the stable-ID $type protocol", (operation) => {
+    expect(isTimelineRequest(request(operation))).toBe(true)
   })
 
   test("validates direct store calls before touching storage", async () => {
@@ -488,6 +679,12 @@ describe("timeline message validation and service-worker responses", () => {
     await expect(store.execute("../invalid", start())).rejects.toThrow(
       "Invalid timeline request"
     )
+    await expect(
+      store.execute("video", {
+        type: "delete",
+        actionId: ""
+      })
+    ).rejects.toThrow("Invalid timeline request")
     expect(storage.get).not.toHaveBeenCalled()
   })
 
@@ -544,8 +741,7 @@ describe("timeline message validation and service-worker responses", () => {
     })
     const listener = createTimelineMessageListener(store, "our-extension")
     const respond = jest.fn()
-    let received: Promise<TimelineResponse>
-    received = new Promise((resolve) => {
+    const received = new Promise<TimelineResponse>((resolve) => {
       expect(
         listener(request(start()), sender, (response) => {
           respond(response)
@@ -560,9 +756,9 @@ describe("timeline message validation and service-worker responses", () => {
     await expect(received).resolves.toEqual({
       ok: true,
       changed: true,
-      actions: [action()]
+      actions: [createdAction()]
     })
-    expect(data[timelineStorageKey("video")]).toEqual([action()])
+    expect(data[timelineStorageKey("video")]).toEqual([createdAction()])
   })
 
   test("storage errors never send modified actions or raw error details", async () => {
@@ -573,7 +769,7 @@ describe("timeline message validation and service-worker responses", () => {
       }
     }
     const listener = createTimelineMessageListener(
-      createTimelineStore(storage),
+      createTimelineStore(storage, () => "new-action"),
       "our-extension"
     )
     const response = await new Promise<TimelineResponse>((resolve) => {
@@ -586,9 +782,29 @@ describe("timeline message validation and service-worker responses", () => {
     expect(response).not.toHaveProperty("actions")
   })
 
+  test("ID generation errors are sanitized and do not return provisional actions", async () => {
+    const { storage } = memoryStorage({
+      timelines: { video: [legacyAction()] }
+    })
+    const listener = createTimelineMessageListener(
+      createTimelineStore(storage, () => {
+        throw new Error("private generation details")
+      }),
+      "our-extension"
+    )
+    const response = await new Promise<TimelineResponse>((resolve) => {
+      expect(listener(request(), sender, resolve)).toBe(true)
+    })
+    expect(response).toEqual({
+      ok: false,
+      error: "Timeline action ID could not be created."
+    })
+    expect(storage.set).not.toHaveBeenCalled()
+  })
+
   test("conflicts return a safe error without changing the replacement interval", async () => {
     const { store, storage } = memoryStorage({
-      [timelineStorageKey("video")]: [action({ start: 20 })]
+      [timelineStorageKey("video")]: [action({ id: "replacement", start: 0 })]
     })
     const listener = createTimelineMessageListener(store, "our-extension")
     const response = await new Promise<TimelineResponse>((resolve) => {
@@ -596,10 +812,8 @@ describe("timeline message validation and service-worker responses", () => {
         listener(
           request({
             type: "stop",
-            team: "Team A",
-            action: "Pass",
-            end: 30,
-            expectedStart: 0
+            actionId: "old-id",
+            end: 30
           }),
           sender,
           resolve

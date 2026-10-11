@@ -33,7 +33,7 @@ jest.mock(
         <button
           onClick={() => {
             const action = actions[0]
-            if (action) onDelete(action.team, action.action, action.start)
+            if (action) onDelete(action.id)
           }}>
           Delete first
         </button>
@@ -54,6 +54,7 @@ const deferred = <T,>() => {
 }
 
 const action = (overrides: Partial<TimelineAction> = {}): TimelineAction => ({
+  id: "interval-a",
   team: "Team A",
   action: "Pass",
   start: 10000,
@@ -186,7 +187,7 @@ describe("content timeline safety", () => {
     "rejects stale %s controls after the URL changes and permits them after B loads",
     async (buttonName, operationType) => {
       const initial = action()
-      const nextVideo = action({ start: 2000 })
+      const nextVideo = action({ id: "interval-b", start: 2000 })
       const navigationRead = deferred<TimelineResponse>()
       sendMessage.mockResolvedValueOnce(success([initial]))
       await mount()
@@ -232,11 +233,7 @@ describe("content timeline safety", () => {
           videoId: "videoB",
           operation: expect.objectContaining({
             type: operationType,
-            team: "Team A",
-            action: "Pass",
-            ...(operationType === "stop"
-              ? { expectedStart: 2000 }
-              : { start: 2000 })
+            actionId: "interval-b"
           })
         })
       ])
@@ -379,8 +376,16 @@ describe("content timeline safety", () => {
   test("keeps captured label targets when another tab restarts an interval mid-batch", async () => {
     const firstLabel = deferred<TimelineResponse>()
     const first = action()
-    const second = action({ team: "Team B", start: 5000 })
-    const replacement = action({ team: "Team B", start: 15000 })
+    const second = action({
+      id: "interval-second",
+      team: "Team B",
+      start: 5000
+    })
+    const replacement = action({
+      id: "interval-replacement",
+      team: "Team B",
+      start: 5000
+    })
     sendMessage.mockResolvedValueOnce(success([first, second]))
     await mount()
     sendMessage.mockReturnValueOnce(firstLabel.promise)
@@ -398,9 +403,7 @@ describe("content timeline safety", () => {
         videoId: "videoA",
         operation: expect.objectContaining({
           type: "label",
-          team: "Team B",
-          action: "Pass",
-          expectedStart: 5000
+          actionId: "interval-second"
         })
       })
     )

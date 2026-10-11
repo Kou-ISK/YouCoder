@@ -584,10 +584,10 @@ const MainContent: React.FC = () => {
   const handleLabel = (label: string) =>
     runTimelineOperation(async () => {
       const videoId = getYoutubeVideoId()
-      const targets = getActions().filter((item) => item.end === undefined)
+      const targets = timelineActions.filter((item) => item.end === undefined)
       for (const item of targets) {
         if (videoId !== getYoutubeVideoId()) break
-        await addLabel(item.team, item.action, label, item.start)
+        await addLabel(item.id, label)
       }
     })
   const handleSaveTimeline = () =>
@@ -655,11 +655,11 @@ const MainContent: React.FC = () => {
 
   const handleActionToggle = (team: string, action: string) =>
     runTimelineOperation(async () => {
-      const active = getActions().some(
+      const active = timelineActions.find(
         (item) =>
           item.team === team && item.action === action && item.end === undefined
       )
-      if (active) await stopAction(team, action)
+      if (active) await stopAction(active.id)
       else await startAction(team, action)
     })
 
@@ -716,10 +716,8 @@ const MainContent: React.FC = () => {
             />
             <TimelinePanel
               actions={timelineActions}
-              onDelete={(team, action, start) => {
-                void runTimelineOperation(() =>
-                  deleteAction(team, action, start)
-                )
+              onDelete={(actionId) => {
+                void runTimelineOperation(() => deleteAction(actionId))
               }}
               onSave={handleSaveTimeline}
               onExportCSV={() => exportActionsToCSV(timelineActions)}

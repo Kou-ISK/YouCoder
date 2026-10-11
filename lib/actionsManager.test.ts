@@ -35,7 +35,11 @@ beforeEach(() => {
       Object.assign(database, clone(values))
     }
   )
-  store = createTimelineStore(chrome.storage.local)
+  let nextId = 0
+  store = createTimelineStore(
+    chrome.storage.local,
+    () => `interval-${++nextId}`
+  )
   ;(chrome.runtime.sendMessage as jest.Mock).mockImplementation(
     async ({ videoId, operation }) => {
       try {
@@ -86,7 +90,7 @@ describe("動画別の保存とナビゲーション", () => {
     navigate("videoB")
     expect(getActions()).toEqual([])
     await startAction("B", "シュート")
-    await addLabel("B", "シュート", "結果 - 成功")
+    await addLabel(getActions()[0].id, "結果 - 成功")
     expect(getActions()).toEqual([
       expect.objectContaining({ team: "B", labels: ["結果 - 成功"] })
     ])
@@ -98,12 +102,12 @@ describe("動画別の保存とナビゲーション", () => {
   })
   test("同時開始、終了、ラベル、削除が永続データに反映される", async () => {
     await Promise.all([startAction("A", "パス"), startAction("B", "パス")])
-    await addLabel("A", "パス", "成功")
-    await stopAction("A", "パス")
+    await addLabel(getActions()[0].id, "成功")
+    await stopAction(getActions()[0].id)
     expect(getActions()[0]).toMatchObject({ end: 10000, labels: ["成功"] })
-    expect(await deleteAction("A", "パス", 10000)).toBe(true)
+    expect(await deleteAction(getActions()[0].id)).toBe(true)
     expect(getActions()).toHaveLength(1)
-    expect(await deleteAction("missing", "パス", 0)).toBe(false)
+    await expect(deleteAction("missing-id")).rejects.toThrow()
   })
   test("二重クリックで進行中アクションを複製しない", async () => {
     await Promise.all([startAction("A", "パス"), startAction("A", "パス")])
@@ -128,7 +132,9 @@ describe("動画別の保存とナビゲーション", () => {
     await startAction("B", "シュート")
     resolveA!({
       ok: true,
-      actions: [{ team: "A", action: "パス", start: 0, labels: [] }],
+      actions: [
+        { id: "old-a", team: "A", action: "パス", start: 0, labels: [] }
+      ],
       changed: false
     })
     await a
@@ -157,7 +163,7 @@ describe("保存失敗を成功に見せない", () => {
       new Error("quota")
     )
     await expect(startAction("B", "シュート")).rejects.toThrow()
-    await expect(deleteAction("A", "パス", 10000)).rejects.toThrow()
+    await expect(deleteAction(getActions()[0].id)).rejects.toThrow()
     expect(getActions()).toHaveLength(1)
     expect(getActions()[0].team).toBe("A")
     expect(sessionStorage.setItem).not.toHaveBeenCalled()
@@ -190,8 +196,45 @@ describe("保存失敗を成功に見せない", () => {
 test("CSVファイルを生成してダウンロードする", () => {
   const anchor = { href: "", download: "", click: jest.fn() }
   jest.spyOn(document, "createElement").mockReturnValue(anchor as any)
-  exportActionsToCSV([{ team: "日本", action: "パス", start: 0, labels: [] }])
+  exportActionsToCSV([
+    { id: "csv-action", team: "日本", action: "パス", start: 0, labels: [] }
+  ])
   expect(URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob))
   expect(anchor.click).toHaveBeenCalled()
   expect(URL.revokeObjectURL).toHaveBeenCalled()
+})
+
+describe("永続IDで同時刻の記録を区別", () => {
+  test("停止後に同じ時刻へ戻って再開始しても古いIDで新記録を変更しない", async () => {
+    await startAction("A", "パス")
+    const originalId = getActions()[0].id
+    await stopAction(originalId)
+    await startAction("A", "パス")
+    const restarted = getActions()[1]
+    expect(restarted.start).toBe(getActions()[0].start)
+    expect(restarted.id).not.toBe(originalId)
+    await expect(addLabel(originalId, "誤ラベル")).rejects.toThrow()
+    await expect(stopAction(originalId)).rejects.toThrow()
+    expect(getActions()[1]).toEqual(restarted)
+    await deleteAction(restarted.id)
+    expect(getActions().map((item) => item.id)).toEqual([originalId])
+  })
+
+  test("旧データの同一tupleを移行し、それぞれ固有IDで削除できる", async () => {
+    const legacy = {
+      team: "A",
+      action: "パス",
+      start: 10000,
+      end: 10000,
+      labels: []
+    }
+    database.timelines = { videoA: [legacy, legacy] }
+    await loadTimelineForVideo("videoA")
+    const [first, second] = getActions()
+    expect(first.id).not.toBe(second.id)
+    await deleteAction(second.id)
+    await loadTimelineForVideo("videoA")
+    expect(getActions()).toEqual([first])
+    expect(database.timelines).toEqual({ videoA: [legacy, legacy] })
+  })
 })
