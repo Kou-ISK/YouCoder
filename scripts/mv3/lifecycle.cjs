@@ -73,6 +73,8 @@ async function test(name, fn) {
     await h.nav(p, "YC_TEST_SORT")
     const row = p.locator("tbody tr").filter({ hasText: "Alpha" })
     await row.hover()
+    // Force bypasses actionability checks, including pointer-event reception.
+    // This checks record identity, not whether a normal click can reach the control.
     await row.getByTitle("クリックして削除を開始").click({ force: true })
     await p.getByRole("columnheader", { name: /チーム/ }).click({ force: true })
     await p.getByRole("columnheader", { name: /チーム/ }).click({ force: true })
@@ -86,7 +88,7 @@ async function test(name, fn) {
       (await h.storage(popup, "YC_TEST_SORT")).map((x) => x.id),
       ["sort-Z"]
     )
-    return "Alpha remains confirmation target after descending sort; pointer clicks skipped only CSS stability wait"
+    return "Alpha remains confirmation target after descending sort; forced clicks verify identity, not pointer reachability"
   })
   await test("Actual MV3 service worker stop and message-triggered restart", async () => {
     const pageCDP = await context.newCDPSession(popup)

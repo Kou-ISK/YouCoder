@@ -52,6 +52,11 @@ not a claim that actual YouTube fullscreen/play controls were exercised.
 Below-player panels scroll with the page; their bottom may exceed the viewport
 height, while remaining within their workspace and horizontal page bounds.
 
+Workspace bounds constrain each panel independently. The application does not
+prevent panel-to-panel collisions: independent artifact review observed a
+**74 px-wide overlap** after moving a panel. Player non-obstruction does not
+establish that the panels remain mutually unobstructed.
+
 ## Synthetic MV3 results — 25/25 PASS
 
 Actual extension service worker, isolated content-script messages and
@@ -60,16 +65,23 @@ Only this fixture tab intercepts navigation; it fetches no real YouTube media.
 
 | Group | Results |
 | --- | --- |
-| Layout — 8/8 | Below-player anchor and control reachability; actual native Fullscreen API enter/exit via fixture pointer click; actual pointer move/resize; 900/375/320/wide containment; A→B→A plus anchor replacement; page reload restoration; 20 synchronous clicks with one delayed write followed by injected stop failure and recovery; collapse/reset |
+| Layout — 8/8 | Below-player anchor and native video control-area reachability; actual native Fullscreen API enter/exit via fixture pointer click; actual pointer move/resize; 900/375/320/wide outer panel/workspace containment; A→B→A plus anchor replacement; page reload restoration; 20 synchronous clicks with one delayed write followed by injected stop failure and recovery; collapse/reset |
 | Core — 12/12 | UI start/label/stop; A→B→A data/active isolation; URL-leading navigation; same-video two-tab starts/labels/synchronization; different-video isolation; same-time replacement rejects old stop/label/delete IDs; sorted deletion identity; legacy migration with durable IDs and retained backup; end=0 display/seek; malformed payload retained; storage-write failure and recovery; CSV BOM/CRLF/Japanese/quotes/newlines/formula literals |
 | Lifecycle — 4/4 | Old-ID rejection; sorted-row identity; actual `ServiceWorker.stopWorker`, target disappearance, message-triggered restart and subsequent write; browser identity and no insecure launch flags |
 | Browser restart — 1/1 | Full process exit and new process with the same generated profile preserves all five storage keys exactly, restores saved layout and permits a zero-end stop |
 
 The delayed-write check asserts both one interval and exactly one underlying
 storage write. Failures are injected only into the ephemeral test worker and
-restored in `finally`. Sorted deletion uses forced pointer dispatch to isolate
-record identity from animation; it does not establish unrestricted hover-button
-reachability. Native fixture fullscreen is not real YouTube fullscreen.
+restored in `finally`. Sorted deletion in both `core` and `lifecycle` uses
+`force: true`, which bypasses normal actionability checks, including whether
+the target receives pointer events. The PASS establishes selected-record ID
+preservation after sorting; it does not establish normal click reachability.
+Native fixture fullscreen is not real YouTube fullscreen.
+
+The **375 px check covers outer panel/workspace bounds only**. Horizontal
+scrolling to the timeline table's right-hand columns and access to every
+operation were not tested and are not included in its PASS. The same bounds
+assertions do not establish panel collision avoidance.
 
 ## Real YouTube — BLOCKED / NOT RUN
 
@@ -129,9 +141,14 @@ Screenshots include old/fixed geometry, narrow layout, synthetic fullscreen,
 save failure, migration/CSV and the public access blocker.
 
 DOM measurements and every case result were reviewed through CI logs. Artifact
-image transfer into the selected Cloud workspace failed through both available
-normal transfer routes, so **local pixel-by-pixel screenshot inspection is not
-claimed**. The image files remain available in the linked GitHub artifact.
+image transfer into this Cloud execution workspace failed through both available
+normal transfer routes, so this executor did not inspect the image pixels locally.
+The subsequent independent review, as reported in the task follow-up, obtained
+and visually inspected the official artifact for exact head `aa15008`, confirmed
+both CI runs and all 25 cases, and found no blocking issue for a normal develop
+merge. It also identified the overlap and narrow-table coverage limits above.
+This independent image review does not change the live YouTube BLOCKED status;
+no merge or Store submission was performed by this task.
 
 Local Node 22.23.3 / pnpm 9.15.9 verification also passed 22 suites / 402 tests,
 TypeScript and both production builds. Frozen lockfiles, production sources and

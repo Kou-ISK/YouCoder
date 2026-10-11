@@ -190,6 +190,8 @@ async function until(fn, limit = 5000) {
   await test("Delete confirmation remains on selected ID after sorting", async () => {
     const row = p.locator("tbody tr").filter({ hasText: "CrossA" })
     await row.hover()
+    // Force bypasses actionability checks, including pointer-event reception.
+    // This checks record identity, not whether a normal click can reach the control.
     await row.getByTitle("クリックして削除を開始").click({ force: true })
     await p.getByRole("columnheader", { name: /チーム/ }).click({ force: true })
     await p.getByRole("columnheader", { name: /チーム/ }).click({ force: true })
@@ -199,7 +201,7 @@ async function until(fn, limit = 5000) {
       async () => !(await h.storage(popup, A)).some((x) => x.team === "CrossA")
     )
     assert((await h.storage(popup, A)).some((x) => x.team === "UUID"))
-    return "only CrossA removed"
+    return "only CrossA removed; forced clicks verify identity, not pointer reachability"
   })
   await test("Legacy migration produces durable IDs and retains backup", async () => {
     const legacy = [
