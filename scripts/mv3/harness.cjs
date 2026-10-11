@@ -255,12 +255,23 @@ async function storage(popup, id) {
   )
 }
 async function seek(page, t) {
+  // Reloaded fixture media can expose currentTime before metadata is usable.
+  await page.waitForFunction(
+    () => document.querySelector("video")?.readyState >= 2,
+    null,
+    { polling: 100, timeout: 15000 }
+  )
   await page.locator("video").evaluate((v, t) => {
     v.pause()
     v.currentTime = t
   }, t)
   await page.waitForFunction(
-    (t) => Math.abs(document.querySelector("video").currentTime - t) < 0.01,
+    (t) => {
+      const v = document.querySelector("video")
+      return (
+        v.readyState >= 2 && !v.seeking && Math.abs(v.currentTime - t) < 0.01
+      )
+    },
     t,
     { polling: 100 }
   )

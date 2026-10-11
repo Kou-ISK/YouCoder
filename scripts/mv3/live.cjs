@@ -106,7 +106,7 @@ async function reachable(page, selector) {
   await page.screenshot({ path: out + "/public-initial.png" })
   const access = await page.evaluate(() => ({
     title: document.title,
-    publicText: document.body.innerText.slice(0, 2500),
+    publicText: document.body.innerText.slice(0, 180),
     playerRect: document
       .querySelector("#movie_player")
       ?.getBoundingClientRect()

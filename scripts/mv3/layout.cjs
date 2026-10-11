@@ -134,6 +134,16 @@ const rect = async (p) =>
   })
   await test("Rapid UI clicks produce one pending operation and recover after storage failure", async () => {
     await p.getByRole("button", { name: "配置をリセット" }).click()
+    console.log(
+      "Before reload-media readiness",
+      await p
+        .locator("video")
+        .evaluate((v) => ({
+          readyState: v.readyState,
+          seeking: v.seeking,
+          time: v.currentTime
+        }))
+    )
     await h.seek(p, 12)
     const worker = context
       .serviceWorkers()
@@ -160,6 +170,26 @@ const rect = async (p) =>
       await until(async () => (await h.storage(popup, h.A))?.length === 1)
       const a = await h.storage(popup, h.A)
       assert.equal(a[0].end, undefined)
+    } catch (e) {
+      const diagnostic = {
+        storage: await h.storage(popup, h.A),
+        alerts: await p.getByRole("alert").allTextContents(),
+        media: await p
+          .locator("video")
+          .evaluate((v) => ({
+            readyState: v.readyState,
+            seeking: v.seeking,
+            time: v.currentTime,
+            error: v.error?.message
+          })),
+        url: p.url()
+      }
+      fs.writeFileSync(
+        out + "/rapid-diagnostic.json",
+        JSON.stringify(diagnostic, null, 2)
+      )
+      console.log(JSON.stringify(diagnostic))
+      throw e
     } finally {
       await worker.evaluate(() => {
         chrome.storage.local.set = globalThis.__savedSet
