@@ -49,6 +49,26 @@ async function setup() {
   if (process.env.YOUCODER_HEADED !== "1") args.push("--headless=new")
   args.push("about:blank")
   const executable = process.env.YOUCODER_BROWSER || chromium.executablePath()
+  const environment = {
+    status: "STARTING",
+    extensionPath,
+    profile,
+    executable,
+    args,
+    manifest,
+    node: process.version,
+    platform: process.platform,
+    playwright: require(
+      path.join(
+        process.env.YOUCODER_PLAYWRIGHT_MODULE || "playwright",
+        "package.json"
+      )
+    ).version
+  }
+  fs.writeFileSync(
+    path.join(out, "environment.json"),
+    JSON.stringify(environment, null, 2)
+  )
   child = spawn(executable, args, { stdio: ["ignore", log, log] })
   fs.closeSync(log)
   let spawnError
@@ -59,9 +79,9 @@ async function setup() {
   await until(
     () => {
       if (spawnError) throw spawnError
-      if (child.exitCode !== null)
+      if (child.exitCode !== null || child.signalCode !== null)
         throw Error(
-          `Browser exited ${child.exitCode}; inspect browser.log. Do not disable sandbox/security to work around this.`
+          `Browser exited ${child.exitCode ?? child.signalCode}; inspect browser.log. Do not disable sandbox/security to work around this.`
         )
       return fs.existsSync(portFile)
     },
@@ -92,6 +112,8 @@ async function setup() {
     path.join(out, "environment.json"),
     JSON.stringify(
       {
+        ...environment,
+        status: "RUNNING",
         browser: browser.version(),
         extensionId,
         extensionPath,

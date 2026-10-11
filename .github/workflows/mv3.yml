@@ -1,0 +1,78 @@
+name: MV3 browser verification
+
+on:
+  push:
+    branches: [main, develop, "feature/*"]
+  pull_request:
+    branches: [main, develop, "release/*", "hotfix/*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mv3-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    # This supported runner allows Chromium's normal user-namespace sandbox.
+    # Do not change sysctls, AppArmor, sandbox flags or TLS settings.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - run: npm install -g pnpm@9.15.9
+      - name: Install official Playwright runtime
+        run: |
+          npm install --prefix "$RUNNER_TEMP/pw" playwright@1.64.0
+          node "$RUNNER_TEMP/pw/node_modules/playwright/cli.js" install --with-deps chromium
+          echo "YOUCODER_PLAYWRIGHT_MODULE=$RUNNER_TEMP/pw/node_modules/playwright" >> "$GITHUB_ENV"
+          echo "YOUCODER_TEST_OUTPUT=$RUNNER_TEMP/mv3-evidence" >> "$GITHUB_ENV"
+      - name: Build historical baseline and current application serially
+        env:
+          PARCEL_WORKERS: 1
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/baseline" fbf732f25bcd1d0df5ecbeb9a4c3371020662080
+          (cd "$RUNNER_TEMP/baseline" && pnpm install --frozen-lockfile && pnpm build)
+          pnpm install --frozen-lockfile
+          pnpm build
+          node scripts/mv3/fixture-check.cjs
+          mkdir -p "$YOUCODER_TEST_OUTPUT"
+          git rev-parse HEAD > "$YOUCODER_TEST_OUTPUT/head.txt"
+      - name: Reproduce historical defects
+        run: |
+          YOUCODER_EXTENSION_DIR="$RUNNER_TEMP/baseline/build/chrome-mv3-prod" \
+          YOUCODER_EXPECT=baseline YOUCODER_TEST_OUTPUT="$YOUCODER_TEST_OUTPUT/baseline" \
+          node scripts/mv3/run.cjs reproduce
+      - name: Verify corrected geometry
+        if: ${{ !cancelled() }}
+        run: |
+          YOUCODER_EXPECT=fixed YOUCODER_TEST_OUTPUT="$YOUCODER_TEST_OUTPUT/fixed" \
+          node scripts/mv3/run.cjs reproduce
+      - name: Verify actual MV3 data and lifecycle
+        if: ${{ !cancelled() }}
+        run: |
+          YOUCODER_TEST_OUTPUT="$YOUCODER_TEST_OUTPUT/synthetic" node scripts/mv3/run.cjs
+      - name: Observe public YouTube separately
+        if: ${{ !cancelled() }}
+        run: |
+          YOUCODER_TEST_OUTPUT="$YOUCODER_TEST_OUTPUT/public-youtube" node scripts/mv3/run.cjs live
+      - name: Preserve generated evidence only
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: mv3-evidence-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/mv3-evidence/**/*.json
+            ${{ runner.temp }}/mv3-evidence/**/*.png
+            ${{ runner.temp }}/mv3-evidence/**/*.csv
+            ${{ runner.temp }}/mv3-evidence/head.txt
+          retention-days: 7
+          if-no-files-found: warn

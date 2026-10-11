@@ -68,3 +68,28 @@ bdbc02f: 22 suites / 402 tests, TypeScript, production MV3 build and [CI](https:
 After synthetic tests, use a **separate clean unrouted tab/profile** for a minimum ordinary public YouTube check. Observe controls and their `elementFromPoint` reachability with the extension shown, native player fullscreen enter/exit, captions when available, theater mode, real YouTube SPA navigation without document reload, and returned panel geometry. Keep playback short and CPU low. Do not download media, bypass ads, sign in, post, or accept new permissions. If no advertisement or caption track appears, mark that case **NOT RUN**; synthetic geometry does not prove live-ad/caption compatibility. Unsupported YouTube page structures should leave the extension UI absent.
 
 Before Store submission, privacy disclosures/URL, placeholder package metadata, unused Sheets prototype/dependency cleanup, real storage quota/device failure handling, and current Store policy review remain. No merge or Store submission is authorized by this handoff.
+
+
+## Automated Cloud execution
+
+`.github/workflows/mv3.yml` runs on the PR's exact head on GitHub's supported
+Ubuntu 22.04 runner, with Node 22, pnpm 9.15.9, frozen application installs,
+and isolated Playwright 1.64.0 plus its official full Chromium distribution.
+It builds the historical baseline first and the checked-out head second.
+No sandbox, TLS, site-isolation, sysctl or AppArmor exceptions are applied.
+A blocked browser setup is not a product pass.
+
+`YOUCODER_TEST_OUTPUT` now selects the suite directory. `suite.json` records
+process exit status. `live` is an explicit, separate case with an empty profile
+and no request routing. It observes a short ordinary public video, native
+controls, fullscreen/theater, viewport changes and ordinary related-link SPA
+navigation where available. Caption control reachability is separate from
+rendered captions; absent ads/captions are NOT RUN. Site access failures are
+BLOCKED even if the observation command exits successfully. Read the case
+statuses, not just the workflow's green check.
+
+The CI artifact retains only generated JSON, screenshots and synthetic CSV for
+7 days. Profiles, cookies, browser logs, network archives and credentials are
+not uploaded. Screenshots from `public-youtube` are public unauthenticated page
+observations; other screenshots are synthetic. The local runner still uploads
+nothing.
