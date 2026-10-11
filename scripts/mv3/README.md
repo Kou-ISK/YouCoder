@@ -4,7 +4,7 @@ Application-under-test revision: **`bdbc02fdfff51d6d973e4844105f5adb1c530414`**.
 Known-bad overlay revision: **`fbf732f25bcd1d0df5ecbeb9a4c3371020662080`**.
 Zero-end fix: `a65de5a3fb9af325e1b8f753f2134fda215a3cc8`.
 
-These scripts were ported from the private installed-Chrome checks and executed on official Cloud CI Chromium/CfT 156.0.8078.4. **Historical reproduction, corrected geometry and all 25 synthetic MV3 cases passed; real YouTube was blocked by its sign-in/bot challenge.** See [the Cloud verification record](../../docs/mv3-cloud-verification.md) for exact heads, CI, artifact links, runner corrections and unverified live cases. Production application code remains unchanged from bdbc02f.
+These scripts were ported from the private installed-Chrome checks and executed on official Cloud CI Chromium/CfT 156.0.8078.4. **Historical reproduction, corrected geometry and all 25 synthetic MV3 cases passed; real YouTube was blocked by its sign-in/bot challenge.** See [the Cloud verification record](../../docs/mv3-cloud-verification.md) for exact heads, CI, artifact links, runner corrections and unverified live cases. This records the PR12 verification; later publication-preparation changes are tracked in the [release checklist](../../docs/release-checklist.md).
 
 ## Runtime and launch
 
@@ -67,7 +67,7 @@ bdbc02f: 22 suites / 402 tests, TypeScript, production MV3 build and [CI](https:
 
 After synthetic tests, use a **separate clean unrouted tab/profile** for a minimum ordinary public YouTube check. Observe controls and their `elementFromPoint` reachability with the extension shown, native player fullscreen enter/exit, captions when available, theater mode, real YouTube SPA navigation without document reload, and returned panel geometry. Keep playback short and CPU low. Do not download media, bypass ads, sign in, post, or accept new permissions. If no advertisement or caption track appears, mark that case **NOT RUN**; synthetic geometry does not prove live-ad/caption compatibility. Unsupported YouTube page structures should leave the extension UI absent.
 
-Before Store submission, privacy disclosures/URL, placeholder package metadata, unused Sheets prototype/dependency cleanup, real storage quota/device failure handling, and current Store policy review remain. No merge or Store submission is authorized by this handoff.
+For current publication preparation and remaining blockers, use the [release checklist](../../docs/release-checklist.md). This historical handoff itself does not authorize Store submission.
 
 
 ## Automated Cloud execution
@@ -78,6 +78,12 @@ and isolated Playwright 1.64.0 plus its official full Chromium distribution.
 It builds the historical baseline first and the checked-out head second.
 No sandbox, TLS, site-isolation, sysctl or AppArmor exceptions are applied.
 A blocked browser setup is not a product pass.
+
+PR/push runs execute the synthetic suites without visiting public YouTube.
+Public observation requires a manual workflow dispatch with
+`observe_public_youtube` selected (or an explicit local `live` invocation).
+Automatic CI therefore leaves live checks NOT RUN; the earlier bot BLOCKED
+result remains unresolved. This avoids repeating the same blocked access per PR.
 
 `YOUCODER_TEST_OUTPUT` now selects the suite directory. `suite.json` records
 process exit status. `live` is an explicit, separate case with an empty profile
