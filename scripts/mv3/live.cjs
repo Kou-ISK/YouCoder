@@ -129,6 +129,17 @@ async function reachable(page, selector) {
     )
     return
   }
+  if (/confirm you.re not a bot|unusual traffic/i.test(access.publicText)) {
+    record(
+      "public playback",
+      "BLOCKED",
+      "YouTube sign-in/bot challenge: " + access.publicText
+    )
+    skip(
+      "Public playback blocked by YouTube; no challenge bypass or login attempted"
+    )
+    return
+  }
   if (!(await page.locator("#movie_player").isVisible())) {
     record(
       "public playback",

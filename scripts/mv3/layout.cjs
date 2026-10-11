@@ -54,6 +54,42 @@ const rect = async (p) =>
     assert.equal(g.hit, "VIDEO")
     return g
   })
+  await test("Synthetic native fullscreen excludes panels and exit restores geometry", async () => {
+    const before = await rect(p)
+    await p.evaluate(() => {
+      const button = document.createElement("button")
+      button.id = "fixture-fullscreen"
+      button.textContent = "Fixture fullscreen"
+      button.style.cssText = "position:absolute;top:0;left:0"
+      button.onclick = () => document.querySelector("video").requestFullscreen()
+      document.body.append(button)
+    })
+    try {
+      await p.locator("#fixture-fullscreen").click()
+      await p.waitForFunction(
+        () => document.fullscreenElement?.tagName === "VIDEO"
+      )
+      assert.equal(
+        await p.evaluate(() =>
+          document.fullscreenElement.contains(
+            document.querySelector("plasmo-csui")
+          )
+        ),
+        false
+      )
+      await p.screenshot({ path: out + "/synthetic-fullscreen.png" })
+      await p.evaluate(() => document.exitFullscreen())
+      await p.waitForFunction(() => !document.fullscreenElement)
+      assert.deepEqual(await rect(p), before)
+      return "Native video Fullscreen API via fixture pointer click; not real YouTube controls"
+    } finally {
+      await p.evaluate(async () => {
+        if (document.fullscreenElement) await document.exitFullscreen()
+        document.querySelector("#fixture-fullscreen")?.remove()
+        scrollTo(0, 0)
+      })
+    }
+  })
   await test("Actual pointer resize / move constrained to workspace", async () => {
     const resize = p.getByRole("button", { name: "タグ付けのサイズを変更" })
     await resize.scrollIntoViewIfNeeded()
@@ -136,24 +172,35 @@ const rect = async (p) =>
     await p.getByRole("button", { name: "配置をリセット" }).click()
     console.log(
       "Before reload-media readiness",
-      await p
-        .locator("video")
-        .evaluate((v) => ({
-          readyState: v.readyState,
-          seeking: v.seeking,
-          time: v.currentTime
-        }))
+      await p.locator("video").evaluate((v) => ({
+        readyState: v.readyState,
+        seeking: v.seeking,
+        time: v.currentTime
+      }))
     )
     await h.seek(p, 12)
     const worker = context
       .serviceWorkers()
       .find((w) => w.url().includes(h.extensionId))
     assert(worker)
+    const receiverProbe = await worker.evaluate(async () => {
+      const unbound = chrome.storage.local.set
+      try {
+        await unbound({})
+        return { unbound: "accepted" }
+      } catch (e) {
+        return { unbound: "rejected", error: e.message }
+      }
+    })
+    console.log("Chrome storage receiver probe", receiverProbe)
     await worker.evaluate(() => {
       globalThis.__savedSet = chrome.storage.local.set
+      globalThis.__delayedWrites = 0
       chrome.storage.local.set = async (...args) => {
+        globalThis.__delayedWrites++
         await new Promise((r) => setTimeout(r, 400))
-        return globalThis.__savedSet(...args)
+        // Native StorageArea methods require their original receiver.
+        return Reflect.apply(globalThis.__savedSet, chrome.storage.local, args)
       }
     })
     try {
@@ -170,18 +217,17 @@ const rect = async (p) =>
       await until(async () => (await h.storage(popup, h.A))?.length === 1)
       const a = await h.storage(popup, h.A)
       assert.equal(a[0].end, undefined)
+      assert.equal(await worker.evaluate(() => globalThis.__delayedWrites), 1)
     } catch (e) {
       const diagnostic = {
         storage: await h.storage(popup, h.A),
         alerts: await p.getByRole("alert").allTextContents(),
-        media: await p
-          .locator("video")
-          .evaluate((v) => ({
-            readyState: v.readyState,
-            seeking: v.seeking,
-            time: v.currentTime,
-            error: v.error?.message
-          })),
+        media: await p.locator("video").evaluate((v) => ({
+          readyState: v.readyState,
+          seeking: v.seeking,
+          time: v.currentTime,
+          error: v.error?.message
+        })),
         url: p.url()
       }
       fs.writeFileSync(
@@ -194,6 +240,7 @@ const rect = async (p) =>
       await worker.evaluate(() => {
         chrome.storage.local.set = globalThis.__savedSet
         delete globalThis.__savedSet
+        delete globalThis.__delayedWrites
       })
     }
     const before = await h.storage(popup, h.A)
