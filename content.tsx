@@ -5,6 +5,7 @@ import cssText from "data-text:~/styles/style.css"
 import type { PlasmoContentScript } from "plasmo"
 import React, { useEffect, useRef, useState } from "react"
 
+import { AnalysisWorkspace } from "./components/AnalysisWorkspace"
 import {
   addLabel,
   deleteAction,
@@ -21,6 +22,15 @@ export const config: PlasmoContentScript = {
   matches: ["https://www.youtube.com/*"]
 }
 
+// Unknown layouts must fail closed instead of covering playback or ads.
+export const getInlineAnchor = async () => {
+  if (window.location.pathname !== "/watch") return null
+  const element = document.querySelector(
+    "ytd-watch-flexy #below, ytd-watch-grid #below"
+  )
+  return element ? { element, insertPosition: "afterbegin" as const } : null
+}
+
 // スタイル要素を作成する関数
 const createStyle = (cssText: string): HTMLStyleElement => {
   const style = document.createElement("style")
@@ -28,7 +38,10 @@ const createStyle = (cssText: string): HTMLStyleElement => {
   return style
 }
 
-export const getStyle = () => createStyle(cssText)
+export const getStyle = () =>
+  createStyle(
+    `${cssText}\n:host { display: block; width: 100%; min-width: 0; position: relative; isolation: isolate; }`
+  )
 
 // ネットワークエラー監視のための設定
 let networkErrorCount = 0
@@ -664,15 +677,12 @@ const MainContent: React.FC = () => {
     })
 
   return (
-    <div style={{ position: "relative", zIndex: 9999 }}>
+    <div style={{ position: "relative", width: "100%", minWidth: 0 }}>
       {isVideoPage && showExtension && (
         <>
           {videoError && (
             <div
               style={{
-                position: "fixed",
-                top: "10px",
-                right: "10px",
                 backgroundColor: "#ff4444",
                 color: "white",
                 padding: "10px",
@@ -690,14 +700,14 @@ const MainContent: React.FC = () => {
           {storageError && (
             <div
               role="alert"
-              className="fixed top-12 right-2 z-[10001] max-w-sm rounded bg-red-700 p-3 text-sm text-white">
+              className="my-2 rounded bg-red-700 p-3 text-sm text-white">
               {storageError}
             </div>
           )}
           {isSaving && (
             <div
               role="status"
-              className="fixed top-2 right-2 z-[10001] rounded bg-white p-2 text-sm text-gray-900">
+              className="my-2 rounded bg-white p-2 text-sm text-gray-900">
               記録を保存中…
             </div>
           )}
@@ -705,23 +715,25 @@ const MainContent: React.FC = () => {
             disabled={isSaving}
             aria-busy={isSaving}
             className="m-0 min-w-0 border-0 p-0">
-            <TaggingPanel
-              teams={teams}
-              actions={actions}
-              labels={filteredLabels}
-              activeActions={activeActions}
-              activeLabels={activeLabels}
-              onActionToggle={handleActionToggle}
-              onLabelClick={handleLabel}
-            />
-            <TimelinePanel
-              actions={timelineActions}
-              onDelete={(actionId) => {
-                void runTimelineOperation(() => deleteAction(actionId))
-              }}
-              onSave={handleSaveTimeline}
-              onExportCSV={() => exportActionsToCSV(timelineActions)}
-            />
+            <AnalysisWorkspace>
+              <TaggingPanel
+                teams={teams}
+                actions={actions}
+                labels={filteredLabels}
+                activeActions={activeActions}
+                activeLabels={activeLabels}
+                onActionToggle={handleActionToggle}
+                onLabelClick={handleLabel}
+              />
+              <TimelinePanel
+                actions={timelineActions}
+                onDelete={(actionId) => {
+                  void runTimelineOperation(() => deleteAction(actionId))
+                }}
+                onSave={handleSaveTimeline}
+                onExportCSV={() => exportActionsToCSV(timelineActions)}
+              />
+            </AnalysisWorkspace>
           </fieldset>
         </>
       )}

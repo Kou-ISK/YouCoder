@@ -1,9 +1,9 @@
 import React from "react"
 
 import { logger } from "../../utils/errorHandling"
+import { useWorkspacePanel } from "../AnalysisWorkspace"
 import { DraggableResizable } from "../DraggableResizable"
 import { useTimelinePanel } from "./hooks/useTimelinePanel"
-import { useTimelinePanelPosition } from "./hooks/useTimelinePanelPosition"
 import { TimelinePanelContent } from "./TimelinePanelContent"
 import type { TimelinePanelProps } from "./types"
 
@@ -28,10 +28,8 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   )
 
   // パネルの位置とサイズの管理
-  const { position, size, handlePositionChange, handleSizeChange } =
-    useTimelinePanelPosition({
-      storageKey: "timelinePanel"
-    })
+  const { position, size, bounds, handlePositionChange, handleSizeChange } =
+    useWorkspacePanel("timelinePanel")
 
   // タイムラインのビジネスロジック
   const timelinePanelState = useTimelinePanel({
@@ -44,11 +42,13 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
     <DraggableResizable
       initialPosition={position}
       initialSize={size}
+      bounds={bounds}
+      title="タイムライン"
       minWidth={MIN_WIDTH}
       minHeight={MIN_HEIGHT}
       onPositionChange={handlePositionChange}
       onSizeChange={handleSizeChange}
-      className="rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100/40 transition-all duration-300 ease-in-out hover:shadow-2xl"
+      className="rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100/40 transition-shadow duration-300 ease-in-out hover:shadow-2xl"
       style={{
         zIndex: 10000,
         borderRadius: "8px",

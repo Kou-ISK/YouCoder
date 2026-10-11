@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import React from "react"
 
-import MainContent from "./content"
+import MainContent, { getInlineAnchor } from "./content"
 import { resetState } from "./lib/actionsManager"
 import type { TimelineAction, TimelineResponse } from "./lib/timelineStore"
 
@@ -128,6 +128,18 @@ beforeEach(() => {
 })
 
 afterEach(cleanup)
+
+test("mounts only below a recognized watch player and never falls back to an overlay", async () => {
+  expect(await getInlineAnchor()).toBeNull()
+  const below = document.createElement("div")
+  ;(document.querySelector as jest.Mock).mockReturnValue(below)
+  expect(await getInlineAnchor()).toEqual({
+    element: below,
+    insertPosition: "afterbegin"
+  })
+  window.history.replaceState({}, "", "/results?search_query=sports")
+  expect(await getInlineAnchor()).toBeNull()
+})
 
 describe("content timeline safety", () => {
   test("does not overwrite a committed operation with a delayed background read", async () => {

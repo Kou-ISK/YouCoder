@@ -13,6 +13,8 @@ export interface DraggableResizableProps {
   initialSize: Size
   minWidth?: number
   minHeight?: number
+  bounds?: Size
+  title?: string
   className?: string
   style?: React.CSSProperties
   onPositionChange?: (position: Position) => void
