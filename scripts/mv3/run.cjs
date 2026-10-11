@@ -1,4 +1,4 @@
-// Run serially. Evidence lives outside the checkout and is never uploaded.
+// Run serially. This runner writes local evidence; CI separately retains an allowlist.
 const { spawnSync } = require("node:child_process")
 const fs = require("node:fs"),
   path = require("node:path"),
@@ -10,7 +10,7 @@ const selected = requested.length
   : ["layout", "core", "lifecycle", "restart"]
 if (selected.some((x) => !allowed.includes(x))) {
   console.error(
-    "Usage: node scripts/mv3/run.cjs [reproduce|layout|core|lifecycle|restart ...]"
+    "Usage: node scripts/mv3/run.cjs [reproduce|layout|core|lifecycle|restart|live ...]"
   )
   process.exit(2)
 }

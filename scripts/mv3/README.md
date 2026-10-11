@@ -4,7 +4,7 @@ Application-under-test revision: **`bdbc02fdfff51d6d973e4844105f5adb1c530414`**.
 Known-bad overlay revision: **`fbf732f25bcd1d0df5ecbeb9a4c3371020662080`**.
 Zero-end fix: `a65de5a3fb9af325e1b8f753f2134fda215a3cc8`.
 
-These scripts were ported from the private installed-Chrome checks. Their syntax and generated fixture have been checked, but **the portable runner has not yet been executed in Cloud**. Run it and inspect the JSON/screenshots before claiming a browser pass. The application code is unchanged by this handoff commit.
+These scripts were ported from the private installed-Chrome checks and executed on official Cloud CI Chromium/CfT 156.0.8078.4. **Historical reproduction, corrected geometry and all 25 synthetic MV3 cases passed; real YouTube was blocked by its sign-in/bot challenge.** See [the Cloud verification record](../../docs/mv3-cloud-verification.md) for exact heads, CI, artifact links, runner corrections and unverified live cases. Production application code remains unchanged from bdbc02f.
 
 ## Runtime and launch
 
