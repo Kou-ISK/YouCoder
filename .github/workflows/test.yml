@@ -45,3 +45,13 @@ jobs:
 
       - name: Build extension
         run: pnpm build
+
+      - name: Audit production manifest and bundle
+        run: node scripts/release/audit-bundle.cjs > "$RUNNER_TEMP/release-bundle-audit.json"
+
+      - name: Preserve production audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-bundle-audit
+          path: ${{ runner.temp }}/release-bundle-audit.json
+          retention-days: 7

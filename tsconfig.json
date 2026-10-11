@@ -7,7 +7,7 @@
       "~*": ["./*"]
     },
     "baseUrl": ".",
-    "types": ["gapi", "gapi.auth2", "node", "jest", "chrome"],
+    "types": ["node", "jest", "chrome"],
     "jsx": "react-jsx"
   }
 }

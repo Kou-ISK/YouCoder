@@ -65,8 +65,6 @@ const defaultButtonSets: ButtonSet[] = [
 ]
 
 const Popup = () => {
-  const [spreadsheetId, setSpreadsheetId] = useState("")
-  const [authUrl, setAuthUrl] = useState<string | null>(null)
   const [teams, setTeams] = useState<string[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalInput, setModalInput] = useState("")

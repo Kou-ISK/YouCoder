@@ -1,5 +1,7 @@
 # YouCoder 要件定義書
 
+> この文書は初期構想を含み、実装済み機能の一覧ではありません。現在の使い方・保存・制約は[README](../README.md)と[データフロー監査](data-flow-audit.md)を参照してください。Google Sheets/OAuth連携、定期バックアップ、全データの復元は未提供です。未使用Sheets試作は公開準備で削除しました。
+
 ## 1. プロジェクト概要
 
 YouTubeの映像を視聴しながらスポーツ分析のための「アクション」と「ラベル」タグ付けを行うChrome拡張機能。
@@ -24,7 +26,7 @@ YouTubeの映像を視聴しながらスポーツ分析のための「アクシ�
 - **スタイル**: Tailwind CSS
 - **データ保存**:
   - ローカル: Chrome Storage API (JSON)
-  - エクスポート: CSV, Google Sheets API
+  - エクスポート: CSV（実装済み）、Google Sheets API（構想・未提供）
 - **開発環境**:
   - パッケージマネージャー: pnpm
   - テスト: Jest
