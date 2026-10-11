@@ -1,0 +1,58 @@
+# Timeline data-safety changes
+
+This branch is a **draft for review**, not a Store-ready release.
+
+## What changed
+
+- All timeline reads and mutations pass through a single MV3 background queue. Each operation reads the latest stored state, preventing one tab from overwriting another tab's edits.
+- New writes use `youCoder.timeline.<videoId>`. Existing `timelines[videoId]` entries are read when no new key exists and are left untouched. Malformed saved data fails closed instead of being replaced with an empty timeline.
+- Content-side state is scoped to the current video and guarded against delayed requests. Navigation and storage events refresh the timeline and active buttons together.
+- A write is acknowledged only after `chrome.storage.local.set` resolves. Session storage and memory are not reported as persistent saves. Failed or uncertain results are visible; controls show a saving state while an operation is pending.
+- Every interval has a persistent ID. Stop, label, and delete operations target that ID, so seeking back to an identical start time cannot make an old operation edit a replacement interval. Repeated identical labels are no-ops.
+- CSV uses elapsed seconds with explicit column names, quoted/escaped fields, UTF-8 BOM, CRLF, a plain-label column, and spreadsheet-formula neutralization. This changes the old epoch-date CSV schema.
+- API permissions are `storage` and `unlimitedStorage`; site access is limited to `https://www.youtube.com/*`. `unlimitedStorage` was already present in the original extension and is retained for large local timelines and safe migration without a quota regression. It does not grant website or network access. Injection and CSS access use the same YouTube scope.
+- A completed interval ending at zero displays `00:00.000` and remains seekable.
+- Panels mount in a recognized watch page's below-player area. Their move/resize handles stay inside a bounded workspace; narrow layouts stack vertically. Saved wide/narrow layouts restore on mount and are clamped to the available width. Old viewport-based coordinates are ignored. Unknown page structures do not receive a fallback overlay.
+
+## Automated verification
+
+Run from the repository after installing the lockfile dependencies:
+
+```sh
+pnpm test -- --runInBand
+pnpm exec tsc --noEmit --incremental false
+pnpm build
+```
+
+Verified after the layout changes on Node 22 / pnpm 9.15.9: 22 suites / 402 tests passed; TypeScript and production MV3 build passed. Build warnings concern deprecated `punycode` and outdated Browserslist data.
+
+Focused tests cover A → B → A, out-of-order replies, same-video and cross-video concurrent operations, persisted write failures, legacy data, invalid data, zero timestamps, same-timestamp interval replacement, duplicate tuple deletion by ID, durable legacy-ID migration, malformed/generated ID rejection, confirmation identity after sorting/filtering, duplicate labels, CSV quotes/newlines/Japanese/formula input, and React navigation/error/pending states.
+
+The build's generated manifest must contain the background service worker, only the `storage` and `unlimitedStorage` API permissions, and only the YouTube HTTPS origin for host/content-script access. The unused Sheets prototype is not imported into the shipped entry points and is not enabled by this change.
+
+## Real-Chrome baseline and remaining verification
+
+The data-safety baseline (`fbf732f`) was tested in installed Chrome 154 on macOS with an empty dedicated profile and synthetic YouTube pages. Actual extension runtime/storage passed A → B → A, URL-leading navigation guards, same/different-video tabs, stale-ID rejection, sorted deletion, legacy migration, injected storage failure/recovery, CSV export, worker stop/restart, and full browser restart. The zero-end display fix (`a65de5a`) also passed an actual Chrome display/seek check. Screenshots and synthetic exports remain private.
+
+That baseline's overlays covered player controls, could extend beyond the viewport, and did not restore saved panel geometry. The revised below-player workspace addresses these defects in code and regression tests. **The revised application now passes all 25 synthetic MV3 cases on Cloud Chromium/CfT 156, including layout, synthetic SPA, resize, native fixture fullscreen, rapid writes, failure recovery and browser restart. Real YouTube playback/controls/SPA/fullscreen/captions/ads remain unverified because YouTube required sign-in/bot verification.** See [the Cloud verification record](mv3-cloud-verification.md) for exact revisions, measurements, artifacts and limitations. Earlier Mac baseline passes are not used as proof of the revised placement. A brief public YouTube playback check succeeded on the baseline; live ads were not observed. No browser-security protections were disabled.
+
+Coverage limits: forced sorted-row clicks prove selected-record ID preservation, not normal click reachability; `force: true` also bypasses pointer-event reception checks. Panels are bounded below the player but have no panel-to-panel collision prevention; independent artifact review observed a 74px-wide overlap after a move. The 375px PASS covers outer bounds only, not horizontal scrolling to the table's right-hand columns or access to every operation. The independent reviewer obtained and visually inspected the official aa15008 artifact; the earlier image-transfer failure was specific to this Cloud executor. Live YouTube remains BLOCKED.
+
+The following checklist is covered by the synthetic Cloud run except for real YouTube behavior and release preparation; repeat in a permitted live-browser environment before release:
+
+- Load `build/chrome-mv3-prod` unpacked in a separate Chrome test profile.
+- Start/tag/stop a record on video A. Navigate to B within YouTube, record on B, then return to A. Verify each timeline and active state belongs to its own video.
+- Repeat in two tabs for both the same video and different videos. Verify concurrent records/labels and deletion are preserved and visible across tabs.
+- Restart Chrome and suspend/restart the extension service worker. Verify persisted timelines reload and subsequent edits work.
+- Exercise a failed storage write and an invalid stored payload. Verify there is no success claim or silent overwrite.
+- Export a fixture containing Japanese, commas, double quotes, multiline labels, uncategorized labels, and formula-leading text. Verify elapsed seconds and literal spreadsheet cells.
+- Verify panel geometry after pointer/keyboard changes, viewport resize, SPA navigation, anchor replacement, page reload, and full Chrome restart. Verify rapid clicks produce only one pending write and failed writes can recover.
+- Verify real-video playback, ads, navigation, fullscreen, captions, and YouTube controls continue to work. This patch does not establish Store/YouTube policy compliance.
+- Migration assigns missing IDs and writes them to the video-specific key before returning records to any tab. Existing IDs remain unchanged; duplicate or malformed saved IDs fail closed. The legacy backup is retained, so disk usage can temporarily grow. Storage/device failures still surface and never trigger automatic deletion.
+- Do not edit the same data in an old extension build after migration: the old build only understands the legacy key and cannot see new-format edits.
+
+No Store submission, production merge, or release is part of this patch.
+
+## Store preparation still required
+
+Publish an accurate privacy policy and Store data-use declarations for local timeline/configuration storage and YouTube-origin panel preferences, including the retained legacy backup. Replace placeholder package description/author and choose release metadata. The unused Sheets prototype is excluded from shipped entry points but its source and dependency remain; keep it isolated or remove it before enabling any Google integration. No OAuth, Sheets access, or new permissions are included here.

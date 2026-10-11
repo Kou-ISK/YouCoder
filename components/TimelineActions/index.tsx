@@ -21,7 +21,7 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
     ).length
   }
   return (
-    <div className="flex gap-3 items-center w-full justify-between">
+    <div className="flex flex-wrap gap-3 items-center w-full min-w-0 justify-between">
       {/* ボタングループ */}
       <div className="flex gap-2 items-center">
         <button
@@ -112,7 +112,7 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
         getUniqueActions &&
         getUniqueLabels && (
           <div
-            className="flex gap-1.5 items-center select-auto pointer-events-auto"
+            className="flex flex-wrap gap-1.5 items-center min-w-0 select-auto pointer-events-auto"
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}>

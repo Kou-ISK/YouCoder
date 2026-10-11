@@ -8,6 +8,7 @@ import type { Action } from "./types"
 // Mockデータ
 const mockActions: Action[] = [
   {
+    id: "pass-id",
     team: "Team A",
     action: "Pass",
     start: 1000,
@@ -15,6 +16,7 @@ const mockActions: Action[] = [
     labels: ["Good", "Accurate"]
   },
   {
+    id: "shoot-id",
     team: "Team B",
     action: "Shoot",
     start: 3000,
@@ -22,6 +24,7 @@ const mockActions: Action[] = [
     labels: ["Result - goal", "Quality - excellent"]
   },
   {
+    id: "tackle-id",
     team: "Team A",
     action: "Tackle",
     start: 5000,
@@ -169,7 +172,7 @@ describe("TimelinePanel", () => {
       await user.click(confirmButton)
     })
 
-    expect(defaultProps.onDelete).toHaveBeenCalledWith("Team A", "Pass", 1000)
+    expect(defaultProps.onDelete).toHaveBeenCalledWith("pass-id")
   })
 
   test("空のアクション配列でもエラーにならない", () => {
@@ -185,6 +188,7 @@ describe("TimelinePanel", () => {
   test("時刻フォーマットが正しく表示される", () => {
     const longTimeActions = [
       {
+        id: "long-action-id",
         team: "Team A",
         action: "Long Action",
         start: 65000, // 1分5秒
@@ -202,6 +206,7 @@ describe("TimelinePanel", () => {
   test("ラベルが複数ある場合は適切に表示される", () => {
     const multiLabelAction = [
       {
+        id: "complex-action-id",
         team: "Team A",
         action: "Complex Action",
         start: 1000,

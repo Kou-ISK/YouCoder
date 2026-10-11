@@ -29,7 +29,7 @@ module.exports = {
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
           jsx: "react-jsx",
-          types: ["node", "jest"]
+          types: ["node", "jest", "chrome"]
         }
       }
     ]

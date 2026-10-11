@@ -3,15 +3,15 @@ import { TimelinePanel } from "components/TimelinePanel"
 import type { Action } from "components/TimelinePanel/types"
 import cssText from "data-text:~/styles/style.css"
 import type { PlasmoContentScript } from "plasmo"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 
+import { AnalysisWorkspace } from "./components/AnalysisWorkspace"
 import {
   addLabel,
   deleteAction,
   exportActionsToCSV,
   getActions,
   getYoutubeVideoId,
-  loadActionsFromStorage,
   loadTimelineForVideo,
   saveTimelineForVideo,
   startAction,
@@ -19,7 +19,16 @@ import {
 } from "./lib/actionsManager"
 
 export const config: PlasmoContentScript = {
-  matches: ["*://*.youtube.com/*"]
+  matches: ["https://www.youtube.com/*"]
+}
+
+// Unknown layouts must fail closed instead of covering playback or ads.
+export const getInlineAnchor = async () => {
+  if (window.location.pathname !== "/watch") return null
+  const element = document.querySelector(
+    "ytd-watch-flexy #below, ytd-watch-grid #below"
+  )
+  return element ? { element, insertPosition: "afterbegin" as const } : null
 }
 
 // スタイル要素を作成する関数
@@ -29,7 +38,10 @@ const createStyle = (cssText: string): HTMLStyleElement => {
   return style
 }
 
-export const getStyle = () => createStyle(cssText)
+export const getStyle = () =>
+  createStyle(
+    `${cssText}\n:host { display: block; width: 100%; min-width: 0; position: relative; isolation: isolate; }`
+  )
 
 // ネットワークエラー監視のための設定
 let networkErrorCount = 0
@@ -175,53 +187,85 @@ const MainContent: React.FC = () => {
   // 動画エラー状態の監視
   const [videoError, setVideoError] = useState<string | null>(null)
 
+  const [storageError, setStorageError] = useState<string | null>(null)
+  const operationPending = useRef(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const uiGeneration = useRef(0)
+  const displayedVideoId = useRef<string | null>(null)
+  const storageErrors = useRef(new Map<string, string>())
+  const syncTimelineUI = (
+    videoTimeline: Action[],
+    videoId = getYoutubeVideoId()
+  ) => {
+    displayedVideoId.current = videoId
+    setTimelineActions(videoTimeline)
+    const inProgress = new Set(
+      videoTimeline
+        .filter((item) => item.end === undefined)
+        .map((item) => `${item.team}_${item.action}`)
+    )
+    setActiveActions(inProgress)
+    setSelectedActions(new Set(inProgress))
+  }
+
   useEffect(() => {
-    // SPAナビゲーションの変更を監視するためのポーリングメカニズム。
-    const timer = setInterval(() => {
-      const currentVideoPage = !!getYoutubeVideoId()
-      if (currentVideoPage !== isVideoPage) {
-        setIsVideoPage(currentVideoPage)
-
-        // 動画が変わった際にタイムラインと UI 状態を同期
-        const syncTimelineAndUI = async () => {
-          const videoId = getYoutubeVideoId()
-          if (videoId) {
-            try {
-              const result = await chrome.storage.local.get(["timelines"])
-              const videoTimeline = result.timelines?.[videoId] || []
-              setTimelineActions(videoTimeline)
-
-              // 進行中のアクションをUI状態に同期
-              const inProgressActions = new Set<string>()
-              videoTimeline.forEach((action: any) => {
-                if (!action.end) {
-                  const actionKey = `${action.team}_${action.action}`
-                  inProgressActions.add(actionKey)
-                }
-              })
-
-              setActiveActions(inProgressActions)
-              setSelectedActions(new Set(inProgressActions))
-
-              console.log(
-                `[YouCoder] 動画変更時にUI状態を同期しました - 動画ID: ${videoId}, 進行中アクション数: ${inProgressActions.size}`
-              )
-            } catch (error) {
-              console.error("[YouCoder] 動画変更時の同期エラー:", error)
-            }
-          } else {
-            // 動画ページでない場合は状態をクリア
-            setActiveActions(new Set())
-            setSelectedActions(new Set())
-            setTimelineActions([])
-          }
-        }
-
-        syncTimelineAndUI()
+    let disposed = false
+    let observedVideoId: string | null | undefined
+    const sync = async () => {
+      const videoId = getYoutubeVideoId()
+      const request = ++uiGeneration.current
+      if (videoId !== observedVideoId) {
+        observedVideoId = videoId
+        setStorageError(
+          videoId ? storageErrors.current.get(videoId) || null : null
+        )
+        syncTimelineUI([], null)
+        setActiveLabels(new Set())
       }
+      setIsVideoPage(!!videoId)
+      try {
+        await loadTimelineForVideo(videoId)
+        if (
+          !disposed &&
+          request === uiGeneration.current &&
+          videoId === getYoutubeVideoId()
+        ) {
+          syncTimelineUI(getActions())
+          setStorageError(
+            videoId ? storageErrors.current.get(videoId) || null : null
+          )
+        }
+      } catch {
+        if (!disposed && request === uiGeneration.current)
+          setStorageError(
+            "記録を読み込めませんでした。再読み込みして再試行してください。"
+          )
+      }
+    }
+    const onStorage = (
+      changes: { [key: string]: chrome.storage.StorageChange },
+      area: string
+    ) => {
+      const videoId = getYoutubeVideoId()
+      if (
+        area === "local" &&
+        (changes[`youCoder.timeline.${videoId}`] || changes.timelines)
+      )
+        void sync()
+    }
+    const timer = setInterval(() => {
+      if (observedVideoId !== getYoutubeVideoId()) void sync()
     }, 500)
-    return () => clearInterval(timer)
-  }, [isVideoPage])
+    document.addEventListener("yt-navigate-finish", sync)
+    chrome.storage.onChanged.addListener(onStorage)
+    void sync()
+    return () => {
+      disposed = true
+      clearInterval(timer)
+      document.removeEventListener("yt-navigate-finish", sync)
+      chrome.storage.onChanged.removeListener(onStorage)
+    }
+  }, [])
 
   // 動画エラー監視のuseEffect
   useEffect(() => {
@@ -426,103 +470,14 @@ const MainContent: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    // YouTubeのナビゲーションイベントを監視します。
-    const handleNavigateFinish = async () => {
-      const currentVideoPage = !!getYoutubeVideoId()
-      setIsVideoPage(currentVideoPage)
-
-      // ナビゲーション後にタイムラインとUI状態を同期
-      if (currentVideoPage) {
-        const videoId = getYoutubeVideoId()
-        if (videoId) {
-          try {
-            const result = await chrome.storage.local.get(["timelines"])
-            const videoTimeline = result.timelines?.[videoId] || []
-            setTimelineActions(videoTimeline)
-
-            // 進行中のアクションをUI状態に同期
-            const inProgressActions = new Set<string>()
-            videoTimeline.forEach((action: any) => {
-              if (!action.end) {
-                const actionKey = `${action.team}_${action.action}`
-                inProgressActions.add(actionKey)
-              }
-            })
-
-            setActiveActions(inProgressActions)
-            setSelectedActions(new Set(inProgressActions))
-
-            console.log(
-              `[YouCoder] ナビゲーション後にUI状態を同期しました - 動画ID: ${videoId}, 進行中アクション数: ${inProgressActions.size}`
-            )
-          } catch (error) {
-            console.error("[YouCoder] ナビゲーション後の同期エラー:", error)
-          }
-        }
-      } else {
-        // 動画ページでない場合は状態をクリア
-        setActiveActions(new Set())
-        setSelectedActions(new Set())
-        setTimelineActions([])
-      }
-    }
-
-    document.addEventListener("yt-navigate-finish", handleNavigateFinish)
-    return () => {
-      document.removeEventListener("yt-navigate-finish", handleNavigateFinish)
-    }
-  }, [])
-
-  useEffect(() => {
     // ローカルストレージからデータを読み込みます。
     const loadData = async () => {
       try {
-        const videoId = getYoutubeVideoId()
         const result = await chrome.storage.local.get([
           "teams",
           "buttonSets",
-          "timelines",
           "selectedButtonSet"
         ])
-
-        // 動画のタイムラインデータを読み込み、進行中のアクションの状態を同期
-        if (videoId && result.timelines) {
-          const videoTimeline = result.timelines[videoId] || []
-
-          // actionsManagerのメモリ状態も同期
-          if (videoTimeline.length > 0) {
-            await loadTimelineForVideo(videoId)
-            console.log(
-              `[YouCoder] 初期読み込み: actionsManagerにタイムラインデータを同期しました - アクション数: ${videoTimeline.length}`
-            )
-          }
-
-          setTimelineActions(videoTimeline)
-
-          // 進行中のアクション（end プロパティがない）をUI状態に同期
-          const inProgressActions = new Set<string>()
-          videoTimeline.forEach((action: any) => {
-            if (!action.end) {
-              // 終了時間がない = 進行中
-              const actionKey = `${action.team}_${action.action}`
-              inProgressActions.add(actionKey)
-            }
-          })
-
-          // UI状態を進行中のアクションと同期
-          setActiveActions(inProgressActions)
-          setSelectedActions(new Set(inProgressActions))
-
-          console.log(
-            `[YouCoder] UI状態をタイムラインデータと同期しました - 進行中アクション数: ${inProgressActions.size}, 総アクション数: ${videoTimeline.length}`
-          )
-        } else if (videoId) {
-          // 動画IDはあるがタイムラインデータがない場合
-          console.log(
-            `[YouCoder] 初期読み込み: 動画ID ${videoId} のタイムラインデータが見つかりません`
-          )
-          setTimelineActions([])
-        }
 
         if (result.teams) setTeams(result.teams)
         if (result.buttonSets) {
@@ -600,44 +555,56 @@ const MainContent: React.FC = () => {
   // 新たに選択中のアクションを管理し、ラベル表示を絞り込む
   const [selectedActions, setSelectedActions] = useState<Set<string>>(new Set())
 
-  const handleLabel = async (label: string) => {
-    // ラベルをアクションに追加します。
-    for (const actionKey of activeActions) {
-      const [team, action] = actionKey.split("_")
-      await addLabel(team, action, label)
+  const runTimelineOperation = async (operation: () => Promise<unknown>) => {
+    if (operationPending.current) return
+    // The page URL can change before YouTube dispatches its navigation event.
+    // Never apply controls/rows still displayed for A to the new video B.
+    if (
+      !displayedVideoId.current ||
+      displayedVideoId.current !== getYoutubeVideoId()
+    ) {
+      setStorageError(
+        "動画を切り替えています。読み込み完了後に再試行してください。"
+      )
+      return
     }
-
-    // 自動保存を実行
+    operationPending.current = true
+    setIsSaving(true)
+    const request = ++uiGeneration.current
     const videoId = getYoutubeVideoId()
-    if (videoId) {
-      await saveTimelineForVideo(videoId)
+    if (videoId) storageErrors.current.delete(videoId)
+    setStorageError(null)
+    try {
+      await operation()
+      if (request === uiGeneration.current && videoId === getYoutubeVideoId()) {
+        // Read latest committed state, including changes from other tabs.
+        await loadTimelineForVideo(videoId)
+        if (request === uiGeneration.current && videoId === getYoutubeVideoId())
+          syncTimelineUI(getActions())
+      }
+      if (request === uiGeneration.current && videoId === getYoutubeVideoId())
+        setStorageError(null)
+    } catch {
+      const message =
+        "保存結果を確認できませんでした。記録内容を確認してから再試行してください。"
+      if (videoId) storageErrors.current.set(videoId, message)
+      if (videoId === getYoutubeVideoId()) setStorageError(message)
+    } finally {
+      operationPending.current = false
+      setIsSaving(false)
     }
-
-    // タイムラインの状態を更新
-    const updatedActions = getActions()
-    setTimelineActions([...updatedActions])
-
-    setActiveLabels((prev) => {
-      const updated = new Set(prev)
-      updated.add(label)
-      setTimeout(() => {
-        setActiveLabels((current) => {
-          const next = new Set(current)
-          next.delete(label)
-          return next
-        })
-      }, 1000)
-      return updated
+  }
+  const handleLabel = (label: string) =>
+    runTimelineOperation(async () => {
+      const videoId = getYoutubeVideoId()
+      const targets = timelineActions.filter((item) => item.end === undefined)
+      for (const item of targets) {
+        if (videoId !== getYoutubeVideoId()) break
+        await addLabel(item.id, label)
+      }
     })
-  }
-
-  const handleSaveTimeline = async () => {
-    // タイムラインを保存します。
-    const videoId = getYoutubeVideoId()
-    if (videoId) {
-      await saveTimelineForVideo(videoId)
-    }
-  }
+  const handleSaveTimeline = () =>
+    runTimelineOperation(() => saveTimelineForVideo(getYoutubeVideoId()))
 
   // 選択中のボタンセットに基づくアクション・ラベルを抽出
   const currentSet = buttonSets.find((set) => set.setName === selectedButtonSet)
@@ -699,90 +666,23 @@ const MainContent: React.FC = () => {
         })()
       : {} // アクションが選択されていない場合は空のオブジェクト
 
-  const handleActionToggle = async (team: string, action: string) => {
-    // アクションの開始・停止を切り替えます。
-    const actionKey = `${team}_${action}`
-
-    try {
-      // 1. 先にアクションの開始/停止を実行し、完了を待つ
-      const updated = new Set(activeActions)
-      if (updated.has(actionKey)) {
-        await stopAction(team, action)
-        updated.delete(actionKey)
-      } else {
-        await startAction(team, action)
-        updated.add(actionKey)
-      }
-
-      // 2. 非同期処理が完了してから状態を更新
-      setActiveActions(updated)
-      console.log(
-        `[YouCoder] アクティブなアクションを更新しました - 現在のアクション数: ${Array.from(updated).length}`
+  const handleActionToggle = (team: string, action: string) =>
+    runTimelineOperation(async () => {
+      const active = timelineActions.find(
+        (item) =>
+          item.team === team && item.action === action && item.end === undefined
       )
-
-      // 3. 選択状態も同期して更新
-      const updatedSelection = new Set(selectedActions)
-      if (updatedSelection.has(actionKey)) {
-        updatedSelection.delete(actionKey)
-      } else {
-        updatedSelection.add(actionKey)
-      }
-      setSelectedActions(updatedSelection)
-      console.log(
-        `[YouCoder] 選択中のアクションを更新しました - 選択数: ${Array.from(updatedSelection).length}`
-      )
-
-      // 4. タイムラインの状態を即時更新（非同期処理完了後に確実に取得）
-      const updatedActions = getActions()
-      setTimelineActions([...updatedActions]) // 新しい配列参照で強制的に再レンダリング
-      console.log(
-        `[YouCoder] タイムライン状態を更新しました - 総アクション数: ${updatedActions.length}`
-      )
-    } catch (error) {
-      console.error("[YouCoder] アクション切り替えエラー:", error)
-    }
-  }
-
-  // 動画ページでのタイムライン同期を定期的に実行
-  useEffect(() => {
-    if (!isVideoPage) return
-
-    // 初回実行（即座に同期）
-    const syncInitial = () => {
-      const currentActions = getActions()
-      if (currentActions.length > 0) {
-        setTimelineActions([...currentActions])
-        console.log(
-          `[YouCoder] 初回同期完了 - アクション数: ${currentActions.length}`
-        )
-      }
-    }
-
-    // 100ms後に初回同期（コンポーネントの初期化完了を待つ）
-    const initialTimer = setTimeout(syncInitial, 100)
-
-    // 定期同期（1秒ごと）
-    const timer = setInterval(() => {
-      const currentActions = getActions()
-      setTimelineActions([...currentActions])
-    }, 1000)
-
-    return () => {
-      clearTimeout(initialTimer)
-      clearInterval(timer)
-    }
-  }, [isVideoPage])
+      if (active) await stopAction(active.id)
+      else await startAction(team, action)
+    })
 
   return (
-    <div style={{ position: "relative", zIndex: 9999 }}>
+    <div style={{ position: "relative", width: "100%", minWidth: 0 }}>
       {isVideoPage && showExtension && (
         <>
           {videoError && (
             <div
               style={{
-                position: "fixed",
-                top: "10px",
-                right: "10px",
                 backgroundColor: "#ff4444",
                 color: "white",
                 padding: "10px",
@@ -797,45 +697,44 @@ const MainContent: React.FC = () => {
               {videoError}
             </div>
           )}
-          <TaggingPanel
-            teams={teams}
-            actions={actions}
-            labels={filteredLabels}
-            activeActions={activeActions}
-            activeLabels={activeLabels}
-            onActionToggle={handleActionToggle}
-            onLabelClick={handleLabel}
-          />
-          <TimelinePanel
-            actions={timelineActions}
-            onDelete={(team, action, start) => {
-              console.log(
-                `[YouCoder] 削除開始: ${team} - ${action} - ${start}ms`
-              )
-
-              // 1. UI状態を即座に更新（削除対象をフィルタリング）
-              const newActions = timelineActions.filter(
-                (a) =>
-                  !(a.team === team && a.action === action && a.start === start)
-              )
-              setTimelineActions(newActions)
-              console.log(
-                `[YouCoder] UI更新完了 - 削除後のアクション数: ${newActions.length}`
-              )
-
-              // 2. バックグラウンドでストレージとメモリを更新
-              deleteAction(team, action, start).catch((error) => {
-                console.error("[YouCoder] バックグラウンド削除エラー:", error)
-                // エラーの場合はUIを元に戻す
-                setTimelineActions([...timelineActions])
-                console.warn(
-                  "[YouCoder] 削除に失敗したため、UIを元に戻しました"
-                )
-              })
-            }}
-            onSave={handleSaveTimeline}
-            onExportCSV={() => exportActionsToCSV(timelineActions)}
-          />
+          {storageError && (
+            <div
+              role="alert"
+              className="my-2 rounded bg-red-700 p-3 text-sm text-white">
+              {storageError}
+            </div>
+          )}
+          {isSaving && (
+            <div
+              role="status"
+              className="my-2 rounded bg-white p-2 text-sm text-gray-900">
+              記録を保存中…
+            </div>
+          )}
+          <fieldset
+            disabled={isSaving}
+            aria-busy={isSaving}
+            className="m-0 min-w-0 border-0 p-0">
+            <AnalysisWorkspace>
+              <TaggingPanel
+                teams={teams}
+                actions={actions}
+                labels={filteredLabels}
+                activeActions={activeActions}
+                activeLabels={activeLabels}
+                onActionToggle={handleActionToggle}
+                onLabelClick={handleLabel}
+              />
+              <TimelinePanel
+                actions={timelineActions}
+                onDelete={(actionId) => {
+                  void runTimelineOperation(() => deleteAction(actionId))
+                }}
+                onSave={handleSaveTimeline}
+                onExportCSV={() => exportActionsToCSV(timelineActions)}
+              />
+            </AnalysisWorkspace>
+          </fieldset>
         </>
       )}
     </div>

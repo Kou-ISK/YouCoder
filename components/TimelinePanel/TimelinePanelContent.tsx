@@ -7,7 +7,7 @@ import type { Action, FilterConfig, SortConfig } from "./types"
 
 interface TimelinePanelContentProps {
   actions: Action[]
-  onDelete?: (team: string, action: string, start: number) => void
+  onDelete?: (actionId: string) => void
   onSeek?: (timestamp: number) => void
   sortConfig: SortConfig | undefined
   filterConfig: FilterConfig

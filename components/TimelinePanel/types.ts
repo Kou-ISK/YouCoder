@@ -1,4 +1,5 @@
 export type Action = {
+  id: string
   team: string
   action: string
   start: number
@@ -23,7 +24,7 @@ export type FilterConfig = {
 
 export interface TimelinePanelProps {
   actions: Action[]
-  onDelete?: (team: string, action: string, start: number) => void
+  onDelete?: (actionId: string) => void
   onSave?: () => void
   onExportCSV?: () => void
   onSeek?: (time: number) => void
