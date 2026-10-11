@@ -47,14 +47,10 @@
   },
   "manifest": {
     "host_permissions": [
-      "https://*/*",
       "https://www.youtube.com/*"
     ],
     "permissions": [
-      "storage",
-      "unlimitedStorage",
-      "activeTab",
-      "scripting"
+      "storage"
     ],
     "content_security_policy": {
       "extension_pages": "script-src 'self'; object-src 'self';"
@@ -65,7 +61,7 @@
           "*.css"
         ],
         "matches": [
-          "*://*.youtube.com/*"
+          "https://www.youtube.com/*"
         ]
       }
     ]
