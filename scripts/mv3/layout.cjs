@@ -21,14 +21,12 @@ async function until(fn) {
   throw Error("condition timeout")
 }
 const rect = async (p) =>
-  p
-    .locator('[data-youcoder-panel="タグ付け"]')
-    .evaluate((e) => ({
-      x: e.offsetLeft,
-      y: e.offsetTop,
-      width: e.offsetWidth,
-      height: e.offsetHeight
-    }))
+  p.locator('[data-youcoder-panel="タグ付け"]').evaluate((e) => ({
+    x: e.offsetLeft,
+    y: e.offsetTop,
+    width: e.offsetWidth,
+    height: e.offsetHeight
+  }))
 ;(async () => {
   const { browser, context, popup } = await h.setup()
   await popup.evaluate(async (data) => {
@@ -149,6 +147,11 @@ const rect = async (p) =>
       }
     })
     try {
+      // A reload can expose the buttons before the initial worker read completes.
+      // Trial click waits for the real disabled fieldset to become actionable.
+      await p
+        .getByRole("button", { name: /^AlphaチームのPassアクション/ })
+        .click({ trial: true })
       await p
         .getByRole("button", { name: /^AlphaチームのPassアクション/ })
         .evaluate((b) => {

@@ -48,6 +48,10 @@ async function geometry(page) {
   })
 }
 function bounded(g) {
+  assert(
+    g.player?.width > 0 && g.player?.height > 0,
+    "Visible nonzero player geometry required"
+  )
   assert.equal(g.anchor, "below")
   assert.equal(g.panels.length, 2)
   assert(g.workspace.top >= g.player.bottom - 1)
@@ -88,10 +92,25 @@ async function reachable(page, selector) {
     await page.screenshot({ path: out + "/public-access.png" }).catch(() => {})
     return
   }
-  await h.delay(3000)
+  await page
+    .waitForFunction(
+      () =>
+        document.querySelector("video")?.readyState >= 2 ||
+        /confirm you.re not a bot|unusual traffic|video unavailable/i.test(
+          document.body.innerText
+        ),
+      null,
+      { timeout: 15000 }
+    )
+    .catch(() => {})
   await page.screenshot({ path: out + "/public-initial.png" })
   const access = await page.evaluate(() => ({
     title: document.title,
+    publicText: document.body.innerText.slice(0, 2500),
+    playerRect: document
+      .querySelector("#movie_player")
+      ?.getBoundingClientRect()
+      .toJSON(),
     player: !!document.querySelector("#movie_player"),
     readyState: document.querySelector("video")?.readyState,
     playerError: document
@@ -107,6 +126,17 @@ async function reachable(page, selector) {
   if (response?.status() >= 400 || access.consent || !access.player) {
     skip(
       "Public player unavailable; no login, consent or network restriction bypass attempted"
+    )
+    return
+  }
+  if (!(await page.locator("#movie_player").isVisible())) {
+    record(
+      "public playback",
+      "BLOCKED",
+      "Public player is not visible: " + access.publicText
+    )
+    skip(
+      "Public player unavailable; native controls, full screen and SPA cannot be assessed"
     )
     return
   }

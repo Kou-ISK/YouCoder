@@ -8,8 +8,11 @@ const { assert, fs, out } = h
   )
   const { context, popup } = await h.setup()
   await popup.evaluate((data) => chrome.storage.local.set(data), h.fixture)
-  const { page } = await h.synthetic(context, h.A)
-  await page.setViewportSize({ width: 1440, height: 730 })
+  // The historical component freezes its initial viewport coordinates.
+  // Mount at the target size; resizing afterward tests a different old defect.
+  const { page } = await h.synthetic(context, h.A, {
+    viewport: { width: 1440, height: 730 }
+  })
   await h.delay(300)
   const observed = await page.evaluate(() => {
     const host = document.querySelector("plasmo-csui"),
@@ -27,6 +30,12 @@ const { assert, fs, out } = h
       }))
     const point = { x: video.left + video.width / 2, y: video.bottom - 20 }
     const hit = document.elementFromPoint(point.x, point.y)
+    const controlPoints = [35, video.width - 35].map((dx) => {
+      const x = video.left + dx,
+        y = video.bottom - 20
+      const element = document.elementFromPoint(x, y)
+      return { x, y, covered: element === host, hit: element?.tagName }
+    })
     return {
       viewport: { width: innerWidth, height: innerHeight },
       anchor: host.parentElement.id,
@@ -34,7 +43,12 @@ const { assert, fs, out } = h
       point,
       hit: hit?.tagName,
       covered: hit === host,
+      controlPoints,
       overflow: panels.some((p) => p.rect.right > innerWidth),
+      overflowPixels: Math.max(
+        0,
+        ...panels.map((p) => p.rect.right - innerWidth)
+      ),
       video: video.toJSON()
     }
   })
@@ -43,12 +57,15 @@ const { assert, fs, out } = h
     JSON.stringify({ expected, observed }, null, 2)
   )
   await page.screenshot({ path: out + "/reproduce.png", fullPage: true })
+  console.log(JSON.stringify({ expected, observed }))
   if (expected === "baseline") {
     assert(
       observed.covered,
       "Old timeline should obstruct native video controls"
     )
     assert(observed.overflow, "Old tagging panel should extend beyond viewport")
+    assert.equal(observed.overflowPixels, 80)
+    assert(observed.controlPoints.every((p) => p.covered))
     assert(
       !observed.panels.some(
         (p) => Math.abs(p.rect.x - 900) < 1 && Math.abs(p.rect.width - 460) < 1
@@ -57,6 +74,7 @@ const { assert, fs, out } = h
     )
   } else {
     assert.equal(observed.covered, false)
+    assert(observed.controlPoints.every((p) => !p.covered))
     assert.equal(observed.overflow, false)
     assert.equal(observed.anchor, "below")
     assert.equal(observed.panels.length, 2)

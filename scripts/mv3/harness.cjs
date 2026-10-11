@@ -132,6 +132,7 @@ async function setup() {
   return { browser, context, popup }
 }
 async function closeCurrent() {
+  const wasConnected = !!browser
   if (browser) {
     try {
       const cdp = await browser.newBrowserCDPSession()
@@ -144,12 +145,18 @@ async function closeCurrent() {
   }
   if (child) {
     const current = child
-    if (current.exitCode === null && current.signalCode === null)
+    // A connected browser must finish its normal shutdown and flush storage.
+    // SIGTERM immediately after Browser.close races localStorage persistence.
+    if (
+      !wasConnected &&
+      current.exitCode === null &&
+      current.signalCode === null
+    )
       current.kill("SIGTERM")
     await until(
       () => current.exitCode !== null || current.signalCode !== null,
       "owned browser process exit",
-      5000
+      15000
     )
     child = null
   }
@@ -165,7 +172,7 @@ async function cleanup() {
 }
 async function synthetic(context, id, options = {}) {
   const page = await context.newPage()
-  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.setViewportSize(options.viewport || { width: 1440, height: 1000 })
   // Only this tab is routed. No live YouTube requests or videos are fetched.
   await page.route("**/*", (route) => {
     const url = new URL(route.request().url())
