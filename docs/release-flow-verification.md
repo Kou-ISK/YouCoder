@@ -1,6 +1,8 @@
 # PR13後の利用フロー検証
 
-2026-10-12。基点develop: `2f6026478266d5a2b1d234c9d03ae3b33c34639b`。PR12/13はマージ済み。追加作業は [PR14](https://github.com/Kou-ISK/YouCoder/pull/14) でレビューします。
+2026-10-12。基点develop: `2f6026478266d5a2b1d234c9d03ae3b33c34639b`。追加作業は [PR14](https://github.com/Kou-ISK/YouCoder/pull/14) で独立コード・最終画像レビューを完了し、`83a0d3578978c0fae9f955c5260f1a44d68b86de` でdevelopへ統合済みです。
+
+最終head `b228354ea57c0193f771eaebf5b18b04a488fa2b` の[Test CI](https://github.com/Kou-ISK/YouCoder/actions/runs/38210094974)（389単体・型・build）、[MV3 CI](https://github.com/Kou-ISK/YouCoder/actions/runs/38210094906)（合成35項目）と[マージ後MV3 CI](https://github.com/Kou-ISK/YouCoder/actions/runs/38210608262)は成功。レビュー対象とmergeのファイルツリーは同一です。以下の初回失敗と途中headの結果は履歴として残します。実YouTubeのBLOCKEDは継続しています。
 
 ## 初回の結果と修正
 
@@ -35,10 +37,10 @@
 
 CIは生成データのJSON/PNG/CSV、head、bundle監査、配布候補ZIPとSHA256を保存します。ZIPは既存の提出workflowを使わず作成し、React/React DOM/Scheduler/Plasmo/Parcel runtimeのライセンス本文を同梱します。artifact保持は7日です。最終head・CI・artifactはPR本文を正本として記録します。
 
-Store草案画像は実際の拡張UIをタイムライン1280×800・設定640×400で撮影したものです。タイムライン画像に「デモデータ / 合成ページ」を明示し、実YouTubeの検証証拠に流用しません。Cloudへの画像転送は通常のダウンロードとLibrary経由の両方で失敗したため、このexecutorでは新しいCI画像を目視できていません。画像の独立目視は公開前に必要です。
+Store草案画像は実際の拡張UIをタイムライン1280×800・設定640×400で撮影したものです。タイムライン画像に「デモデータ / 合成ページ」を明示し、実YouTubeの検証証拠に流用しません。このexecutorへの画像転送は失敗しましたが、親スレッドの独立レビューで[最終画像artifact](https://github.com/Kou-ISK/YouCoder/actions/runs/38210094906/artifacts/11729072739)を目視し、時刻列・通知・狭幅案内の修正を確認済みです。完了記録は[PR14](https://github.com/Kou-ISK/YouCoder/pull/14)にあります。
 
 [Store画像の公式要件](https://developer.chrome.com/docs/webstore/images)に合わせた画面草案であり、既存仮アイコンの採用判断や440×280の必須プロモーション画像は別途残ります。旧画像・記録は履歴として維持し、最新の成果物と混同しません。
 
 ## 公開前に残る条件
 
-実サイトの正常再生・字幕/広告/全画面/シアター/実SPA確認、Store画像の目視、最終branding素材、privacy/データ申告の発行者確認、保存時保護の方針、容量超過ユーザーへの更新案内、独立コードレビューが必要です。テスト成功だけを根拠に公開しません。新料金・契約・権限拡大・認証移送は行っていません。
+実サイトの正常再生・字幕/広告/全画面/シアター/実SPA確認、最終branding素材、privacy/データ申告の発行者確認、保存時保護の方針、容量超過ユーザーへの更新案内、最終version/ZIP/素材権利の確認が必要です。[確定事実と未決事項](release-decisions.md)を参照してください。テスト成功だけを根拠に公開しません。新料金・契約・権限拡大・認証移送は行っていません。
