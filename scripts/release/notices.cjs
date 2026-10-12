@@ -32,6 +32,6 @@ for (const parcelRoot of parcelRoots) {
   )
 }
 fs.writeFileSync(
-  "build/chrome-mv3-prod/THIRD_PARTY_NOTICES.txt",
+  process.argv[2] || "build/chrome-mv3-prod/THIRD_PARTY_NOTICES.txt",
   notices.join("\n\n--------------------\n\n")
 )

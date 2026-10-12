@@ -1,19 +1,54 @@
-name: "Submit to Web Store"
+name: "Submit reviewed Web Store artifact"
 on:
   workflow_dispatch:
+    inputs:
+      candidate_run_id:
+        description: "Successful Test workflow run ID"
+        required: true
+        type: string
+      candidate_artifact_id:
+        description: "Reviewed youcoder-candidate artifact ID"
+        required: true
+        type: string
+      expected_commit:
+        description: "Reviewed candidate source_commit (full SHA)"
+        required: true
+        type: string
+      expected_sha256:
+        description: "Reviewed INNER chrome-mv3-prod.zip SHA256"
+        required: true
+        type: string
+      publish:
+        description: "Publish only after separate Store readiness approval"
+        type: boolean
+        default: false
 
 jobs:
-  build:
+  submit:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    env:
+      CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+      CANDIDATE_ARTIFACT_ID: ${{ inputs.candidate_artifact_id }}
+      EXPECTED_COMMIT: ${{ inputs.expected_commit }}
+      EXPECTED_SHA256: ${{ inputs.expected_sha256 }}
     steps:
       - uses: actions/checkout@v3
-      - name: Cache pnpm modules
-        uses: actions/cache@v3
         with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-
+          fetch-depth: 0
+      - name: Validate producer run and artifact provenance
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/release/candidate.py metadata --provenance "$RUNNER_TEMP/candidate-provenance.json"
+      - name: Download that exact artifact
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ inputs.candidate_artifact_id }}
+          merge-multiple: true
+          run-id: ${{ inputs.candidate_run_id }}
+          repository: ${{ github.repository }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/reviewed-candidate
       - name: Use Node.js 22.x
         uses: actions/setup-node@v3.4.1
         with:
@@ -22,14 +57,30 @@ jobs:
         with:
           version: 9.15.9
           run_install: false
-      - name: Install locked dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Build the extension
-        run: pnpm build
-      - name: Package the extension into a zip artifact
-        run: pnpm package
+      - name: Install locked audit tools without lifecycle scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Derive expected runtime license notices
+        run: node scripts/release/notices.cjs "$RUNNER_TEMP/expected-notices.txt"
+      - name: Verify ZIP bytes, version, licenses and fresh bundle audit
+        run: |
+          python3 scripts/release/candidate.py verify \
+            --directory "$RUNNER_TEMP/reviewed-candidate" \
+            --provenance "$RUNNER_TEMP/candidate-provenance.json" \
+            --notices "$RUNNER_TEMP/expected-notices.txt" \
+            --output "$RUNNER_TEMP/verified-candidate"
+      - name: Preserve validation receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: submission-validation-receipt
+          path: ${{ runner.temp }}/verified-candidate/receipt.json
+          retention-days: 7
+      - name: Recheck identical bytes immediately before publisher
+        id: verify
+        run: python3 scripts/release/candidate.py recheck --directory "$RUNNER_TEMP/verified-candidate"
       - name: Browser Platform Publish
+        if: ${{ inputs.publish && steps.verify.outputs.verified == 'true' }}
         uses: PlasmoHQ/bpp@v3
         with:
           keys: ${{ secrets.SUBMIT_KEYS }}
-          artifact: build/chrome-mv3-prod.zip
+          artifact: ${{ runner.temp }}/verified-candidate/chrome-mv3-prod.zip
+          version-file: package.json

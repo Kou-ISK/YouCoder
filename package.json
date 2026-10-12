@@ -1,7 +1,7 @@
 {
   "name": "you-coder",
   "displayName": "YouCoder",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "YouTube動画のアクション区間とラベルを記録し、CSVで書き出すスポーツ映像分析ツール。",
   "author": "Kou Isaka (Kou-ISK)",
   "homepage": "https://github.com/Kou-ISK/YouCoder",
