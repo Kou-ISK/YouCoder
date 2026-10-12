@@ -326,9 +326,42 @@ async function importJson(popup, buffer) {
         (k) => k === "timelines" || k.startsWith("youCoder.timeline.")
       )
     )
-    await popup.evaluate(
-      (snapshot) => chrome.storage.local.set(snapshot),
-      snapshot
+    const guide = fs.readFileSync(h.root + "/docs/backup-restore.md", "utf8")
+    const restoreScript = guide.match(/```js\n(const input[\s\S]+?)\n```/)[1]
+    const chooser = popup.waitForEvent("filechooser")
+    await popup.evaluate(`(() => {${restoreScript}})()`)
+    await (
+      await chooser
+    ).setFiles({
+      name: "backup.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(snapshot))
+    })
+    await until(
+      async () =>
+        (await h.storage(popup, A))?.length === snapshot[key(A)].length,
+      "documented restore procedure"
+    )
+    const beforeRefusedOverwrite = await popup.evaluate(() =>
+      chrome.storage.local.get(null)
+    )
+    const rejection = popup.waitForEvent("console", {
+      predicate: (message) =>
+        message.text().includes("既存データがあるため中止")
+    })
+    const secondChooser = popup.waitForEvent("filechooser")
+    await popup.evaluate(`(() => {${restoreScript}})()`)
+    await (
+      await secondChooser
+    ).setFiles({
+      name: "backup.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(snapshot))
+    })
+    await rejection
+    assert.deepEqual(
+      await popup.evaluate(() => chrome.storage.local.get(null)),
+      beforeRefusedOverwrite
     )
     await popup.reload()
     one = await h.synthetic(context, A)
@@ -352,7 +385,7 @@ async function importJson(popup, buffer) {
       await h.storage(popup, "YC_CONTINUE_B"),
       snapshot[key("YC_CONTINUE_B")]
     )
-    return "advanced chrome.storage.local backup/restore on a fresh profile; no full-restore product UI"
+    return "documented file-picker script in extension context; fresh-profile restore and existing-data refusal; no product restore UI"
   })
   await test("Store screenshot drafts use actual extension UI with explicit synthetic-data caption", async () => {
     await p.setViewportSize({ width: 1280, height: 800 })
