@@ -88,10 +88,7 @@ async function promptBounds(page, width) {
   const prompt = page.getByText("🎯 アクションを選択してください", {
     exact: true
   })
-  await prompt.scrollIntoViewIfNeeded()
-  await page
-    .getByText("ラベルの選択にはアクションの選択が必要です", { exact: true })
-    .scrollIntoViewIfNeeded()
+  await prompt.locator("..").scrollIntoViewIfNeeded()
   const measured = await region.evaluate((region) => {
     const heading = [...region.querySelectorAll("div")].find(
       (e) => e.textContent === "🎯 アクションを選択してください"
@@ -112,6 +109,11 @@ async function promptBounds(page, width) {
   assert(
     measured.scrollWidth <= measured.clientWidth + 1,
     "prompt does not cause horizontal clipping"
+  )
+  assert(
+    measured.card.top >= measured.region.top - 1 &&
+      measured.card.bottom <= measured.region.bottom + 1,
+    "the whole prompt card, including its padding, is reachable by scrolling"
   )
   for (const rect of measured.textRects) {
     assert(
