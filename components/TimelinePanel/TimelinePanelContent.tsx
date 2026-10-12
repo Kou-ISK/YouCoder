@@ -1,6 +1,6 @@
 import React from "react"
 
-import { STYLES } from "../../constants"
+import { STYLES, TABLE } from "../../constants"
 import { TimelineActions } from "../TimelineActions"
 import { TimelineTable } from "../TimelineTable"
 import type { Action, FilterConfig, SortConfig } from "./types"
@@ -97,7 +97,7 @@ export const TimelinePanelContent: React.FC<TimelinePanelContentProps> = ({
         ref={tableRef}
         className="timeline-content bg-white/95 cursor-default flex-1 overflow-hidden p-2 relative"
         style={{
-          minHeight: 0 // フレックスアイテムが縮小可能にする
+          minHeight: TABLE.MIN_VIEWPORT_HEIGHT // 固定ヘッダーの下に操作可能な行を残す
         }}>
         <TimelineTable
           actions={actions}

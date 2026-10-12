@@ -8,7 +8,7 @@ import { TimelinePanelContent } from "./TimelinePanelContent"
 import type { TimelinePanelProps } from "./types"
 
 const MIN_WIDTH = 300
-const MIN_HEIGHT = 180
+const MIN_HEIGHT = 320
 
 /**
  * タイムラインパネルコンポーネント

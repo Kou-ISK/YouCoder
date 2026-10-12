@@ -13,22 +13,24 @@ const notices = names.map((name) => {
   return `${name} ${pkg.version}\n${fs.readFileSync(path.join(path.dirname(packagePath), "LICENSE"), "utf8")}`
 })
 // The Parcel bootstrap is also embedded in the generated production JS.
-const parcelRoot = fs
+const parcelRoots = fs
   .readdirSync("node_modules/.pnpm")
-  .find((name) => name.startsWith("@parcel+runtime-js@2.9.3_"))
-if (!parcelRoot)
+  .filter((name) => name.startsWith("@parcel+runtime-js@"))
+  .sort()
+if (!parcelRoots.length)
   throw Error("Parcel runtime license not found in locked installation")
-notices.push(
-  "@parcel/runtime-js 2.9.3\n" +
-    fs.readFileSync(
-      path.join(
-        "node_modules/.pnpm",
-        parcelRoot,
-        "node_modules/@parcel/runtime-js/LICENSE"
-      ),
-      "utf8"
-    )
-)
+for (const parcelRoot of parcelRoots) {
+  const directory = path.join(
+    "node_modules/.pnpm",
+    parcelRoot,
+    "node_modules/@parcel/runtime-js"
+  )
+  const pkg = JSON.parse(fs.readFileSync(path.join(directory, "package.json")))
+  notices.push(
+    `@parcel/runtime-js ${pkg.version}\n` +
+      fs.readFileSync(path.join(directory, "LICENSE"), "utf8")
+  )
+}
 fs.writeFileSync(
   "build/chrome-mv3-prod/THIRD_PARTY_NOTICES.txt",
   notices.join("\n\n--------------------\n\n")

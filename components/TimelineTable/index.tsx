@@ -255,6 +255,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
       ref={scrollContainerRef}
       aria-label="タイムライン表（左右にスクロールできます）"
       tabIndex={0}
+      style={{ scrollPaddingTop: TABLE.HEADER_SCROLL_PADDING }}
       className="w-full h-full overflow-auto relative">
       <table
         className="w-full border-collapse table-fixed text-base font-sans"

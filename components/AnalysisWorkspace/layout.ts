@@ -18,7 +18,7 @@ export const MIN_PANEL_WIDTH = 280
 export const MIN_PANEL_HEIGHT = 160
 export const PANEL_MINIMUMS = {
   taggingPanel: { width: 380, height: 320 },
-  timelinePanel: { width: 300, height: 180 }
+  timelinePanel: { width: 300, height: 320 }
 } as const
 
 export type PanelLayouts = Record<PanelId, PanelLayout>

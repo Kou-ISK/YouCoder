@@ -11,14 +11,22 @@ const requested = process.argv.slice(2),
     "lifecycle",
     "restart",
     "experience",
+    "capacity-migration",
     "live"
   ]
 const selected = requested.length
   ? requested
-  : ["layout", "core", "lifecycle", "restart", "experience"]
+  : [
+      "layout",
+      "core",
+      "lifecycle",
+      "restart",
+      "experience",
+      "capacity-migration"
+    ]
 if (selected.some((x) => !allowed.includes(x))) {
   console.error(
-    "Usage: node scripts/mv3/run.cjs [reproduce|layout|core|lifecycle|restart|experience|live ...]"
+    "Usage: node scripts/mv3/run.cjs [reproduce|layout|core|lifecycle|restart|experience|capacity-migration|live ...]"
   )
   process.exit(2)
 }

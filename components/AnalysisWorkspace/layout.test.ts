@@ -32,7 +32,7 @@ test("a saved overlapping narrow arrangement is repaired within the canvas", () 
     {
       taggingPanel: {
         position: { x: 0, y: 0 },
-        size: { width: 325, height: 350 }
+        size: { width: 325, height: 330 }
       },
       timelinePanel: {
         position: { x: 0, y: 300 },
@@ -41,7 +41,7 @@ test("a saved overlapping narrow arrangement is repaired within the canvas", () 
     },
     bounds
   )
-  expect(result.timelinePanel.position.y).toBe(366)
+  expect(result.timelinePanel.position.y).toBe(346)
   expect(
     result.timelinePanel.position.y + result.timelinePanel.size.height
   ).toBeLessThanOrEqual(bounds.height)

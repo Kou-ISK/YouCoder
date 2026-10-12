@@ -41,6 +41,7 @@ jobs:
           node "$RUNNER_TEMP/pw/node_modules/playwright/cli.js" install --with-deps chromium
           echo "YOUCODER_PLAYWRIGHT_MODULE=$RUNNER_TEMP/pw/node_modules/playwright" >> "$GITHUB_ENV"
           echo "YOUCODER_TEST_OUTPUT=$RUNNER_TEMP/mv3-evidence" >> "$GITHUB_ENV"
+          echo "YOUCODER_PREVIOUS_EXTENSION_DIR=$RUNNER_TEMP/baseline/build/chrome-mv3-prod" >> "$GITHUB_ENV"
       - name: Build historical baseline and current application serially
         env:
           PARCEL_WORKERS: 1

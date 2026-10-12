@@ -154,6 +154,14 @@ async function importJson(popup, buffer) {
         fullPage: true
       })
       await p.getByTitle("クリックして削除を開始").click()
+      console.log(
+        "Narrow confirmation geometry",
+        await scroller.evaluate((e) => ({
+          clientHeight: e.clientHeight,
+          scrollTop: e.scrollTop,
+          scrollLeft: e.scrollLeft
+        }))
+      )
       await p.getByRole("button", { name: "削除確認" }).click()
       await until(
         async () => (await h.storage(popup, videoId)).length === 0,
