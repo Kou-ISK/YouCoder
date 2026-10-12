@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react"
+import { act, fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import React from "react"
 
@@ -146,7 +146,7 @@ describe("TimelinePanel", () => {
     const user = userEvent.setup()
     render(<TimelinePanel {...defaultProps} />)
 
-    // テーブル行にホバーして削除ボタンを表示させる
+    // 通常の行操作と常時表示する削除ボタン
     const tableRows = screen.getAllByRole("row")
     const firstDataRow = tableRows[1] // ヘッダー行の次の行
 
@@ -154,9 +154,9 @@ describe("TimelinePanel", () => {
       await user.hover(firstDataRow)
     })
 
-    // 削除ボタンを取得（ゴミ箱アイコンまたは削除確認ボタン）
-    const deleteButton = screen.getByRole("button", {
-      name: /クリックして削除を開始|削除確認|🗑️/i
+    // アクセシブル名で削除ボタンを取得
+    const deleteButton = within(firstDataRow).getByRole("button", {
+      name: /記録を削除|削除確認/i
     })
 
     // 最初のクリックで削除確認状態になる

@@ -4,13 +4,21 @@ const fs = require("node:fs"),
   path = require("node:path"),
   os = require("node:os")
 const requested = process.argv.slice(2),
-  allowed = ["reproduce", "layout", "core", "lifecycle", "restart", "live"]
+  allowed = [
+    "reproduce",
+    "layout",
+    "core",
+    "lifecycle",
+    "restart",
+    "experience",
+    "live"
+  ]
 const selected = requested.length
   ? requested
-  : ["layout", "core", "lifecycle", "restart"]
+  : ["layout", "core", "lifecycle", "restart", "experience"]
 if (selected.some((x) => !allowed.includes(x))) {
   console.error(
-    "Usage: node scripts/mv3/run.cjs [reproduce|layout|core|lifecycle|restart|live ...]"
+    "Usage: node scripts/mv3/run.cjs [reproduce|layout|core|lifecycle|restart|experience|live ...]"
   )
   process.exit(2)
 }

@@ -10,8 +10,8 @@ import React, {
 
 import type { Position, Size } from "../DraggableResizable/types"
 import {
+  arrangePanels,
   defaultPanelLayout,
-  fitPanel,
   LAYOUT_KEY,
   parseLayouts,
   WIDE_WORKSPACE,
@@ -43,6 +43,7 @@ export const AnalysisWorkspace: React.FC<{ children: React.ReactNode }> = ({
   const [saved, setSaved] = useState<SavedLayouts>(readLayouts)
   const [collapsed, setCollapsed] = useState(false)
   const [layoutError, setLayoutError] = useState(false)
+  const [overlapBlocked, setOverlapBlocked] = useState(false)
   const bounds = useMemo(() => workspaceBounds(width || 1), [width])
   const mode = width >= WIDE_WORKSPACE ? "wide" : "narrow"
 
@@ -65,17 +66,21 @@ export const AnalysisWorkspace: React.FC<{ children: React.ReactNode }> = ({
   }, [])
 
   const layouts = useMemo(
-    () => ({
-      taggingPanel: fitPanel(
-        saved[mode]?.taggingPanel || defaultPanelLayout("taggingPanel", bounds),
+    () =>
+      arrangePanels(
+        {
+          taggingPanel:
+            saved[mode]?.taggingPanel ||
+            defaultPanelLayout("taggingPanel", bounds),
+          timelinePanel:
+            saved[mode]?.timelinePanel ||
+            defaultPanelLayout("timelinePanel", bounds)
+        },
         bounds
-      ),
-      timelinePanel: fitPanel(
-        saved[mode]?.timelinePanel ||
-          defaultPanelLayout("timelinePanel", bounds),
-        bounds
-      )
-    }),
+      ) || {
+        taggingPanel: defaultPanelLayout("taggingPanel", bounds),
+        timelinePanel: defaultPanelLayout("timelinePanel", bounds)
+      },
     [saved, mode, bounds]
   )
 
@@ -90,13 +95,17 @@ export const AnalysisWorkspace: React.FC<{ children: React.ReactNode }> = ({
   }, [])
   const update = useCallback(
     (id: PanelId, change: Partial<PanelLayout>) => {
+      const arranged = arrangePanels(
+        { ...layouts, [id]: { ...layouts[id], ...change } },
+        bounds,
+        id
+      )
+      setOverlapBlocked(!arranged)
+      if (!arranged) return
       const latest = layoutError ? saved : readLayouts()
       persist({
         ...latest,
-        [mode]: {
-          ...latest[mode],
-          [id]: fitPanel({ ...layouts[id], ...change }, bounds)
-        }
+        [mode]: arranged
       })
     },
     [mode, layouts, bounds, persist, saved, layoutError]
@@ -120,6 +129,7 @@ export const AnalysisWorkspace: React.FC<{ children: React.ReactNode }> = ({
             const next = { ...(layoutError ? saved : readLayouts()) }
             delete next[mode]
             persist(next)
+            setOverlapBlocked(false)
           }}>
           配置をリセット
         </button>
@@ -134,6 +144,11 @@ export const AnalysisWorkspace: React.FC<{ children: React.ReactNode }> = ({
       {layoutError && (
         <p role="status" className="px-3 py-2 text-sm text-red-700">
           パネル配置を保存できませんでした。このページ内でのみ反映されます。
+        </p>
+      )}
+      {overlapBlocked && (
+        <p role="status" className="px-3 py-2 text-sm text-slate-700">
+          パネルが重ならない空きがないため、直前の配置を保ちました。
         </p>
       )}
       <WorkspaceContext.Provider value={value}>

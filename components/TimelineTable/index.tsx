@@ -21,10 +21,6 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
     false,
     false
   ])
-  // 行のホバー状態を管理
-  const [hoveredActionId, setHoveredActionId] = React.useState<string | null>(
-    null
-  )
   // 削除確認状態を管理
   const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(
     null
@@ -70,7 +66,6 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
       if (pendingDeleteId !== actionId) {
         e.currentTarget.style.backgroundColor = "#f0f9ff"
       }
-      setHoveredActionId(actionId)
     },
     [pendingDeleteId]
   )
@@ -87,7 +82,6 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
         e.currentTarget.style.backgroundColor =
           index % 2 === 0 ? "#ffffff" : "#f9fafb"
       }
-      setHoveredActionId(null)
     },
     [pendingDeleteId]
   )
@@ -204,18 +198,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
     ) {
       resetDeleteConfirmation()
     }
-    if (
-      hoveredActionId !== null &&
-      !processedActions.some((action) => action.id === hoveredActionId)
-    ) {
-      setHoveredActionId(null)
-    }
-  }, [
-    processedActions,
-    pendingDeleteId,
-    hoveredActionId,
-    resetDeleteConfirmation
-  ])
+  }, [processedActions, pendingDeleteId, resetDeleteConfirmation])
 
   // ソートヘッダーをレンダリングする関数
   const renderSortHeader = (
@@ -270,6 +253,8 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
   return (
     <div
       ref={scrollContainerRef}
+      aria-label="タイムライン表（左右にスクロールできます）"
+      tabIndex={0}
       className="w-full h-full overflow-auto relative">
       <table
         className="w-full border-collapse table-fixed text-base font-sans"
@@ -313,7 +298,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                   pendingDeleteId === action.id
                     ? "3px solid #ef4444"
                     : "3px solid transparent",
-                transition: "all 0.3s ease"
+                transition: "background-color 0.3s ease"
               }}
               onMouseEnter={(e) => handleRowMouseEnter(e, action.id)}
               onMouseLeave={(e) => handleRowMouseLeave(e, action.id, index)}>
@@ -374,83 +359,24 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                   : "-"}
               </td>
               <td className="px-2 py-1.5 text-center border-b border-gray-200 relative">
-                {hoveredActionId === action.id ? (
-                  pendingDeleteId === action.id ? (
-                    // 削除確認状態のボタン
-                    <button
-                      onClick={() => handleDeleteClick(action.id)}
-                      style={{
-                        backgroundColor: "#dc2626",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "4px",
-                        padding: "4px 8px",
-                        fontSize: "14px",
-                        cursor: "pointer",
-                        fontWeight: "600",
-                        animation: "pulse 1s infinite"
-                      }}
-                      title="もう一度クリックすると削除されます">
-                      削除確認
-                    </button>
-                  ) : (
-                    // 通常の削除ボタン
-                    <button
-                      onClick={() => handleDeleteClick(action.id)}
-                      style={{
-                        backgroundColor: "transparent",
-                        color: "#6b7280",
-                        border: "1px solid #d1d5db",
-                        borderRadius: "4px",
-                        padding: "2px 6px",
-                        fontSize: "14px",
-                        cursor: "pointer",
-                        transition: "all 0.2s ease"
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#fee2e2"
-                        e.currentTarget.style.color = "#b91c1c"
-                        e.currentTarget.style.borderColor = "#fecaca"
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "transparent"
-                        e.currentTarget.style.color = "#6b7280"
-                        e.currentTarget.style.borderColor = "#d1d5db"
-                      }}
-                      title="クリックして削除を開始">
-                      🗑️
-                    </button>
-                  )
-                ) : pendingDeleteId === action.id ? (
-                  // ホバーしていないが削除確認状態のアイテム
-                  <button
-                    onClick={() => handleDeleteClick(action.id)}
-                    style={{
-                      backgroundColor: "#dc2626",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      padding: "4px 8px",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      fontWeight: "600",
-                      animation: "pulse 1s infinite"
-                    }}
-                    title="もう一度クリックすると削除されます">
-                    削除確認
-                  </button>
-                ) : (
-                  // 何も表示しない（削除ボタンを隠す）
-                  <span
-                    style={{
-                      color: "#e5e7eb",
-                      fontSize: "14px",
-                      fontWeight: "400",
-                      userSelect: "none"
-                    }}>
-                    ⋯
-                  </span>
-                )}
+                <button
+                  type="button"
+                  onClick={() => handleDeleteClick(action.id)}
+                  className={`rounded border px-1 py-1 text-xs whitespace-nowrap focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                    pendingDeleteId === action.id
+                      ? "border-red-700 bg-red-600 text-white"
+                      : "border-gray-300 text-gray-600 hover:bg-red-50 hover:text-red-700"
+                  }`}
+                  aria-label={
+                    pendingDeleteId === action.id ? undefined : "記録を削除"
+                  }
+                  title={
+                    pendingDeleteId === action.id
+                      ? "もう一度クリックすると削除されます"
+                      : "クリックして削除を開始"
+                  }>
+                  {pendingDeleteId === action.id ? "削除確認" : "削除"}
+                </button>
               </td>
             </tr>
           ))}

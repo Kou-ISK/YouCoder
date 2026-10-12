@@ -73,6 +73,7 @@ export const TimelinePanelContent: React.FC<TimelinePanelContentProps> = ({
         {/* 新しいアクションのインジケーター */}
         {newActionIndicator && (
           <div
+            className="pointer-events-none"
             style={{
               position: "absolute",
               right: "8px",
