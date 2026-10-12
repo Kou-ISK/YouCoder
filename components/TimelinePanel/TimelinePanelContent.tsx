@@ -69,45 +69,32 @@ export const TimelinePanelContent: React.FC<TimelinePanelContentProps> = ({
           getUniqueActions={getUniqueActions}
           getUniqueLabels={getUniqueLabels}
         />
-
-        {/* 新しいアクションのインジケーター */}
-        {newActionIndicator && (
-          <div
-            className="pointer-events-none"
-            style={{
-              position: "absolute",
-              right: "8px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              backgroundColor: "#10b981",
-              color: "white",
-              padding: "4px 8px",
-              borderRadius: STYLES.DIMENSIONS.BORDER_RADIUS_LG,
-              fontSize: STYLES.FONT_SIZE.MEDIUM,
-              fontWeight: "500",
-              animation: "pulse 1s infinite",
-              boxShadow: "0 2px 4px rgba(16, 185, 129, 0.3)"
-            }}>
-            新しいアクション追加
-          </div>
-        )}
       </div>
 
       <div
         ref={tableRef}
-        className="timeline-content bg-white/95 cursor-default flex-1 overflow-hidden p-2 relative"
+        className="timeline-content bg-white/95 cursor-default flex-1 flex flex-col overflow-hidden p-2 relative"
         style={{
           minHeight: TABLE.MIN_VIEWPORT_HEIGHT // 固定ヘッダーの下に操作可能な行を残す
         }}>
-        <TimelineTable
-          actions={actions}
-          onDelete={onDelete}
-          onSeek={onSeek}
-          sortConfig={sortConfig}
-          onSort={handleSort}
-          filterConfig={filterConfig}
-          scrollContainerRef={scrollContainerRef}
-        />
+        {newActionIndicator && (
+          <div
+            role="status"
+            className="pointer-events-none flex-shrink-0 bg-emerald-50 text-emerald-700 px-2 text-xs leading-5">
+            新しいアクション追加
+          </div>
+        )}
+        <div className="min-h-0 min-w-0 flex-1">
+          <TimelineTable
+            actions={actions}
+            onDelete={onDelete}
+            onSeek={onSeek}
+            sortConfig={sortConfig}
+            onSort={handleSort}
+            filterConfig={filterConfig}
+            scrollContainerRef={scrollContainerRef}
+          />
+        </div>
 
         {/* 下部に移動ボタン */}
         {showScrollToBottom && (

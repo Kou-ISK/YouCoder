@@ -134,16 +134,16 @@ export const CHROME_EXTENSION = {
 export const TABLE = {
   ITEMS_PER_PAGE: 10,
   MAX_ITEMS_PER_PAGE: 100,
-  MIN_WIDTH: "600px",
+  MIN_WIDTH: "760px",
   MIN_VIEWPORT_HEIGHT: 128,
   HEADER_SCROLL_PADDING: 40,
   COLUMN_WIDTHS: {
-    TEAM: "10%",
-    ACTION: "10%",
-    START_TIME: "10%",
-    END_TIME: "10%",
-    LABELS: "50%",
-    MENU: "10%"
+    TEAM: "96px",
+    ACTION: "112px",
+    START_TIME: "128px",
+    END_TIME: "128px",
+    LABELS: "auto",
+    MENU: "80px"
   }
 } as const
 

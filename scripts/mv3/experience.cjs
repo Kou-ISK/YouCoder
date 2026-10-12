@@ -43,6 +43,124 @@ async function panelGeometry(page) {
   )
   return boxes
 }
+async function timeCellBounds(page) {
+  const measurements = await page
+    .locator("tbody tr td:nth-child(3), tbody tr td:nth-child(4)")
+    .evaluateAll((cells) =>
+      cells.map((cell) => {
+        const range = document.createRange()
+        range.selectNodeContents(cell)
+        return {
+          text: cell.textContent,
+          cell: cell.getBoundingClientRect().toJSON(),
+          textRects: [...range.getClientRects()].map((r) => r.toJSON())
+        }
+      })
+    )
+  assert(measurements.length > 0, "time cells exist")
+  for (const { text, cell, textRects } of measurements) {
+    for (const rect of textRects) {
+      assert(
+        rect.left >= cell.left && rect.right <= cell.right,
+        `time ${text} fits its own column: ${JSON.stringify({ cell, rect })}`
+      )
+      assert(
+        rect.top >= cell.top && rect.bottom <= cell.bottom,
+        `time ${text} fits the row height`
+      )
+    }
+  }
+  return measurements
+}
+async function settledTimeline(page) {
+  await page
+    .getByText("新しいアクション追加", { exact: true })
+    .waitFor({ state: "hidden" })
+  await page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve))
+      )
+  )
+}
+async function promptBounds(page, width) {
+  const region = page.getByRole("region", { name: "タグ付けの操作と案内" })
+  const prompt = page.getByText("🎯 アクションを選択してください", {
+    exact: true
+  })
+  await prompt.scrollIntoViewIfNeeded()
+  await page
+    .getByText("ラベルの選択にはアクションの選択が必要です", { exact: true })
+    .scrollIntoViewIfNeeded()
+  const measured = await region.evaluate((region) => {
+    const heading = [...region.querySelectorAll("div")].find(
+      (e) => e.textContent === "🎯 アクションを選択してください"
+    )
+    const card = heading.parentElement
+    const range = document.createRange()
+    range.selectNodeContents(card)
+    return {
+      region: region.getBoundingClientRect().toJSON(),
+      scrollWidth: region.scrollWidth,
+      clientWidth: region.clientWidth,
+      scrollTop: region.scrollTop,
+      scrollHeight: region.scrollHeight,
+      card: card.getBoundingClientRect().toJSON(),
+      textRects: [...range.getClientRects()].map((r) => r.toJSON())
+    }
+  })
+  assert(
+    measured.scrollWidth <= measured.clientWidth + 1,
+    "prompt does not cause horizontal clipping"
+  )
+  for (const rect of measured.textRects) {
+    assert(
+      rect.left >= measured.region.left - 1 &&
+        rect.right <= measured.region.right + 1,
+      "prompt text wraps inside the scroll region"
+    )
+    assert(
+      rect.top >= measured.region.top - 1 &&
+        rect.bottom <= measured.region.bottom + 1,
+      "complete prompt is reachable inside the scroll region"
+    )
+  }
+  await page.screenshot({
+    path: out + `/narrow-${width}-prompt.png`,
+    fullPage: true
+  })
+  return measured
+}
+async function badgeBounds(page, width) {
+  const badge = page.getByText("新しいアクション追加", { exact: true })
+  await badge.waitFor()
+  const measured = await badge.evaluate((badge) => {
+    const panel = badge.closest("[data-youcoder-panel]")
+    return {
+      badge: badge.getBoundingClientRect().toJSON(),
+      controls: [
+        ...panel.querySelectorAll(
+          ".timeline-actions select, .timeline-actions button, thead"
+        )
+      ].map((e) => e.getBoundingClientRect().toJSON())
+    }
+  })
+  for (const control of measured.controls) {
+    const b = measured.badge
+    assert(
+      b.right <= control.left ||
+        control.right <= b.left ||
+        b.bottom <= control.top ||
+        control.bottom <= b.top,
+      "new-action notice has its own row and does not cover filters or table header"
+    )
+  }
+  await page.screenshot({
+    path: out + `/narrow-${width}-new-action.png`,
+    fullPage: true
+  })
+  return measured
+}
 async function exportJson(popup) {
   const download = popup.waitForEvent("download")
   await popup.getByRole("button", { name: "エクスポート", exact: true }).click()
@@ -110,11 +228,13 @@ async function importJson(popup, buffer) {
     const download = p.waitForEvent("download")
     await p.getByRole("button", { name: "CSV出力" }).click()
     await (await download).saveAs(out + "/reachable-after-move.csv")
+    await settledTimeline(p)
+    const times = await timeCellBounds(p)
     await p.screenshot({ path: out + "/panels-after-move.png", fullPage: true })
     await p.reload()
     await p.getByRole("button", { name: "CSV出力" }).waitFor()
     await panelGeometry(p)
-    return { before, restored: await panelGeometry(p) }
+    return { before, restored: await panelGeometry(p), times }
   })
   await test("375px and 320px: tag, filter, scroll right, delete and export via normal UI", async () => {
     const measured = []
@@ -123,12 +243,14 @@ async function importJson(popup, buffer) {
       await p.getByRole("button", { name: "配置をリセット" }).click()
       const videoId = `YC_NARROW_${width}`
       await h.nav(p, videoId)
+      const prompt = await promptBounds(p, width)
       await h.seek(p, 1)
       await toggle(p).click()
       await until(
         async () => (await h.storage(popup, videoId))?.length === 1,
         "narrow start"
       )
+      const badge = await badgeBounds(p, width)
       await p.getByRole("button", { name: /^成功ラベル/ }).click()
       await h.seek(p, 4)
       await toggle(p).click()
@@ -142,6 +264,30 @@ async function importJson(popup, buffer) {
       const scroller = p.getByLabel(
         "タイムライン表（左右にスクロールできます）"
       )
+      await settledTimeline(p)
+      const endCell = p.locator("tbody tr td:nth-child(4)").first()
+      await endCell.scrollIntoViewIfNeeded()
+      const times = await timeCellBounds(p)
+      const visibleTime = await endCell.evaluate((cell) => {
+        const range = document.createRange()
+        range.selectNodeContents(cell)
+        return {
+          text: range.getBoundingClientRect().toJSON(),
+          scroller: cell
+            .closest("table")
+            .parentElement.getBoundingClientRect()
+            .toJSON()
+        }
+      })
+      assert(
+        visibleTime.text.left >= visibleTime.scroller.left &&
+          visibleTime.text.right <= visibleTime.scroller.right,
+        "horizontal scrolling exposes the complete end time"
+      )
+      await p.screenshot({
+        path: out + `/narrow-${width}-times.png`,
+        fullPage: true
+      })
       await scroller.scrollIntoViewIfNeeded()
       await scroller.hover()
       await p.mouse.wheel(1000, 0)
@@ -170,7 +316,14 @@ async function importJson(popup, buffer) {
       const download = p.waitForEvent("download")
       await p.getByRole("button", { name: "CSV出力" }).click()
       await (await download).saveAs(out + `/narrow-${width}.csv`)
-      measured.push({ width, panels: await panelGeometry(p) })
+      measured.push({
+        width,
+        panels: await panelGeometry(p),
+        times,
+        visibleTime,
+        badge,
+        prompt
+      })
     }
     return measured
   })
@@ -390,6 +543,8 @@ async function importJson(popup, buffer) {
   await test("Store screenshot drafts use actual extension UI with explicit synthetic-data caption", async () => {
     await p.setViewportSize({ width: 1280, height: 800 })
     await h.nav(p, A)
+    await settledTimeline(p)
+    await timeCellBounds(p)
     await p.evaluate(() => {
       const label = document.createElement("p")
       label.textContent =

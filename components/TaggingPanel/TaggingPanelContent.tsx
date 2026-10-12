@@ -30,7 +30,7 @@ export const TaggingPanelContent: React.FC<TaggingPanelContentProps> = ({
     )
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col min-w-0">
       {/* アクションセクション */}
       <ActionsSection
         teams={teams}
@@ -52,7 +52,7 @@ export const TaggingPanelContent: React.FC<TaggingPanelContentProps> = ({
 
       {/* 状態インジケーター */}
       {!hasActiveActions && (
-        <div className="mt-8 text-center py-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-dashed border-blue-200">
+        <div className="mt-2 px-2 py-4 min-w-0 flex-shrink-0 break-words whitespace-normal text-center bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-dashed border-blue-200">
           <div className="text-blue-600 text-lg font-semibold mb-2">
             🎯 アクションを選択してください
           </div>

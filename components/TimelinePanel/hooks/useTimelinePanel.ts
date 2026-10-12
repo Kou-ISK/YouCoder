@@ -114,6 +114,7 @@ export const useTimelinePanel = ({
       }, 3000)
       return () => clearTimeout(timer)
     }
+    setNewActionIndicator(false)
   }, [actions.length])
 
   // タイムラインの自動スクロール

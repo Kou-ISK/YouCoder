@@ -204,7 +204,6 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
   const renderSortHeader = (
     title: string,
     key: "team" | "action" | "start" | "end",
-    width: string,
     index: number
   ) => {
     const isSorted = sortConfig?.key === key
@@ -225,7 +224,6 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
         }}
         className="px-2 py-1.5 text-left font-semibold text-slate-800 text-base overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer transition-colors duration-200"
         style={{
-          width,
           backgroundColor: isSorted
             ? "#f1f5f9"
             : hoveredHeaders[index]
@@ -272,14 +270,14 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
           className="sticky top-0 bg-slate-100 border-b border-slate-300"
           style={{ zIndex: STYLES.Z_INDEX.TABLE_HEADER }}>
           <tr>
-            {renderSortHeader("チーム", "team", "15%", 0)}
-            {renderSortHeader("アクション", "action", "20%", 1)}
-            {renderSortHeader("開始時間", "start", "12%", 2)}
-            {renderSortHeader("終了時間", "end", "12%", 3)}
-            <th className="px-2 py-1.5 text-left font-semibold text-slate-800 text-base overflow-hidden text-ellipsis whitespace-nowrap w-9/25">
+            {renderSortHeader("チーム", "team", 0)}
+            {renderSortHeader("アクション", "action", 1)}
+            {renderSortHeader("開始時間", "start", 2)}
+            {renderSortHeader("終了時間", "end", 3)}
+            <th className="px-2 py-1.5 text-left font-semibold text-slate-800 text-base overflow-hidden text-ellipsis whitespace-nowrap">
               ラベル
             </th>
-            <th className="px-2 py-1.5 text-center font-semibold text-slate-800 text-base w-1/20">
+            <th className="px-2 py-1.5 text-center font-semibold text-slate-800 text-base">
               操作
             </th>
           </tr>
@@ -311,7 +309,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               </td>
               <td
                 onClick={() => seekToTime(action.start)}
-                className="px-2 py-1.5 text-blue-500 font-mono text-base font-medium border-b border-gray-200 cursor-pointer underline decoration-dotted"
+                className="px-2 py-1.5 text-blue-500 font-mono text-base font-medium border-b border-gray-200 cursor-pointer underline decoration-dotted whitespace-nowrap overflow-hidden text-ellipsis"
                 title="クリックすると動画の該当位置にジャンプします">
                 {formatTime(action.start)}
               </td>
@@ -321,7 +319,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                     ? () => seekToTime(action.end)
                     : undefined
                 }
-                className={`px-2 py-1.5 font-mono text-base font-medium border-b border-gray-200 ${
+                className={`px-2 py-1.5 font-mono text-base font-medium border-b border-gray-200 whitespace-nowrap overflow-hidden text-ellipsis ${
                   action.end !== undefined
                     ? "text-blue-500 cursor-pointer underline decoration-dotted"
                     : "text-amber-500 cursor-default"
