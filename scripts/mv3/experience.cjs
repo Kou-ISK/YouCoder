@@ -400,13 +400,7 @@ async function importJson(popup, buffer) {
       label.scrollIntoView()
     })
     await p.screenshot({ path: out + "/store-timeline-draft-1280x800.png" })
-    const screenshotSession = await context.newCDPSession(popup)
-    await screenshotSession.send("Emulation.setDeviceMetricsOverride", {
-      width: 640,
-      height: 400,
-      deviceScaleFactor: 2,
-      mobile: false
-    })
+    await popup.setViewportSize({ width: 640, height: 400 })
     await popup.evaluate(() => {
       const caption = document.createElement("p")
       caption.textContent = "YouCoder — 設定画面 / デモデータ"
@@ -414,17 +408,19 @@ async function importJson(popup, buffer) {
         "font:14px sans-serif;padding:8px 24px;margin:0;color:#334155"
       document.body.prepend(caption)
     })
-    await popup.screenshot({ path: out + "/store-settings-draft-1280x800.png" })
-    for (const name of [
-      "store-settings-draft-1280x800.png",
-      "store-timeline-draft-1280x800.png"
+    await popup.screenshot({
+      path: out + "/store-settings-draft-640x400.png",
+      scale: "css"
+    })
+    for (const [name, width, height] of [
+      ["store-settings-draft-640x400.png", 640, 400],
+      ["store-timeline-draft-1280x800.png", 1280, 800]
     ]) {
       const png = fs.readFileSync(out + "/" + name)
-      assert.equal(png.readUInt32BE(16), 1280)
-      assert.equal(png.readUInt32BE(20), 800)
+      assert.equal(png.readUInt32BE(16), width)
+      assert.equal(png.readUInt32BE(20), height)
     }
-    await screenshotSession.detach()
-    return "1280x800 screenshots of actual production UI, generated fixture only; review before publishing"
+    return "1280x800 timeline and 640x400 settings screenshots of actual production UI, generated fixture only; review before publishing"
   })
   await h.cleanup()
   if (results.some((x) => x.status === "FAIL")) process.exitCode = 1

@@ -33,7 +33,7 @@
 
 CIは生成データのJSON/PNG/CSV、head、bundle監査、配布候補ZIPとSHA256を保存します。ZIPは既存の提出workflowを使わず作成し、React/React DOM/Scheduler/Plasmo/Parcel runtimeのライセンス本文を同梱します。artifact保持は7日です。最終head・CI・artifactはPR本文を正本として記録します。
 
-Store草案画像は実際の拡張UIを1280×800で撮影したものです。タイムライン画像に「デモデータ / 合成ページ」を明示し、実YouTubeの検証証拠に流用しません。Cloudへの画像転送は通常のダウンロードとLibrary経由の両方で失敗したため、このexecutorでは新しいCI画像を目視できていません。画像の独立目視は公開前に必要です。
+Store草案画像は実際の拡張UIをタイムライン1280×800・設定640×400で撮影したものです。タイムライン画像に「デモデータ / 合成ページ」を明示し、実YouTubeの検証証拠に流用しません。Cloudへの画像転送は通常のダウンロードとLibrary経由の両方で失敗したため、このexecutorでは新しいCI画像を目視できていません。画像の独立目視は公開前に必要です。
 
 [Store画像の公式要件](https://developer.chrome.com/docs/webstore/images)に合わせた画面草案であり、既存仮アイコンの採用判断や440×280の必須プロモーション画像は別途残ります。旧画像・記録は履歴として維持し、最新の成果物と混同しません。
 

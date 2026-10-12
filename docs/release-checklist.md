@@ -12,7 +12,7 @@
 - [x] 合成SPAの動画要素交換、A/B別記録と開始中のタグ付け継続を確認。実YouTube SPAとは区別。
 - [x] `unlimitedStorage` を削除。10,000行の容量とChromeの実quota拒否・データ保持・復旧を確認。popupの設定値ログは開発時限定へ変更。
 - [x] 389単体テスト、型、production build、既存25 MV3項目、bundle監査を確認。ZIPと第三者ライセンス・SHA256をCIで生成する。
-- [x] 1280×800のStore画面草案をCI artifactに作成。デモデータ/合成ページを明示し、実YouTubeの証拠にしない。
+- [x] 1280×800（タイムライン）・640×400（設定）のStore画面草案をCI artifactに作成。デモデータ/合成ページを明示し、実YouTubeの証拠にしない。
 
 ## 最終確認
 
