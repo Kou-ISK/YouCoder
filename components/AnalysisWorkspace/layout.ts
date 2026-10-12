@@ -16,6 +16,12 @@ export const TIMELINE_HEIGHT = 340
 export const WIDE_HEIGHT = 420
 export const MIN_PANEL_WIDTH = 280
 export const MIN_PANEL_HEIGHT = 160
+export const PANEL_MINIMUMS = {
+  taggingPanel: { width: 380, height: 320 },
+  timelinePanel: { width: 300, height: 320 }
+} as const
+
+export type PanelLayouts = Record<PanelId, PanelLayout>
 
 export const workspaceBounds = (width: number): Size => ({
   width: Math.max(1, width),
@@ -100,4 +106,81 @@ export const parseLayouts = (raw: string | null): SavedLayouts => {
   } catch {
     return {}
   }
+}
+
+export const fitWorkspacePanel = (
+  id: PanelId,
+  layout: PanelLayout,
+  bounds: Size
+) =>
+  fitPanel(layout, bounds, PANEL_MINIMUMS[id].width, PANEL_MINIMUMS[id].height)
+
+export const panelsOverlap = (a: PanelLayout, b: PanelLayout) =>
+  a.position.x < b.position.x + b.size.width + PANEL_GAP &&
+  b.position.x < a.position.x + a.size.width + PANEL_GAP &&
+  a.position.y < b.position.y + b.size.height + PANEL_GAP &&
+  b.position.y < a.position.y + a.size.height + PANEL_GAP
+
+// Keep the edited panel where requested; move/shrink its neighbour if it fits.
+// Return null if there is no room, so the caller can retain the last safe layout.
+export const arrangePanels = (
+  requested: PanelLayouts,
+  bounds: Size,
+  preferred: PanelId = "taggingPanel"
+): PanelLayouts | null => {
+  const layouts: PanelLayouts = {
+    taggingPanel: fitWorkspacePanel(
+      "taggingPanel",
+      requested.taggingPanel,
+      bounds
+    ),
+    timelinePanel: fitWorkspacePanel(
+      "timelinePanel",
+      requested.timelinePanel,
+      bounds
+    )
+  }
+  if (!panelsOverlap(layouts.taggingPanel, layouts.timelinePanel))
+    return layouts
+  const other: PanelId =
+    preferred === "taggingPanel" ? "timelinePanel" : "taggingPanel"
+  const fixed = layouts[preferred],
+    neighbour = layouts[other]
+  const right = fixed.position.x + fixed.size.width + PANEL_GAP
+  const below = fixed.position.y + fixed.size.height + PANEL_GAP
+  const spaces = [
+    { x: right, y: 0, width: bounds.width - right, height: bounds.height },
+    { x: 0, y: 0, width: fixed.position.x - PANEL_GAP, height: bounds.height },
+    { x: 0, y: below, width: bounds.width, height: bounds.height - below },
+    { x: 0, y: 0, width: bounds.width, height: fixed.position.y - PANEL_GAP }
+  ]
+  const minimum = PANEL_MINIMUMS[other]
+  const candidates = spaces.flatMap((space) => {
+    if (
+      space.width < Math.min(bounds.width, minimum.width) ||
+      space.height < minimum.height
+    )
+      return []
+    const fitted = fitWorkspacePanel(
+      other,
+      {
+        position: {
+          x: neighbour.position.x - space.x,
+          y: neighbour.position.y - space.y
+        },
+        size: neighbour.size
+      },
+      space
+    )
+    fitted.position.x += space.x
+    fitted.position.y += space.y
+    return [fitted]
+  })
+  const cost = (layout: PanelLayout) =>
+    Math.abs(layout.position.x - neighbour.position.x) +
+    Math.abs(layout.position.y - neighbour.position.y) +
+    Math.abs(layout.size.width - neighbour.size.width) +
+    Math.abs(layout.size.height - neighbour.size.height)
+  candidates.sort((a, b) => cost(a) - cost(b))
+  return candidates.length ? { ...layouts, [other]: candidates[0] } : null
 }

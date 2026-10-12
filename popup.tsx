@@ -99,7 +99,7 @@ const Popup = () => {
           CHROME_EXTENSION.STORAGE_KEYS.SELECTED_ACTION
         ])
 
-        logger.info("Loaded data from chrome.storage", data)
+        logger.debug("Loaded data from chrome.storage", data)
 
         setTeams(data.teams || [])
         setShowExtension(
@@ -140,7 +140,7 @@ const Popup = () => {
           initialSelectedButtonSet = normalizedButtonSets[0].setName
         }
 
-        logger.info("Setting selectedButtonSet to:", initialSelectedButtonSet)
+        logger.debug("Setting selectedButtonSet to:", initialSelectedButtonSet)
         setSelectedButtonSet(
           initialSelectedButtonSet ||
             (normalizedButtonSets.length > 0
@@ -152,7 +152,7 @@ const Popup = () => {
           setSelectedAction(data.selectedAction)
         }
 
-        logger.info("Data loading completed. Final states:", {
+        logger.debug("Data loading completed. Final states:", {
           selectedButtonSet: initialSelectedButtonSet,
           buttonSets: normalizedButtonSets,
           teams: data.teams || []
@@ -177,7 +177,7 @@ const Popup = () => {
       buttonSets.length > 0 &&
       (!selectedButtonSet || selectedButtonSet.trim() === "")
     ) {
-      logger.info(
+      logger.debug(
         "Force setting selectedButtonSet to first available:",
         buttonSets[0].setName
       )
@@ -276,7 +276,7 @@ const Popup = () => {
             selectedButtonSet: selectedButtonSet
           })
           setButtonSets(updatedButtonSets)
-          logger.info("Action added and saved to localStorage", { modalInput })
+          logger.debug("Action added and saved to localStorage", { modalInput })
         }
         break
       case "addLabel":
@@ -323,7 +323,7 @@ const Popup = () => {
             if (!labels[category].includes(modalInput)) {
               labels[category].push(modalInput)
               targetButton.labels = labels
-              logger.info(`ラベル追加: ${category} - ${modalInput}`)
+              logger.debug(`ラベル追加: ${category} - ${modalInput}`)
             } else {
               alert(
                 `ラベル "${modalInput}" は既にカテゴリ "${category}" に存在します`
@@ -343,7 +343,7 @@ const Popup = () => {
             selectedAction: selectedAction
           })
           setButtonSets(updatedButtonSets)
-          logger.info("Label added and saved to localStorage", { modalInput })
+          logger.debug("Label added and saved to localStorage", { modalInput })
         }
         break
       case "team":

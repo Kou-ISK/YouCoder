@@ -85,13 +85,13 @@ test("keyboard move and resize persist and survive a component remount", () => {
   })
   fireEvent.keyDown(
     screen.getByRole("button", { name: "テストのサイズを変更" }),
-    { key: "ArrowLeft" }
+    { key: "ArrowRight" }
   )
   view.unmount()
   view = renderWorkspace()
   expect(view.container.querySelector("[data-youcoder-panel]")).toHaveStyle({
     left: "10px",
-    width: "370px"
+    width: "390px"
   })
 })
 

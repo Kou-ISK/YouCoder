@@ -41,6 +41,7 @@ jobs:
           node "$RUNNER_TEMP/pw/node_modules/playwright/cli.js" install --with-deps chromium
           echo "YOUCODER_PLAYWRIGHT_MODULE=$RUNNER_TEMP/pw/node_modules/playwright" >> "$GITHUB_ENV"
           echo "YOUCODER_TEST_OUTPUT=$RUNNER_TEMP/mv3-evidence" >> "$GITHUB_ENV"
+          echo "YOUCODER_PREVIOUS_EXTENSION_DIR=$RUNNER_TEMP/baseline/build/chrome-mv3-prod" >> "$GITHUB_ENV"
       - name: Build historical baseline and current application serially
         env:
           PARCEL_WORKERS: 1
@@ -67,8 +68,8 @@ jobs:
         run: |
           YOUCODER_TEST_OUTPUT="$YOUCODER_TEST_OUTPUT/synthetic" node scripts/mv3/run.cjs
       - name: Observe public YouTube separately
-        # Keep known bot-blocked live observation explicit, not repeated per PR.
-        if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && inputs.observe_public_youtube }}
+        # Explicit opt-in: dispatch input, or one observation when opening a marked PR.
+        if: ${{ !cancelled() && ((github.event_name == 'workflow_dispatch' && inputs.observe_public_youtube) || (github.event_name == 'pull_request' && github.event.action == 'opened' && contains(github.event.pull_request.title, '[observe-public-youtube]'))) }}
         run: |
           YOUCODER_TEST_OUTPUT="$YOUCODER_TEST_OUTPUT/public-youtube" node scripts/mv3/run.cjs live
       - name: Preserve generated evidence only

@@ -45,8 +45,12 @@ export const TaggingPanel: React.FC<TaggingPanelProps> = ({
       onSizeChange={handleSizeChange}
       className="bg-gradient-to-br from-white via-blue-50 to-indigo-100 rounded-3xl shadow-2xl border-2 border-gray-200 hover:border-blue-400 font-sans backdrop-blur-xl transition-shadow duration-300 hover:shadow-3xl"
       style={{ zIndex: STYLES.Z_INDEX.TAGGING_PANEL }}>
-      <div className="p-3 w-full h-full overflow-hidden flex flex-col box-border">
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+      <div className="p-3 w-full h-full min-w-0 min-h-0 overflow-hidden flex flex-col box-border">
+        <div
+          role="region"
+          aria-label="タグ付けの操作と案内"
+          tabIndex={0}
+          className="flex-1 min-w-0 min-h-0 overflow-y-auto custom-scrollbar">
           <TaggingPanelContent
             teams={teams}
             actions={actions}

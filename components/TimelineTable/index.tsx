@@ -21,10 +21,6 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
     false,
     false
   ])
-  // 行のホバー状態を管理
-  const [hoveredActionId, setHoveredActionId] = React.useState<string | null>(
-    null
-  )
   // 削除確認状態を管理
   const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(
     null
@@ -70,7 +66,6 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
       if (pendingDeleteId !== actionId) {
         e.currentTarget.style.backgroundColor = "#f0f9ff"
       }
-      setHoveredActionId(actionId)
     },
     [pendingDeleteId]
   )
@@ -87,7 +82,6 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
         e.currentTarget.style.backgroundColor =
           index % 2 === 0 ? "#ffffff" : "#f9fafb"
       }
-      setHoveredActionId(null)
     },
     [pendingDeleteId]
   )
@@ -204,24 +198,12 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
     ) {
       resetDeleteConfirmation()
     }
-    if (
-      hoveredActionId !== null &&
-      !processedActions.some((action) => action.id === hoveredActionId)
-    ) {
-      setHoveredActionId(null)
-    }
-  }, [
-    processedActions,
-    pendingDeleteId,
-    hoveredActionId,
-    resetDeleteConfirmation
-  ])
+  }, [processedActions, pendingDeleteId, resetDeleteConfirmation])
 
   // ソートヘッダーをレンダリングする関数
   const renderSortHeader = (
     title: string,
     key: "team" | "action" | "start" | "end",
-    width: string,
     index: number
   ) => {
     const isSorted = sortConfig?.key === key
@@ -242,7 +224,6 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
         }}
         className="px-2 py-1.5 text-left font-semibold text-slate-800 text-base overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer transition-colors duration-200"
         style={{
-          width,
           backgroundColor: isSorted
             ? "#f1f5f9"
             : hoveredHeaders[index]
@@ -270,6 +251,9 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
   return (
     <div
       ref={scrollContainerRef}
+      aria-label="タイムライン表（左右にスクロールできます）"
+      tabIndex={0}
+      style={{ scrollPaddingTop: TABLE.HEADER_SCROLL_PADDING }}
       className="w-full h-full overflow-auto relative">
       <table
         className="w-full border-collapse table-fixed text-base font-sans"
@@ -286,14 +270,14 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
           className="sticky top-0 bg-slate-100 border-b border-slate-300"
           style={{ zIndex: STYLES.Z_INDEX.TABLE_HEADER }}>
           <tr>
-            {renderSortHeader("チーム", "team", "15%", 0)}
-            {renderSortHeader("アクション", "action", "20%", 1)}
-            {renderSortHeader("開始時間", "start", "12%", 2)}
-            {renderSortHeader("終了時間", "end", "12%", 3)}
-            <th className="px-2 py-1.5 text-left font-semibold text-slate-800 text-base overflow-hidden text-ellipsis whitespace-nowrap w-9/25">
+            {renderSortHeader("チーム", "team", 0)}
+            {renderSortHeader("アクション", "action", 1)}
+            {renderSortHeader("開始時間", "start", 2)}
+            {renderSortHeader("終了時間", "end", 3)}
+            <th className="px-2 py-1.5 text-left font-semibold text-slate-800 text-base overflow-hidden text-ellipsis whitespace-nowrap">
               ラベル
             </th>
-            <th className="px-2 py-1.5 text-center font-semibold text-slate-800 text-base w-1/20">
+            <th className="px-2 py-1.5 text-center font-semibold text-slate-800 text-base">
               操作
             </th>
           </tr>
@@ -313,7 +297,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                   pendingDeleteId === action.id
                     ? "3px solid #ef4444"
                     : "3px solid transparent",
-                transition: "all 0.3s ease"
+                transition: "background-color 0.3s ease"
               }}
               onMouseEnter={(e) => handleRowMouseEnter(e, action.id)}
               onMouseLeave={(e) => handleRowMouseLeave(e, action.id, index)}>
@@ -325,7 +309,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               </td>
               <td
                 onClick={() => seekToTime(action.start)}
-                className="px-2 py-1.5 text-blue-500 font-mono text-base font-medium border-b border-gray-200 cursor-pointer underline decoration-dotted"
+                className="px-2 py-1.5 text-blue-500 font-mono text-base font-medium border-b border-gray-200 cursor-pointer underline decoration-dotted whitespace-nowrap overflow-hidden text-ellipsis"
                 title="クリックすると動画の該当位置にジャンプします">
                 {formatTime(action.start)}
               </td>
@@ -335,7 +319,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                     ? () => seekToTime(action.end)
                     : undefined
                 }
-                className={`px-2 py-1.5 font-mono text-base font-medium border-b border-gray-200 ${
+                className={`px-2 py-1.5 font-mono text-base font-medium border-b border-gray-200 whitespace-nowrap overflow-hidden text-ellipsis ${
                   action.end !== undefined
                     ? "text-blue-500 cursor-pointer underline decoration-dotted"
                     : "text-amber-500 cursor-default"
@@ -374,83 +358,24 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                   : "-"}
               </td>
               <td className="px-2 py-1.5 text-center border-b border-gray-200 relative">
-                {hoveredActionId === action.id ? (
-                  pendingDeleteId === action.id ? (
-                    // 削除確認状態のボタン
-                    <button
-                      onClick={() => handleDeleteClick(action.id)}
-                      style={{
-                        backgroundColor: "#dc2626",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "4px",
-                        padding: "4px 8px",
-                        fontSize: "14px",
-                        cursor: "pointer",
-                        fontWeight: "600",
-                        animation: "pulse 1s infinite"
-                      }}
-                      title="もう一度クリックすると削除されます">
-                      削除確認
-                    </button>
-                  ) : (
-                    // 通常の削除ボタン
-                    <button
-                      onClick={() => handleDeleteClick(action.id)}
-                      style={{
-                        backgroundColor: "transparent",
-                        color: "#6b7280",
-                        border: "1px solid #d1d5db",
-                        borderRadius: "4px",
-                        padding: "2px 6px",
-                        fontSize: "14px",
-                        cursor: "pointer",
-                        transition: "all 0.2s ease"
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#fee2e2"
-                        e.currentTarget.style.color = "#b91c1c"
-                        e.currentTarget.style.borderColor = "#fecaca"
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "transparent"
-                        e.currentTarget.style.color = "#6b7280"
-                        e.currentTarget.style.borderColor = "#d1d5db"
-                      }}
-                      title="クリックして削除を開始">
-                      🗑️
-                    </button>
-                  )
-                ) : pendingDeleteId === action.id ? (
-                  // ホバーしていないが削除確認状態のアイテム
-                  <button
-                    onClick={() => handleDeleteClick(action.id)}
-                    style={{
-                      backgroundColor: "#dc2626",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      padding: "4px 8px",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      fontWeight: "600",
-                      animation: "pulse 1s infinite"
-                    }}
-                    title="もう一度クリックすると削除されます">
-                    削除確認
-                  </button>
-                ) : (
-                  // 何も表示しない（削除ボタンを隠す）
-                  <span
-                    style={{
-                      color: "#e5e7eb",
-                      fontSize: "14px",
-                      fontWeight: "400",
-                      userSelect: "none"
-                    }}>
-                    ⋯
-                  </span>
-                )}
+                <button
+                  type="button"
+                  onClick={() => handleDeleteClick(action.id)}
+                  className={`rounded border px-1 py-1 text-xs whitespace-nowrap focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                    pendingDeleteId === action.id
+                      ? "border-red-700 bg-red-600 text-white"
+                      : "border-gray-300 text-gray-600 hover:bg-red-50 hover:text-red-700"
+                  }`}
+                  aria-label={
+                    pendingDeleteId === action.id ? undefined : "記録を削除"
+                  }
+                  title={
+                    pendingDeleteId === action.id
+                      ? "もう一度クリックすると削除されます"
+                      : "クリックして削除を開始"
+                  }>
+                  {pendingDeleteId === action.id ? "削除確認" : "削除"}
+                </button>
               </td>
             </tr>
           ))}

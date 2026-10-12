@@ -121,7 +121,7 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
               value={filterConfig.team || ""}
               onChange={(e) => onFilterChange("team", e.target.value)}
               onClick={(e) => e.stopPropagation()}
-              className="filter-select min-w-20 text-base">
+              className="filter-select w-auto max-w-full flex-1 min-w-20 text-base">
               <option value="" className="text-gray-400">
                 全チーム
               </option>
@@ -137,7 +137,7 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
               value={filterConfig.action || ""}
               onChange={(e) => onFilterChange("action", e.target.value)}
               onClick={(e) => e.stopPropagation()}
-              className="filter-select min-w-24 text-base">
+              className="filter-select w-auto max-w-full flex-1 min-w-24 text-base">
               <option value="" className="text-gray-400">
                 全アクション
               </option>
@@ -153,7 +153,7 @@ const TimelineActions: React.FC<TimelineActionsProps> = ({
               value={filterConfig.label || ""}
               onChange={(e) => onFilterChange("label", e.target.value)}
               onClick={(e) => e.stopPropagation()}
-              className="filter-select min-w-20 text-base">
+              className="filter-select w-auto max-w-full flex-1 min-w-20 text-base">
               <option value="" className="text-gray-400">
                 全ラベル
               </option>

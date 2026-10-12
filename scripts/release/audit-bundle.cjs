@@ -8,10 +8,7 @@ const ts = require("typescript")
 const root = path.resolve(process.argv[2] || "build/chrome-mv3-prod")
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json")))
 assert.equal(manifest.manifest_version, 3)
-assert.deepEqual([...manifest.permissions].sort(), [
-  "storage",
-  "unlimitedStorage"
-])
+assert.deepEqual([...manifest.permissions].sort(), ["storage"])
 assert.deepEqual(manifest.host_permissions, ["https://www.youtube.com/*"])
 assert.deepEqual(
   manifest.content_scripts.map((item) => item.matches),

@@ -79,7 +79,9 @@ It builds the historical baseline first and the checked-out head second.
 No sandbox, TLS, site-isolation, sysctl or AppArmor exceptions are applied.
 A blocked browser setup is not a product pass.
 
-PR/push runs execute the synthetic suites without visiting public YouTube.
+Normal PR/push runs execute the synthetic suites without visiting public YouTube.
+Opening a PR with `[observe-public-youtube]` in its title explicitly opts into one
+public observation on the `opened` event only; subsequent pushes do not repeat it.
 Public observation requires a manual workflow dispatch with
 `observe_public_youtube` selected (or an explicit local `live` invocation).
 Automatic CI therefore leaves live checks NOT RUN; the earlier bot BLOCKED
@@ -99,3 +101,21 @@ The CI artifact retains only generated JSON, screenshots and synthetic CSV for
 not uploaded. Screenshots from `public-youtube` are public unauthenticated page
 observations; other screenshots are synthetic. The local runner still uploads
 nothing.
+
+
+## Publication-flow extensions
+
+The default runner also runs `experience` and `capacity-migration`. `experience`
+uses real UI clicks (no `force`) for sorting/deletion, 375/320px tagging and
+horizontal scrolling, a new browser profile for button-set import, and a second
+fresh profile for whole-storage restore via the extension's own storage API.
+The latter is an advanced restore procedure, not a product restore UI.
+`capacity-migration` needs `YOUCODER_PREVIOUS_EXTENSION_DIR` pointing to the
+built historical baseline, and uses a temporary copy at a stable unpacked path
+to test an existing >10MB profile after removal of `unlimitedStorage`.
+Only generated records are used. No user profile is accessed.
+
+Store screenshots are drafts from actual extension UI on a labelled synthetic
+page. They are not proof of live YouTube behavior. The candidate ZIP, its SHA256,
+and the bundle audit are retained by the Test workflow; no submission workflow
+is invoked. See [release-flow verification](../../docs/release-flow-verification.md).
