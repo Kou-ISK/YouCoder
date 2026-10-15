@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "distribution": "GitHub repository download; unpacked Chrome extension",
+  "archive": "youcoder-0.0.2-chrome.zip",
+  "sha256": "5edd2244ac485bde0fe53c19df2d7a1995f2d98a6fb785534ded3d0d8e7311c1",
+  "version": "0.0.2",
+  "repository": "Kou-ISK/YouCoder",
+  "source_commit": "824ea30806ac602980bdba60c6ef928588ef4f82",
+  "source_tree": "5cacc63b145ae6c93fbb0d922458d490ec9026ad",
+  "ci_run_id": 38320354827,
+  "ci_run_attempt": 1,
+  "artifact_id": 11778043034,
+  "ci_archive": "chrome-mv3-prod.zip",
+  "audit_file": "youcoder-0.0.2.bundle-audit.json",
+  "audit_sha256": "00c046907f88d2dd30086e3be0ead95fabd73586dc07941c399239eb2f9d7aaa",
+  "notices_sha256": "6c44368f385d6c1ca0939e5470577e548c714639140e4118739d384a0821d9da",
+  "repackaged": false,
+  "live_youtube_verification": "NOT RUN for this archive; synthetic MV3 results are separate"
+}

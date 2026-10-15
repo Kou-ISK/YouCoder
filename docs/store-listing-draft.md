@@ -46,7 +46,7 @@
 
 データ利用の認証文（販売しない、単一目的以外に転送しない、信用判定に使わない等）は、コード確認に加え発行者の運用上の約束を含みます。公開主体が最終確認してチェックする項目として残します。
 
-[Chrome公式の申告手順](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy)では目的・必要権限・リモートコード・データ利用とprivacy URLの整合を求めています。保存データの暗号化はアプリに未実装であり、[FAQの安全な取扱い要件](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq)との整合も提出前の確認事項です。この草案は適合性の認証ではありません。
+[Chrome公式の申告手順](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy)では目的・必要権限・リモートコード・データ利用とprivacy URLの整合を求めています。保存データの暗号化はアプリに未実装です。[保存時保護の判定](storage-protection-assessment.md)は、公式本文・FAQ・保存先を照合し、現状を「適合根拠未確認」としています。アプリ内暗号化なしだけでStore不適合や独自暗号化の必須化とは判断しません。この草案は適合性の認証ではありません。
 
 ## 提出前に残す項目
 
