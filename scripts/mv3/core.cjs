@@ -188,17 +188,34 @@ async function until(fn, limit = 5000) {
     return { oldId: old, newId: next.id }
   })
   await test("Delete confirmation remains on selected ID after sorting", async () => {
+    const visibilityBefore = await p.evaluate(() => document.visibilityState)
+    // The preceding concurrency cases leave the second tab in front.
+    await p.bringToFront()
+    await until(
+      async () => (await p.evaluate(() => document.visibilityState)) === "visible"
+    )
+    await p.locator("tbody tr").filter({ hasText: "UUID" }).waitFor()
     const row = p.locator("tbody tr").filter({ hasText: "CrossA" })
     const confirmation = row.getByRole("button", { name: "削除確認" })
     // Wait for each visible state so a missed click cannot masquerade as an ID bug.
     await row.getByTitle("クリックして削除を開始").click()
     await confirmation.waitFor({ state: "visible" })
+    const confirmationShownAt = Date.now()
     await p.getByRole("columnheader", { name: /チーム/ }).click()
     await p.getByRole("columnheader", { name: /チーム/ }).click()
     await until(
       async () =>
         (await p.locator("tbody tr").first().locator("td").first().innerText()) ===
         "UUID"
+    )
+    console.log(
+      JSON.stringify({
+        diagnostic: "sorted-delete-confirmation",
+        visibilityBefore,
+        visibilityAfter: await p.evaluate(() => document.visibilityState),
+        elapsedSinceConfirmationMs: Date.now() - confirmationShownAt,
+        confirmationCount: await confirmation.count()
+      })
     )
     await confirmation.waitFor({ state: "visible" })
     await confirmation.click()
