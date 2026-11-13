@@ -2,28 +2,24 @@
 
 YouTube動画を見ながら、チームごとのアクション区間とラベルを記録し、CSVで書き出すChrome拡張機能です。開発者: **Kou Isaka (Kou-ISK)**。
 
-現在は開発版です。Store提出は行っていません。合成ページでのMV3検証と、実YouTubeでの確認範囲は異なります。[検証記録](docs/mv3-cloud-verification.md)と[公開前チェックリスト](docs/release-checklist.md)を確認してください。
+GitHubからダウンロードして使う試用版です。**Node.jsやビルドは不要**です。デスクトップ版Chromeの開発者モードで読み込みます。Chrome Web Storeへの提出・公開は行っていません。
+
+**[YouCoder 0.0.2 のZIPをダウンロード](downloads/youcoder-0.0.2-chrome.zip?raw=true)** · [詳しい導入・更新手順](docs/install-from-github.md) · [配布物と検証範囲](downloads/README.md)
+
+実YouTubeでの動画別保存・SPA遷移・字幕・広告・全画面の最終確認は未完了です。まず重要な記録を持たないChromeプロファイルで試してください。合成ページのMV3テスト成功を、実YouTubeの動作保証とは扱っていません。
 
 ## 導入
 
-Node.js **22.x**、pnpm **9.15.9**、デスクトップ版Chromeを使用します。
+1. 上の配布ZIPをダウンロードし、展開します。GitHubの「Code → Download ZIP」はソースコード用なので、上のリンクを使ってください。
+2. 展開した中の **`manifest.json` が直接入っているフォルダ**を、今後も使う固定の場所へ移します。例: 書類フォルダ内の `YouCoder`。読み込み後は移動・削除しないでください。
+3. Chromeのアドレスバーに `chrome://extensions` と入力し、右上の「デベロッパー モード」をオンにします。
+4. 「パッケージ化されていない拡張機能を読み込む」で、手順2のフォルダを選びます。ZIPファイル自体は選びません。
+5. 拡張機能一覧に **YouCoder 0.0.2** が出ることを確認します。ツールバーのパズル形アイコンからYouCoderを開き、チームとボタンセットを設定します。
+6. 通常の `https://www.youtube.com/watch?v=...` 動画ページを開きます。既に開いていたページは再読み込みします。
 
-```bash
-git clone https://github.com/Kou-ISK/YouCoder.git
-cd YouCoder
-git switch develop
-pnpm --version # 9.15.9
-node --version # v22.x
-pnpm install --frozen-lockfile
-pnpm build
-```
+権限は**YouTubeページの読み取り・変更**と**設定・記録の端末内保存**です。その他のサイト、履歴全体、Cookie、Google Sheetsの権限は要求しません。表示される権限がこの説明と違う場合は、配布元とファイルを確認してください。
 
-1. Chromeで `chrome://extensions` を開き、開発者モードを有効にします。
-2. 「パッケージ化されていない拡張機能を読み込む」で `build/chrome-mv3-prod` を選びます。
-3. 通常の `https://www.youtube.com/watch?v=...` 動画ページを開きます。既に開いていたページは再読み込みします。
-4. ツールバーのYouCoderアイコンから設定を開き、チームとボタンセットを設定します。
-
-更新時は先に[バックアップ](#バックアップと移行)を取り、同じディレクトリで再ビルドして拡張機能の「再読み込み」を使います。アンインストールして入れ直すと拡張機能の保存データは失われます。別ディレクトリ・別プロファイル・将来のStore版で拡張機能IDが変わる場合、データは自動では引き継がれません。
+更新は手動です。先に[バックアップ](#バックアップと移行)を取り、[更新手順](docs/install-from-github.md#更新する)に従って**同じフォルダの中身**を新しい配布物へ入れ替え、拡張機能の「再読み込み」を使います。アンインストールすると保存データは失われます。別フォルダ・別プロファイルでは拡張機能IDが変わる場合があり、記録は自動では引き継がれません。
 
 ## 使い方
 
@@ -75,7 +71,13 @@ API権限は `storage`、ホスト権限はYouTube HTTPSだけです。`unlimite
 
 ## 開発・検証
 
+ソースを変更する場合だけ、Node.js **22.x** と pnpm **9.15.9** を使ってビルドします。ソースの最新状態と、上の固定版ZIPの内容は別です。ZIPの元コミットは[配布記録](downloads/README.md)で確認できます。
+
 ```bash
+git clone https://github.com/Kou-ISK/YouCoder.git
+cd YouCoder
+git switch develop
+pnpm install --frozen-lockfile
 pnpm dev # 開発用。build/chrome-mv3-dev を読み込む
 pnpm test:ci --runInBand
 pnpm exec tsc --noEmit

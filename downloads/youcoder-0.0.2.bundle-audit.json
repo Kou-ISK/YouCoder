@@ -1,0 +1,163 @@
+{
+  "scope": "Static production file inventory and targeted marker checks; not a runtime network audit",
+  "manifest": {
+    "icons": {
+      "16": "icon16.plasmo.6c567d50.png",
+      "32": "icon32.plasmo.76b92899.png",
+      "48": "icon48.plasmo.aced7582.png",
+      "64": "icon64.plasmo.8bb5e6e0.png",
+      "128": "icon128.plasmo.3c1ed2d2.png"
+    },
+    "manifest_version": 3,
+    "action": {
+      "default_icon": {
+        "16": "icon16.plasmo.6c567d50.png",
+        "32": "icon32.plasmo.76b92899.png",
+        "48": "icon48.plasmo.aced7582.png",
+        "64": "icon64.plasmo.8bb5e6e0.png",
+        "128": "icon128.plasmo.3c1ed2d2.png"
+      },
+      "default_popup": "popup.html"
+    },
+    "version": "0.0.2",
+    "author": "Kou Isaka (Kou-ISK)",
+    "name": "YouCoder",
+    "description": "YouTube動画のアクション区間とラベルを記録し、CSVで書き出すスポーツ映像分析ツール。",
+    "homepage_url": "https://github.com/Kou-ISK/YouCoder",
+    "background": {
+      "service_worker": "static/background/index.js"
+    },
+    "permissions": [
+      "storage"
+    ],
+    "content_scripts": [
+      {
+        "matches": [
+          "https://www.youtube.com/*"
+        ],
+        "js": [
+          "content.883ade9e.js"
+        ],
+        "css": []
+      }
+    ],
+    "host_permissions": [
+      "https://www.youtube.com/*"
+    ],
+    "content_security_policy": {
+      "extension_pages": "script-src 'self'; object-src 'self';"
+    },
+    "web_accessible_resources": [
+      {
+        "resources": [
+          "*.css"
+        ],
+        "matches": [
+          "https://www.youtube.com/*"
+        ]
+      },
+      {
+        "matches": [
+          "https://www.youtube.com/*"
+        ],
+        "resources": [
+          "content.45359058.css"
+        ]
+      }
+    ]
+  },
+  "files": [
+    {
+      "file": "content.883ade9e.js",
+      "bytes": 256212,
+      "sha256": "f2a734c724573efec1c35cc1d867edcfd1b139d98bf69eca493f19178eaedd6c",
+      "sheetsPrototypeMarkers": false,
+      "urlLiterals": [
+        "http://www.w3.org/1998/Math/MathML",
+        "http://www.w3.org/1999/xhtml",
+        "http://www.w3.org/1999/xlink",
+        "http://www.w3.org/2000/svg",
+        "http://www.w3.org/XML/1998/namespace",
+        "https://reactjs.org/docs/error-decoder.html?invariant=",
+        "https://www.youtube.com",
+        "https://www.youtube.com/*"
+      ],
+      "networkApiIdentifiers": [
+        "XMLHttpRequest",
+        "fetch"
+      ]
+    },
+    {
+      "file": "icon128.plasmo.3c1ed2d2.png",
+      "bytes": 6307,
+      "sha256": "fcacc041d567153cdd57993dda26ebc44095bfb557ec8ab8dd7ab1e58ff08069"
+    },
+    {
+      "file": "icon16.plasmo.6c567d50.png",
+      "bytes": 689,
+      "sha256": "6f61c1f3caa1164dc968982783498f9bf304f7e1dc8ba1969d52c5d790f40da4"
+    },
+    {
+      "file": "icon32.plasmo.76b92899.png",
+      "bytes": 1285,
+      "sha256": "76b6c09868cd25997bf581ab270ad430eb14e8eb9df32cdd773c2d49f754b8e2"
+    },
+    {
+      "file": "icon48.plasmo.aced7582.png",
+      "bytes": 2048,
+      "sha256": "cfa264dcd141376938d8abb7eabfd6335865c9b239d76404694700c6e1dcfc4d"
+    },
+    {
+      "file": "icon64.plasmo.8bb5e6e0.png",
+      "bytes": 2667,
+      "sha256": "021641a2a7e43ad30af42ec0f3426460f65815e79cd50164eabadfff9bcba4e7"
+    },
+    {
+      "file": "manifest.json",
+      "bytes": 1182,
+      "sha256": "4c9f0f37e20ffbcdb4837cee73130db9fdbfbda3a9623d5cd1e18eb90d37ac48"
+    },
+    {
+      "file": "popup.100f6462.js",
+      "bytes": 179692,
+      "sha256": "fc24ef211a2c932bd74f6dd28dd918c2495b07302054985469cd1fe4cb5afb48",
+      "sheetsPrototypeMarkers": false,
+      "urlLiterals": [
+        "http://www.w3.org/1998/Math/MathML",
+        "http://www.w3.org/1999/xhtml",
+        "http://www.w3.org/1999/xlink",
+        "http://www.w3.org/2000/svg",
+        "http://www.w3.org/XML/1998/namespace",
+        "https://reactjs.org/docs/error-decoder.html?invariant="
+      ],
+      "networkApiIdentifiers": []
+    },
+    {
+      "file": "popup.203b1dd8.css",
+      "bytes": 41392,
+      "sha256": "a51e73c4312cdba5ca133f9fd1390cf7f8fa27aedcf4f1c2da35de4f40c741ed",
+      "sheetsPrototypeMarkers": false
+    },
+    {
+      "file": "popup.html",
+      "bytes": 295,
+      "sha256": "99db3bfed98ff5efed61057347ef6a947113444081ed23c4c90d577a8b0b0dce",
+      "sheetsPrototypeMarkers": false
+    },
+    {
+      "file": "static/background/index.js",
+      "bytes": 6079,
+      "sha256": "61148078f5a3cc5116bdf750c12a5ff671a0073ad1d15cd3c8a6f87f84b9f78a",
+      "sheetsPrototypeMarkers": false,
+      "urlLiterals": [
+        "https://www.youtube.com"
+      ],
+      "networkApiIdentifiers": []
+    },
+    {
+      "file": "THIRD_PARTY_NOTICES.txt",
+      "bytes": 6782,
+      "sha256": "6c44368f385d6c1ca0939e5470577e548c714639140e4118739d384a0821d9da"
+    }
+  ]
+}
