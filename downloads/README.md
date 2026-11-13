@@ -19,6 +19,10 @@ CI内の `chrome-mv3-prod.zip` と**同じバイト列**を、分かりやすい
 
 このZIPは上記コミットの固定版です。`develop` の将来の変更が自動でZIPへ反映されることはありません。更新する際は新しい版の配布記録と手順を確認してください。
 
+CIは新規ビルドに加え、この固定ZIPも毎回検査します。記録されたソースcommitのtree・版、ZIPとSHA256ファイル、内部全ファイルと監査、ライセンス・権限を照合します。ローカルではNode 22、pnpm 9.15.9で `pnpm install --frozen-lockfile` 後、履歴を取得済みのcheckoutから `python3 scripts/release/distribution.py` で実行できます。ZIPを再生成・再圧縮する処理はありません。
+
+この検査はローカルの整合性確認です。生成元CIの成功・レビュー承認・実YouTube QA・手動導入確認を代わりに完了扱いにはしません。GitHub配布版の正式リリース前にはこれらの未完条件を解消してください。Store提出はこの配布経路に含みません。
+
 ## 検証結果
 
 - [Test CI](https://github.com/Kou-ISK/YouCoder/actions/runs/38320354827): 単体389件、候補ゲート14件、型検査、production build、ライセンス・bundle監査・packageが成功。

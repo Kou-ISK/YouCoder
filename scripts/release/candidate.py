@@ -106,6 +106,16 @@ def safe_extract(archive, destination):
                 target.write_bytes(zipped.read(entry))
 
 
+def validate_audited_files(destination, audit):
+    inventory = {p.relative_to(destination).as_posix(): p for p in destination.rglob("*") if p.is_file()}
+    require(len(audit["files"]) == len(inventory), "ZIP file count differs from audit")
+    require({f["file"] for f in audit["files"]} == set(inventory), "ZIP files differ from audit")
+    for item in audit["files"]:
+        data = inventory[item["file"]].read_bytes()
+        require(len(data) == item["bytes"] and digest(data) == item["sha256"], "ZIP file differs from audited bytes")
+    require(audit["manifest"] == read_json(destination / "manifest.json"), "Audited manifest differs from ZIP")
+
+
 def validate_payload(directory, expected_commit, expected_sha, expected_version,
                      expected_tree, expected_notices, destination):
     require({p.name for p in directory.iterdir()} == FILES, "Candidate file set mismatch")
@@ -125,14 +135,7 @@ def validate_payload(directory, expected_commit, expected_sha, expected_version,
     manifest = read_json(destination / "manifest.json")
     require(manifest["version"] == expected_version, "ZIP manifest version mismatch")
     require((destination / "THIRD_PARTY_NOTICES.txt").read_bytes() == expected_notices, "Runtime license notices missing or changed")
-    audit = json.loads(audit_bytes)
-    inventory = {p.relative_to(destination).as_posix(): p for p in destination.rglob("*") if p.is_file()}
-    require(len(audit["files"]) == len(inventory), "ZIP file count differs from audit")
-    require({f["file"] for f in audit["files"]} == set(inventory), "ZIP files differ from audit")
-    for item in audit["files"]:
-        data = inventory[item["file"]].read_bytes()
-        require(len(data) == item["bytes"] and digest(data) == item["sha256"], "ZIP file differs from audited bytes")
-    require(audit["manifest"] == manifest, "Audited manifest differs from ZIP")
+    validate_audited_files(destination, json.loads(audit_bytes))
     return meta
 
 
